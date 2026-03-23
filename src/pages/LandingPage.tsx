@@ -72,9 +72,26 @@ export default function LandingPage() {
 
       {/* TRUST BAR */}
       <section className="bg-stone-100 border-y border-stone-200 py-10 text-center">
-        <p className="text-xs text-stone-400 uppercase tracking-widest">Trusted by organizations across Florida</p>
-        <div className="flex justify-center gap-12 mt-6 flex-wrap text-stone-400 text-sm font-medium">
-          <span>Miami-Dade County</span><span>Google Cloud</span><span>Grants.gov</span><span>FL High Tech Corridor</span><span>HelloAgentic</span>
+        <p className="text-xs text-stone-400 uppercase tracking-widest mb-8">Trusted by organizations across Florida</p>
+        <div className="flex justify-center items-center gap-10 flex-wrap max-w-4xl mx-auto px-6">
+          {[
+            { name: 'HelloAgentic', domain: 'helloagentic.ai', url: 'https://helloagentic.ai' },
+            { name: 'Google Cloud', domain: 'cloud.google.com', url: 'https://cloud.google.com' },
+            { name: 'DeepStation', domain: 'deepstation.ai', url: 'https://deepstation.ai' },
+            { name: 'Miami Dade College', domain: 'mdc.edu', url: 'https://www.mdc.edu' },
+            { name: 'Grants.gov', domain: 'grants.gov', url: 'https://www.grants.gov' },
+          ].map((org, i) => (
+            <a key={i} href={org.url} target="_blank" rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+              <img
+                src={`https://logo.clearbit.com/${org.domain}`}
+                alt={org.name}
+                className="h-8 w-auto object-contain grayscale group-hover:grayscale-0 transition-all"
+                onError={e => { (e.target as HTMLImageElement).style.display='none'; }}
+              />
+              <span className="text-xs text-stone-400 font-medium">{org.name}</span>
+            </a>
+          ))}
         </div>
       </section>
 
