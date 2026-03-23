@@ -10,6 +10,7 @@ import FunderDashboard from './pages/FunderDashboard.tsx'
 import Pricing from './pages/Pricing.tsx'
 import Privacy from './pages/Privacy.tsx'
 import Terms from './pages/Terms.tsx'
+import DemoPage from './pages/DemoPage.tsx'
 
 const Spinner = () => (
   <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
           <Route path="/seeker" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
           <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
+          <Route path="/demo" element={<DemoPage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

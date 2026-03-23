@@ -29,7 +29,7 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="py-32 text-center px-6">
         <div className="inline-flex items-center gap-2 bg-[#76B90020] text-[#76B900] rounded-full px-4 py-1 text-xs font-medium">
-          🏆 Google Cloud ADK Hackathon 2025 — Top 5 of 54 Teams
+          🏆 Google Cloud ADK Hackathon 2026
         </div>
         <h1 className="mt-8 text-6xl font-bold tracking-tight text-stone-900 leading-[1.1] max-w-3xl mx-auto">
           Find The Grant<br />
@@ -40,9 +40,10 @@ export default function LandingPage() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#8FD400] transition-colors">Find My Grants →</Link>
-          <Link to="/login?role=funder" className="border border-[#333333] text-[#EEEEEE] px-5 py-2.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors">I'm a Grant Funder</Link>
+          <Link to="/login?role=funder" className="border-2 border-stone-700 text-stone-800 font-semibold px-5 py-2.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors bg-white">I'm a Grant Funder</Link>
+          <Link to="/demo" className="border border-stone-300 text-stone-600 px-5 py-2.5 rounded-lg hover:border-stone-500 hover:text-stone-800 transition-colors flex items-center gap-2 bg-white">▶ Try Live Demo</Link>
         </div>
-        <p className="mt-4 text-xs text-[#555555]">Free to start · No credit card · Sovereign data</p>
+        <p className="mt-4 text-xs text-stone-400">Free to start · No credit card · Sovereign data</p>
 
         {/* Product Mockup */}
         <div className="mt-20 max-w-3xl mx-auto bg-[#232323] border border-[#333333] rounded-xl p-6 text-left">

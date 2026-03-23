@@ -34,9 +34,17 @@ export default function LoginPage() {
     setGoogleLoading(true);
     try {
       await loginWithGoogle(role);
-      // navigation handled by useEffect above
-    } catch {
-      setError('Google sign-in failed. Make sure popups are not blocked and try again.');
+    } catch (err: any) {
+      const msg = err?.code || err?.message || '';
+      if (msg.includes('popup-closed') || msg.includes('cancelled')) {
+        setError('Sign-in popup was closed. Please try again.');
+      } else if (msg.includes('popup-blocked')) {
+        setError('Popup was blocked. Please allow popups for this site in your browser settings.');
+      } else if (msg.includes('network')) {
+        setError('Network error. Check your connection and try again.');
+      } else {
+        setError('Google sign-in failed. Make sure popups are allowed and try again.');
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -48,14 +56,25 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        if (!name.trim()) throw new Error('Please enter your name.');
+        if (!name.trim()) throw new Error('Please enter your full name.');
+        if (password.length < 6) throw new Error('Password must be at least 6 characters.');
         await signupWithEmail(name.trim(), email.trim(), password, role);
       } else {
         await loginWithEmail(email.trim(), password, role);
       }
-      // navigation handled by useEffect above
     } catch (err: any) {
-      setError(err.message?.replace('Firebase: ', '').replace(/ \(auth\/.*\)/, '') || 'Something went wrong.');
+      const msg = (err?.message || '').replace('Firebase: ', '').replace(/ \(auth\/.*\)\.?/, '').trim();
+      if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
+        setError('Invalid email or password. Please check your credentials.');
+      } else if (msg.includes('email-already-in-use')) {
+        setError('An account with this email already exists. Try signing in instead.');
+      } else if (msg.includes('invalid-email')) {
+        setError('Please enter a valid email address.');
+      } else if (msg.includes('too-many-requests')) {
+        setError('Too many attempts. Please wait a few minutes before trying again.');
+      } else {
+        setError(msg || 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +130,8 @@ export default function LoginPage() {
         <div className="p-8 space-y-4">
           {/* Google Button */}
           <button onClick={handleGoogle} disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-white border-2 border-stone-200 hover:border-stone-300 hover:bg-stone-50 text-stone-700 font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-60">
+            className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-white border-2 border-stone-200 hover:border-stone-300 hover:bg-stone-50 text-stone-700 font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-60"
+            title="Requires popup permissions. If blocked, use email/password below.">
             {googleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -161,9 +181,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-stone-400">
-            By signing in, you agree to our terms of service.
-          </p>
+          <div className="pt-1 text-center space-y-2">
+            <p className="text-xs text-stone-400">
+              By signing in you agree to our <a href="/terms" className="underline hover:text-stone-600">Terms</a> &amp; <a href="/privacy" className="underline hover:text-stone-600">Privacy Policy</a>.
+            </p>
+            <p className="text-xs text-stone-400">
+              No account? <a href="/demo" className="text-[#76B900] font-bold hover:underline">▶ Try Live Demo instead</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
