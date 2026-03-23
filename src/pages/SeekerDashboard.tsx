@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
 import { chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
+import AgentStatus from '../components/AgentStatus';
+import type { AgentItem } from '../components/AgentStatus';
 import { 
   Search, 
   BrainCircuit, 
@@ -413,6 +415,12 @@ Respond in clean markdown with EXACTLY these 4 sections:
   const [demoStep, setDemoStep] = useState(0);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [showAgentSidebar, setShowAgentSidebar] = useState(false);
+
+  // Auto-open sidebar when pipeline starts
+  useEffect(() => {
+    if (isRunning) setShowAgentSidebar(true);
+  }, [isRunning]);
 
   const demoScript = [
     {
@@ -1535,6 +1543,71 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         </div>
       </header>
 
+      {/* Agent Status Sidebar */}
+      {showAgentSidebar && (
+        <AgentStatus
+          isRunning={isRunning}
+          logs={globalLogs}
+          onClose={() => setShowAgentSidebar(false)}
+          agents={[
+            {
+              id: 'hunter',
+              name: 'Researcher',
+              description: 'Scanning Grants.gov + SBA SBIR live',
+              status: agents.find(a => a.id === 'hunter')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'hunter')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'hunter')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'matchmaker',
+              name: 'Eligibility Scorer',
+              description: 'Scoring grants 0–100 against your profile',
+              status: agents.find(a => a.id === 'matchmaker')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'matchmaker')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'matchmaker')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'drafter',
+              name: 'Proposal Drafter',
+              description: 'Writing personalized proposal via Gemini',
+              status: agents.find(a => a.id === 'drafter')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'drafter')?.status === 'completed' ? 'active'
+                    : agents.find(a => a.id === 'drafter')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'controller',
+              name: 'Compliance',
+              description: 'Verifying eligibility, budget, EIN, residency',
+              status: agents.find(a => a.id === 'controller')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'controller')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'controller')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'submitter',
+              name: 'Submitter',
+              description: 'Packaging and queuing application',
+              status: agents.find(a => a.id === 'submitter')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'submitter')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'submitter')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'watcher',
+              name: 'Vault / Watcher',
+              description: 'Background monitor — polling 24/7 for new matches',
+              status: agents.find(a => a.id === 'watcher')?.status === 'working' ? 'active'
+                    : agents.find(a => a.id === 'watcher')?.status === 'completed' ? 'active'
+                    : agents.find(a => a.id === 'watcher')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+          ] satisfies AgentItem[]}
+        />
+      )}
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         {activeTab === 'billing' && (() => {
           const currentPlan = localStorage.getItem('civicpath_plan') || 'free';
@@ -2634,7 +2707,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.location || 'Anywhere'}</span>
                 <div className="ml-auto flex items-center gap-3">
                   <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">Edit Profile</button>
-                  <button onClick={handleExecute} disabled={isRunning}
+                  <button onClick={() => { setShowAgentSidebar(true); handleExecute(); }} disabled={isRunning}
                     className={`inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${
                       isRunning ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900] shadow-sm active:scale-[0.98]'
                     }`}>
