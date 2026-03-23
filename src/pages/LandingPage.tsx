@@ -78,15 +78,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* STATS */}
-      <section className="py-20 px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
-          {[{n:'1,247+',l:'Grants Indexed'},{n:'94%',l:'Match Accuracy'},{n:'38 hrs',l:'Saved Per Grant'},{n:'$2.4M',l:'Active Grant Value'}].map((s,i) => (
-            <div key={i}>
-              <div className="text-4xl font-bold text-[#76B900]">{s.n}</div>
-              <div className="text-sm text-stone-500 mt-1">{s.l}</div>
-            </div>
-          ))}
+      {/* LIVE GRANT DATA BADGE */}
+      <section className="py-10 px-6">
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 bg-[#76B900] rounded-full animate-pulse"></span>
+            <span className="text-sm font-semibold text-stone-700">Powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#76B900] hover:underline font-bold">Grants.gov</a> — official U.S. federal grants database, updated daily</span>
+          </div>
+          <div className="flex items-center gap-6 text-center shrink-0">
+            <div><div className="text-xl font-black text-stone-900">1,000s</div><div className="text-xs text-stone-500">Live Federal Grants</div></div>
+            <div><div className="text-xl font-black text-[#76B900]">Gemini AI</div><div className="text-xs text-stone-500">Matching Engine</div></div>
+            <div><div className="text-xl font-black text-stone-900">$0</div><div className="text-xs text-stone-500">To Start</div></div>
+          </div>
         </div>
       </section>
 
@@ -185,7 +188,7 @@ export default function LandingPage() {
       {/* FINAL CTA */}
       <section className="py-32 text-center px-6">
         <h2 className="text-5xl font-bold text-stone-900 max-w-2xl mx-auto leading-tight">Your community deserves<br />to be funded.</h2>
-        <p className="mt-6 text-stone-500 text-xl max-w-xl mx-auto">Join 847 Florida organizations already using CivicPath to find, match, and win grants.</p>
+        <p className="mt-6 text-stone-500 text-xl max-w-xl mx-auto">Connect to thousands of real federal and state grants. Let AI find the ones that fit you.</p>
         <Link to="/login?role=seeker" className="mt-10 inline-block bg-[#76B900] text-[#111111] font-semibold px-8 py-4 text-lg rounded-xl hover:bg-[#8FD400] transition-colors">
           Find My Grants Now →
         </Link>

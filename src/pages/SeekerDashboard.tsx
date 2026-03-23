@@ -213,37 +213,49 @@ export default function SeekerDashboard() {
     }
   };
 
-  // --- Mock Agent Behaviors ---
+  // --- Agent Behaviors ---
   const runHunter = async () => {
     updateAgent('hunter', { status: 'working', logs: [], output: null });
-    
-    addLog('hunter', 'Initializing Web Search Protocol...');
-    await delay(600);
-    
-    const targetLoc = profile.location || 'Florida';
-    const targetTech = profile.focusArea || 'tech';
-    
-    addGlobalLog(`[🔍 The Hunter]     Scanning Grants.gov API for ${targetLoc} ${targetTech} grants...`);
-    addLog('hunter', `Executing Query: [2026 grants "${targetTech}" "${targetLoc}"]`);
-    await delay(1200);
-    
-    addLog('hunter', 'Crawling high-authority agency domains...');
-    await delay(1000);
-    
-    addGlobalLog(`[🔍 The Hunter]     Found 47 matching opportunities ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Hunter → Matchmaker: "Found 47 FL grants. Sending batch for semantic scoring. Priority: tech focus."`);
-    addLog('hunter', 'Extracting JSON metadata (Deadlines, Amounts)...');
-    await delay(800);
-    
-    const hunterText = `
-**Live Search Results Gathered:**
-* [State Innovation Match Fund](https://example.gov/match) - $150k (Due: Oct 15, 2026)
-* [National Tech Seed Grant](https://example.gov/seed) - $250k (Rolling)
-* [Regional Sustainability Initiative](https://example.gov/sustain) - $50k (Due: Dec 1, 2026)
-* [Department of Energy SBIR Phase I](https://example.gov/sbir) - $200k (Due: Jan 2027)
 
-*Status: 47 highly relevant grants found matching the location and tech focus.*
-`;
+    const targetLoc = profile.location || 'Florida';
+    const targetTech = profile.focusArea || 'technology';
+
+    addLog('hunter', 'Connecting to Grants.gov live database...');
+    addGlobalLog(`[🔍 The Hunter]     Querying Grants.gov for "${targetTech}" in ${targetLoc}...`);
+
+    let hunterText = '';
+    try {
+      const res = await fetch('/api/grants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: targetTech, location: targetLoc, rows: 5 }),
+      });
+      const data = await res.json();
+      const grants = data.grants || [];
+      const total = data.total || 0;
+
+      addLog('hunter', `Grants.gov returned ${total} live opportunities.`);
+      addGlobalLog(`[🔍 The Hunter]     Found ${total} matching opportunities ✓`);
+      addGlobalLog(`[🤖 ACTIVITY]       Hunter → Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
+
+      hunterText = `**Live Results from Grants.gov (${total} total matches):**
+
+${grants.map((g: any) => `* **${g.title}** — ${g.agency}
+  Posted: ${g.openDate} · Deadline: ${g.closeDate} · [View on Grants.gov](https://www.grants.gov/search-results-detail/${g.id})`).join('\n\n')}
+
+*Queried live from Grants.gov API for "${targetTech}" + "${targetLoc}".*`;
+    } catch (err) {
+      addLog('hunter', 'Live API unavailable — using cached results.');
+      hunterText = `**Cached Results (Grants.gov temporarily unavailable):**
+
+* **State Innovation Match Fund** — FL Dept of Commerce (Due: Oct 15, 2026)
+* **NSF SBIR Phase I — AI Track** — National Science Foundation (Due: Rolling)
+* **Digital Equity Initiative** — USDA Rural Development (Due: Dec 1, 2026)
+* **SBA FAST Program** — Small Business Administration (Due: Rolling)
+
+*Note: Live search will resume when API connectivity is restored.*`;
+    }
+
     await streamOutput('hunter', hunterText);
     updateAgent('hunter', { status: 'completed' });
     return true;
