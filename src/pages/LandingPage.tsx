@@ -1,27 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { Hexagon, ArrowUpRight, Shield, Heart, Users, DollarSign, Star, ArrowRight, Search, BrainCircuit, FileEdit, CheckCircle2, Send } from 'lucide-react';
 
-const Logo = () => (
-  <div className="relative inline-flex items-center justify-center w-9 h-9 text-[#2E7D32]">
-    <Hexagon className="w-9 h-9 absolute" strokeWidth={2.5} />
-    <ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} />
-  </div>
-);
-
 const GREEN = '#76B900'; // Nvidia green
-
 const stats = [
   { value: '1,247', label: 'Grants Matched' },
   { value: '847', label: 'Organizations Funded' },
   { value: '$2.4M', label: 'Active Grant Value' },
   { value: '43', label: 'Active Funders' },
-];
-
-const steps = [
-  { n: '01', title: 'Create Your Profile', desc: 'Tell us your mission, focus areas, and goals. Takes 2 minutes.' },
-  { n: '02', title: 'AI Finds Your Matches', desc: 'Gemini AI scores every grant 0-100 based on mission alignment.' },
-  { n: '03', title: 'Apply With One Click', desc: 'Our 6 AI agents draft, verify, and submit your proposal automatically.' },
-  { n: '04', title: 'Get Funded', desc: 'Track your applications and receive award notifications in real time.' },
 ];
 
 const testimonials = [
