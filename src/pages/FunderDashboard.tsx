@@ -138,10 +138,10 @@ export default function FunderDashboard() {
               <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 px-3 py-1.5 rounded-lg hover:bg-stone-100"><LogOut className="w-3.5 h-3.5" /> Sign Out</button>
             </div>
           </div>
-          <div className="flex space-x-1">
+          <div className="flex gap-1 border-b border-stone-200 overflow-x-auto scrollbar-none -mb-px">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setActiveTab(t.id)}
-                className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${
+                className={`pb-3 px-3 text-sm font-bold whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                   activeTab === t.id
                     ? (t.purple ? 'border-purple-500 text-purple-600' : 'border-[#76B900] text-[#76B900]')
                     : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -170,9 +170,9 @@ export default function FunderDashboard() {
               </div>
               <div className="space-y-3">
                 {grants.map(g => (
-                  <div key={g.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl border border-stone-200">
-                    <div><div className="font-bold text-stone-900 text-sm">{g.name}</div><div className="text-xs text-stone-500 mt-0.5 flex items-center gap-3"><span>{g.amount}</span><span>{g.location}</span><span>Due {g.deadline}</span></div></div>
-                    <div className="flex items-center gap-3"><span className="text-xs font-bold text-[#76B900] bg-[#76B900]/10 px-2 py-1 rounded-full">{g.applications} apps</span><button onClick={() => setActiveTab('applicants')} className="text-xs font-bold text-stone-400 hover:text-[#76B900]">View →</button></div>
+                  <div key={g.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-stone-50 rounded-xl border border-stone-200 gap-2">
+                    <div><div className="font-bold text-stone-900 text-sm">{g.name}</div><div className="text-xs text-stone-500 mt-0.5 flex flex-wrap items-center gap-2"><span>{g.amount}</span><span className="hidden sm:inline">·</span><span className="hidden sm:inline">{g.location}</span><span>·</span><span>Due {g.deadline}</span></div></div>
+                    <div className="flex items-center gap-2 shrink-0"><span className="text-xs font-bold text-[#76B900] bg-[#76B900]/10 px-2 py-1 rounded-full">{g.applications} apps</span><button onClick={() => setActiveTab('applicants')} className="text-xs font-bold text-stone-400 hover:text-[#76B900]">View →</button></div>
                   </div>
                 ))}
               </div>
@@ -193,12 +193,12 @@ export default function FunderDashboard() {
 
         {activeTab === 'post' && (
           <div className="animate-in fade-in max-w-3xl">
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-8">
+            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-5 sm:p-8">
               <h2 className="text-xl font-bold text-stone-900 mb-6">Post a New Grant</h2>
               <div className="space-y-5">
                 <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Grant Name *</label><input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Digital Equity Fund" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                 <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Description</label><textarea rows={3} value={form.description} onChange={e => setForm({...form,description:e.target.value})} placeholder="Describe the grant purpose..." className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 resize-none" /></div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Amount *</label><input value={form.amount} onChange={e => setForm({...form,amount:e.target.value})} placeholder="e.g. up to $50,000" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                   <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Deadline</label><input type="date" value={form.deadline} onChange={e => setForm({...form,deadline:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                 </div>
@@ -236,14 +236,14 @@ export default function FunderDashboard() {
                         <div className="flex items-center gap-3 mt-1.5 text-xs text-stone-400"><span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{a.location}</span><span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{a.grant}</span><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{a.date}</span></div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-3 shrink-0">
-                      <div className="text-2xl font-black text-[#76B900]">{a.score}%</div>
+                    <div className="flex flex-row md:flex-col items-start md:items-end justify-between md:justify-start gap-2 shrink-0">
+                      <div className="text-xl md:text-2xl font-black text-[#76B900]">{a.score}%</div>
                       {(a.status==='pending'||a.status==='review')&&(
-                        <div className="flex gap-2">
-                          <button onClick={() => setProposalModal(a)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-stone-200 text-stone-600 rounded-lg hover:border-[#76B900] hover:text-[#76B900]"><Eye className="w-3.5 h-3.5" /> Proposal</button>
-                          <button onClick={() => handleApprove(a.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-[#76B900] text-[#111111] rounded-lg hover:bg-[#689900]"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
-                          <button onClick={() => handleReject(a.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-red-200 text-red-600 rounded-lg hover:bg-red-50"><XCircle className="w-3.5 h-3.5" /> Reject</button>
-                          <button onClick={() => handleSchedule(a)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"><Calendar className="w-3.5 h-3.5" /> Call</button>
+                        <div className="flex flex-wrap gap-1.5 justify-end">
+                          <button onClick={() => setProposalModal(a)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold border border-stone-200 text-stone-600 rounded-lg hover:border-[#76B900] hover:text-[#76B900]"><Eye className="w-3 h-3" /> <span className="hidden sm:inline">Proposal</span></button>
+                          <button onClick={() => handleApprove(a.id)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-[#76B900] text-[#111111] rounded-lg hover:bg-[#689900]"><CheckCircle2 className="w-3 h-3" /> <span className="hidden sm:inline">Approve</span></button>
+                          <button onClick={() => handleReject(a.id)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold border border-red-200 text-red-600 rounded-lg hover:bg-red-50"><XCircle className="w-3 h-3" /> <span className="hidden sm:inline">Reject</span></button>
+                          <button onClick={() => handleSchedule(a)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"><Calendar className="w-3 h-3" /> <span className="hidden sm:inline">Call</span></button>
                         </div>
                       )}
                     </div>

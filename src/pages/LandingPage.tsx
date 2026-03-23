@@ -58,15 +58,15 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <section className="pt-24 pb-20 text-center px-6">
+      <section className="pt-16 sm:pt-24 pb-14 sm:pb-20 text-center px-5 sm:px-6">
         <div className="inline-flex items-center gap-2 bg-[#76B90015] text-[#5a9000] rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide">
           🏆 Google Cloud ADK Hackathon 2026 · Finalist
         </div>
-        <h1 className="mt-7 text-6xl font-bold tracking-tight text-stone-900 leading-[1.08] max-w-3xl mx-auto">
+        <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-stone-900 leading-[1.08] max-w-3xl mx-auto">
           Find The Grant<br />
           <span className="text-[#76B900]">That Gets You.</span>
         </h1>
-        <p className="mt-5 text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
+        <p className="mt-4 text-base sm:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
           6 AI agents find, score, draft, and submit grants for your org — automatically. First match in 60 seconds.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -114,10 +114,10 @@ export default function LandingPage() {
       </section>
 
       {/* 6 AGENTS */}
-      <section className="py-20 px-6 bg-white border-t border-stone-100">
-        <div className="text-center mb-12">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-t border-stone-100">
+        <div className="text-center mb-10 sm:mb-12">
           <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-3">THE ENGINE</p>
-          <h2 className="text-3xl font-bold text-stone-900 tracking-tight">Six AI agents. One click.</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Six AI agents. One click.</h2>
           <p className="text-stone-400 max-w-md mx-auto mt-3 text-sm">From live grant discovery to proposal delivery — your AI team runs 24/7.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
@@ -139,7 +139,7 @@ export default function LandingPage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="bg-[#F9F7F2] border-t border-stone-100 py-20 px-6">
+      <section id="how" className="bg-[#F9F7F2] border-t border-stone-100 py-16 sm:py-20 px-4 sm:px-6">
         <div className="text-center mb-12">
           <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold">HOW IT WORKS</p>
         </div>
@@ -192,7 +192,7 @@ export default function LandingPage() {
       <section id="sovereign" className="px-6 py-20 bg-white border-t border-stone-100">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-5">TRUST & SECURITY</p>
-          <h2 className="text-3xl font-bold text-stone-900 tracking-tight">Built Sovereign. Built for Government.</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Built Sovereign. Built for Government.</h2>
           <p className="mt-4 text-stone-400 max-w-lg mx-auto text-sm leading-relaxed">Your data never leaves our infrastructure. Privacy is not a policy — it's baked into the architecture.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
             {[
@@ -219,8 +219,8 @@ export default function LandingPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-28 text-center px-6 bg-[#111111]">
-        <h2 className="text-4xl font-bold text-white max-w-xl mx-auto leading-tight tracking-tight">Your community deserves<br />to be funded.</h2>
+      <section className="py-20 sm:py-28 text-center px-5 sm:px-6 bg-[#111111]">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white max-w-xl mx-auto leading-tight tracking-tight">Your community deserves<br />to be funded.</h2>
         <p className="mt-4 text-stone-400 text-base max-w-md mx-auto">Connect to 33+ grant databases. Let AI find, draft, and submit the ones that fit you.</p>
         <Link to="/login?role=seeker" className="mt-8 inline-block bg-[#76B900] text-[#111111] font-bold px-8 py-3.5 rounded-lg hover:bg-[#689900] transition-colors text-sm">
           Find My Grants →
