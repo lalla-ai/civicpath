@@ -50,7 +50,6 @@ import {
   Bookmark,
   BookmarkCheck,
   ChevronRight,
-  Trophy,
   Trash2,
   Bell
 } from 'lucide-react';
@@ -205,6 +204,9 @@ export default function SeekerDashboard() {
   const removeTrackerGrant = (id: string) => {
     setTrackerGrants(prev => prev.filter(g => g.id !== id));
   };
+
+  // Tracker view toggle
+  const [trackerView, setTrackerView] = useState<'table' | 'kanban'>('table');
 
   // Email digest
   const [digestLoading, setDigestLoading] = useState(false);
@@ -1373,102 +1375,195 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
-        
         {activeTab === 'tracker' && (
-          <div className="animate-in fade-in space-y-6">
-            {/* Header + email digest */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><Kanban className="w-5 h-5 text-[#76B900]" /> Grant Tracker</h2>
-                <p className="text-sm text-stone-500 mt-0.5">Move grants through your pipeline from saved to won.</p>
+          <div className="animate-in fade-in">
+
+            {/* Notion-style database header */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🗃️</span>
+                <div>
+                  <h1 className="text-xl font-bold text-stone-900">Grant Tracker</h1>
+                  <p className="text-xs text-stone-400 mt-0.5">{trackerGrants.length} grants · {trackerGrants.filter(g=>g.status==='won').length} won · {trackerGrants.filter(g=>g.status==='applied').length} applied</p>
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* View toggle — Notion style */}
+                <div className="flex bg-stone-100 rounded-lg p-0.5">
+                  <button onClick={() => setTrackerView('table')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      trackerView === 'table' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                    }`}>
+                    ⊡ Table
+                  </button>
+                  <button onClick={() => setTrackerView('kanban')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      trackerView === 'kanban' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                    }`}>
+                    ⧮ Board
+                  </button>
+                </div>
                 <button onClick={sendDigest} disabled={digestLoading || !user?.email}
-                  className="flex items-center gap-2 px-4 py-2 border border-stone-200 text-stone-600 text-sm font-bold rounded-xl hover:border-[#76B900] hover:text-[#76B900] transition-colors disabled:opacity-50">
-                  {digestLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-stone-200 text-stone-600 text-xs font-bold rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors disabled:opacity-40">
+                  {digestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
                   Email Digest
                 </button>
-                {digestMsg && <span className="text-xs font-medium text-[#76B900] self-center">{digestMsg}</span>}
+                {digestMsg && <span className="text-xs font-medium text-[#76B900]">{digestMsg}</span>}
               </div>
             </div>
 
-            {/* Save grants from pipeline */}
+            {/* Save from pipeline banner */}
             {discoveredGrants.length > 0 && (
-              <div className="bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl p-4">
-                <p className="text-xs font-bold text-[#76B900] uppercase tracking-wider mb-3">From your last pipeline run — save grants to track</p>
-                <div className="flex flex-wrap gap-2">
-                  {discoveredGrants.map((g, i) => {
-                    const alreadySaved = trackerGrants.some(t => t.title === g.title);
-                    return (
-                      <button key={i} onClick={() => saveToTracker(g)}
-                        disabled={alreadySaved}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                          alreadySaved
-                            ? 'bg-[#76B900]/10 text-[#76B900] border-[#76B900]/20 cursor-default'
-                            : 'bg-white border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900]'
-                        }`}>
-                        {alreadySaved ? <BookmarkCheck className="w-3 h-3" /> : <Bookmark className="w-3 h-3" />}
-                        {g.title.length > 30 ? g.title.slice(0,30) + '...' : g.title}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="mb-4 px-4 py-3 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-[#76B900] mr-1">+ Save from pipeline:</span>
+                {discoveredGrants.map((g, i) => {
+                  const saved = trackerGrants.some(t => t.title === g.title);
+                  return (
+                    <button key={i} onClick={() => saveToTracker(g)} disabled={saved}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                        saved ? 'bg-[#76B900]/10 text-[#76B900] border-[#76B900]/20 cursor-default' : 'bg-white border-stone-200 text-stone-600 hover:border-[#76B900] hover:text-[#76B900]'
+                      }`}>
+                      {saved ? <BookmarkCheck className="w-3 h-3" /> : <Bookmark className="w-3 h-3" />}
+                      {g.title.length > 28 ? g.title.slice(0,28)+'…' : g.title}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* Kanban columns */}
-            {trackerGrants.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Kanban className="w-12 h-12 text-stone-300 mb-4" />
-                <p className="text-stone-500 font-semibold">No grants tracked yet.</p>
-                <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the pipeline to discover grants, then save them here to track your applications.</p>
-                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-sm font-bold text-[#76B900] hover:underline">Run Pipeline →</button>
+            {/* Empty state */}
+            {trackerGrants.length === 0 && (
+              <div className="bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center py-20 text-center">
+                <span className="text-4xl mb-4">🗃️</span>
+                <p className="text-stone-700 font-semibold">No grants tracked yet</p>
+                <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the pipeline to discover grants, then save them here.</p>
+                <button onClick={() => setActiveTab('dashboard')} className="mt-5 px-5 py-2.5 bg-[#76B900] text-[#111] text-sm font-bold rounded-xl hover:bg-[#689900] transition-colors">Run Pipeline →</button>
               </div>
-            ) : (
+            )}
+
+            {/* TABLE VIEW */}
+            {trackerGrants.length > 0 && trackerView === 'table' && (
+              <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                {/* Column headers */}
+                <div className="hidden sm:grid border-b border-stone-100 bg-stone-50" style={{gridTemplateColumns:'2fr 110px 1fr 90px 90px 36px'}}>
+                  {['Grant Name','Status','Agency','Deadline','Source',''].map((h,i) => (
+                    <div key={i} className={`px-4 py-2.5 text-[11px] font-bold text-stone-400 uppercase tracking-wider ${i < 5 ? 'border-r border-stone-100' : ''}`}>{h}</div>
+                  ))}
+                </div>
+
+                {/* Rows */}
+                {trackerGrants.map((g, i) => {
+                  const statusConfig: Record<TrackerGrant['status'], {dot:string;label:string;bg:string;text:string}> = {
+                    saved:      {dot:'bg-stone-400', label:'Saved',     bg:'bg-stone-100', text:'text-stone-600'},
+                    applied:    {dot:'bg-blue-500',  label:'Applied',   bg:'bg-blue-50',   text:'text-blue-700'},
+                    'in-review':{dot:'bg-amber-500', label:'In Review', bg:'bg-amber-50',  text:'text-amber-700'},
+                    won:        {dot:'bg-[#76B900]', label:'Won 🎉',    bg:'bg-[#76B900]/10',text:'text-[#5a9000]'},
+                  };
+                  const sc = statusConfig[g.status];
+                  const statusOrder: TrackerGrant['status'][] = ['saved','applied','in-review','won'];
+                  const nextStatus = statusOrder[statusOrder.indexOf(g.status) + 1];
+                  return (
+                    <div key={g.id}
+                      className={`group flex flex-col sm:grid border-b border-stone-100 last:border-b-0 hover:bg-stone-50/60 transition-colors ${
+                        i % 2 === 0 ? '' : 'bg-[#FAFAFA]'
+                      }`}
+                      style={{gridTemplateColumns:'2fr 110px 1fr 90px 90px 36px'}}>
+
+                      {/* Name */}
+                      <div className="px-4 py-3 flex items-center gap-2.5 sm:border-r border-stone-100">
+                        <span className="text-base shrink-0">
+                          {g.status === 'saved' ? '🔖' : g.status === 'applied' ? '✉️' : g.status === 'in-review' ? '🔄' : '🎉'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <a href={g.url} target="_blank" rel="noopener noreferrer"
+                            className="text-[13px] font-medium text-stone-900 hover:text-[#76B900] truncate block leading-snug">
+                            {g.title}
+                          </a>
+                          {/* Mobile: show all info inline */}
+                          <div className="flex flex-wrap gap-2 mt-1 sm:hidden">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${sc.bg} ${sc.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />{sc.label}
+                            </span>
+                            {g.closeDate && g.closeDate !== 'Rolling' && <span className="text-[11px] text-stone-400">Due {g.closeDate}</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status — click to advance */}
+                      <div className="hidden sm:flex px-3 py-3 items-center border-r border-stone-100">
+                        <button onClick={() => nextStatus && moveTrackerGrant(g.id, nextStatus)}
+                          title={nextStatus ? `Advance to ${nextStatus}` : 'Won!'}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${sc.bg} ${sc.text} ${nextStatus ? 'hover:opacity-70 cursor-pointer' : 'cursor-default'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />{sc.label}
+                        </button>
+                      </div>
+
+                      {/* Agency */}
+                      <div className="hidden sm:flex px-4 py-3 items-center border-r border-stone-100">
+                        <span className="text-[12px] text-stone-500 truncate">{g.agency || '—'}</span>
+                      </div>
+
+                      {/* Deadline */}
+                      <div className="hidden sm:flex px-4 py-3 items-center border-r border-stone-100">
+                        <span className={`text-[12px] ${g.closeDate && g.closeDate !== 'Rolling' ? 'text-stone-600' : 'text-stone-300'}`}>
+                          {g.closeDate && g.closeDate !== 'Rolling' ? g.closeDate : '—'}
+                        </span>
+                      </div>
+
+                      {/* Source */}
+                      <div className="hidden sm:flex px-4 py-3 items-center border-r border-stone-100">
+                        <span className="text-[11px] text-stone-400 truncate">{g.source}</span>
+                      </div>
+
+                      {/* Actions (hover-reveal) */}
+                      <div className="hidden sm:flex px-2 py-3 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => removeTrackerGrant(g.id)} title="Remove" className="p-1 text-stone-300 hover:text-red-400 transition-colors rounded">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Add row */}
+                <button onClick={() => setActiveTab('dashboard')}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-stone-400 hover:bg-stone-50 hover:text-stone-600 transition-colors text-[13px] border-t border-stone-100">
+                  <Plus className="w-3.5 h-3.5" /> Run pipeline to discover more grants
+                </button>
+              </div>
+            )}
+
+            {/* KANBAN VIEW */}
+            {trackerGrants.length > 0 && trackerView === 'kanban' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {([
-                  {key:'saved', label:'Saved', color:'stone', icon:<Bookmark className="w-4 h-4" />, next:'applied'},
-                  {key:'applied', label:'Applied', color:'blue', icon:<Send className="w-4 h-4" />, next:'in-review'},
-                  {key:'in-review', label:'In Review', color:'amber', icon:<Clock className="w-4 h-4" />, next:'won'},
-                  {key:'won', label:'Won 🎉', color:'green', icon:<Trophy className="w-4 h-4" />, next:null},
+                  {key:'saved', label:'Saved', dot:'bg-stone-400', border:'border-stone-200 bg-stone-50', header:'text-stone-600', next:'applied'},
+                  {key:'applied', label:'Applied', dot:'bg-blue-500', border:'border-blue-200 bg-blue-50/60', header:'text-blue-700', next:'in-review'},
+                  {key:'in-review', label:'In Review', dot:'bg-amber-500', border:'border-amber-200 bg-amber-50/60', header:'text-amber-700', next:'won'},
+                  {key:'won', label:'Won 🎉', dot:'bg-[#76B900]', border:'border-[#76B900]/30 bg-[#76B900]/5', header:'text-[#5a9000]', next:null},
                 ] as const).map(col => {
-                  const colGrants = trackerGrants.filter(g => g.status === col.key);
-                  const colorMap: Record<string, string> = {
-                    stone:'border-stone-300 bg-stone-50',
-                    blue:'border-blue-200 bg-blue-50',
-                    amber:'border-amber-200 bg-amber-50',
-                    green:'border-[#76B900]/30 bg-[#76B900]/5',
-                  };
-                  const headerMap: Record<string, string> = {
-                    stone:'text-stone-600',blue:'text-blue-700',amber:'text-amber-700',green:'text-[#76B900]'
-                  };
+                  const cols = trackerGrants.filter(g => g.status === col.key);
                   return (
-                    <div key={col.key} className={`rounded-2xl border-2 ${colorMap[col.color]} p-3 min-h-[200px]`}>
-                      <div className={`flex items-center justify-between mb-3`}>
-                        <div className={`flex items-center gap-1.5 font-bold text-sm ${headerMap[col.color]}`}>
-                          {col.icon} {col.label}
+                    <div key={col.key} className={`rounded-2xl border-2 ${col.border} p-3 min-h-[160px]`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={`flex items-center gap-2 font-bold text-sm ${col.header}`}>
+                          <span className={`w-2 h-2 rounded-full ${col.dot}`} />{col.label}
                         </div>
-                        <span className="text-xs font-black bg-white/80 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">{colGrants.length}</span>
+                        <span className="text-xs font-black text-stone-500 bg-white/80 px-2 py-0.5 rounded-full border border-stone-200">{cols.length}</span>
                       </div>
                       <div className="space-y-2">
-                        {colGrants.map(g => (
+                        {cols.map(g => (
                           <div key={g.id} className="bg-white rounded-xl border border-stone-200 p-3 shadow-sm">
-                            <div className="flex items-start justify-between gap-1 mb-1">
+                            <div className="flex items-start justify-between gap-1 mb-1.5">
                               <a href={g.url} target="_blank" rel="noopener noreferrer"
-                                className="text-xs font-bold text-stone-900 hover:text-[#76B900] leading-tight line-clamp-2">
-                                {g.title}
-                              </a>
-                              <button onClick={() => removeTrackerGrant(g.id)} className="shrink-0 text-stone-300 hover:text-red-400 transition-colors">
-                                <Trash2 className="w-3 h-3" />
-                              </button>
+                                className="text-xs font-semibold text-stone-900 hover:text-[#76B900] leading-snug line-clamp-2">{g.title}</a>
+                              <button onClick={() => removeTrackerGrant(g.id)} className="shrink-0 text-stone-300 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                             </div>
-                            <p className="text-[10px] text-stone-400 mb-2">{g.agency} {g.closeDate && g.closeDate !== 'Rolling' ? `· Due ${g.closeDate}` : ''}</p>
-                            <p className="text-[10px] text-stone-400 mb-2">{g.source} · Added {g.addedAt}</p>
+                            {g.agency && <p className="text-[10px] text-stone-400 mb-2">{g.agency}</p>}
                             {col.next && (
                               <button onClick={() => moveTrackerGrant(g.id, col.next as TrackerGrant['status'])}
-                                className="w-full flex items-center justify-center gap-1 text-[10px] font-bold text-stone-500 hover:text-[#76B900] border border-stone-200 hover:border-[#76B900] rounded-lg py-1 transition-colors">
-                                Mark as {col.next === 'applied' ? 'Applied' : col.next === 'in-review' ? 'In Review' : 'Won'}
-                                <ChevronRight className="w-3 h-3" />
+                                className="w-full text-[11px] font-bold text-stone-400 hover:text-[#76B900] border border-stone-200 hover:border-[#76B900] rounded-lg py-1 flex items-center justify-center gap-1 transition-colors">
+                                Move to {col.next === 'applied' ? 'Applied' : col.next === 'in-review' ? 'In Review' : 'Won'} <ChevronRight className="w-3 h-3" />
                               </button>
                             )}
                           </div>
@@ -1479,6 +1574,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 })}
               </div>
             )}
+
           </div>
         )}
 
