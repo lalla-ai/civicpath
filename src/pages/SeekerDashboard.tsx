@@ -46,6 +46,27 @@ type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
 type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations' | 'lalla';
 
+interface Profile {
+  // Step 1 — Your Organization
+  companyName: string;
+  orgType: string;
+  location: string;
+  website: string;
+  // Step 2 — Mission & Impact
+  focusArea: string;
+  missionStatement: string;
+  targetPopulation: string;
+  geographicScope: string;
+  annualBudget: string;
+  teamSize: string;
+  yearsOperating: string;
+  // Step 3 — Funding Goal
+  projectDescription: string;
+  fundingAmount: string;
+  previousGrants: string;
+  backgroundInfo: string;
+}
+
 interface AgentState {
   id: string;
   name: string;
@@ -70,14 +91,23 @@ export default function SeekerDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<AppStep>('onboarding');
+  const [onboardStep, setOnboardStep] = useState(1);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [profile, setProfile] = useState(() => {
+  const [profile, setProfile] = useState<Profile>(() => {
     try {
       const saved = localStorage.getItem('civicpath_profile');
       return saved ? JSON.parse(saved) : {
-        companyName: '', focusArea: '', location: '', backgroundInfo: ''
+        companyName: '', orgType: '', location: '', website: '',
+        focusArea: '', missionStatement: '', targetPopulation: '',
+        geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
+        projectDescription: '', fundingAmount: '', previousGrants: '', backgroundInfo: ''
       };
-    } catch { return { companyName: '', focusArea: '', location: '', backgroundInfo: '' }; }
+    } catch { return {
+      companyName: '', orgType: '', location: '', website: '',
+      focusArea: '', missionStatement: '', targetPopulation: '',
+      geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
+      projectDescription: '', fundingAmount: '', previousGrants: '', backgroundInfo: ''
+    }; }
   });
 
   useEffect(() => {
@@ -176,7 +206,7 @@ export default function SeekerDashboard() {
     setLallaMessages(next);
     setLallaInput('');
     setLallaLoading(true);
-    const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise — like a trusted expert who knows the user personally. Use markdown for lists and bold text. Keep answers under 200 words unless more detail is asked for.\n\nUser's organization context:\n- Name: ${profile.companyName || 'Not set'}\n- Location: ${profile.location || 'Florida'}\n- Focus area: ${profile.focusArea || 'General'}\n- Background: ${profile.backgroundInfo || 'Not provided'}${discoveredGrants.length > 0 ? `\n\nGrants currently in their pipeline: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
+    const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise — like a trusted expert who knows the user personally. Use markdown for lists and bold text. Keep answers under 200 words unless more detail is asked for.\n\nUser's organization context:\n- Name: ${profile.companyName || 'Not set'}\n- Type: ${profile.orgType || 'Not set'}\n- Location: ${profile.location || 'Florida'}\n- Focus area: ${profile.focusArea || 'General'}\n- Mission: ${profile.missionStatement || 'Not provided'}\n- Target population: ${profile.targetPopulation || 'General'}\n- Annual budget: ${profile.annualBudget || 'Unknown'}\n- Team size: ${profile.teamSize || 'Unknown'}\n- Funding goal: ${profile.fundingAmount || 'Unknown'} for ${profile.projectDescription || 'their project'}\n- Previous grants: ${profile.previousGrants || 'Unknown'}\n- Background: ${profile.backgroundInfo || 'Not provided'}${discoveredGrants.length > 0 ? `\n\nGrants currently in their pipeline: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
     try {
       const reply = await chatWithLalla(next, ctx);
       setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
@@ -506,6 +536,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
     }
   };
 
+  // ── Onboarding wizard ──────────────────────────────────────────────────────
+  const isStep1Valid = profile.companyName.trim() && profile.orgType && profile.location.trim();
+  const isStep2Valid = profile.focusArea.trim() && profile.missionStatement.trim();
+  const isStep3Valid = profile.projectDescription.trim();
+
   if (step === 'onboarding') {
     return (
       <div className="min-h-screen bg-[#F9F7F2] text-stone-900 flex flex-col items-center justify-center p-4 selection:bg-[#2E7D32]/20 font-sans relative">
@@ -657,84 +692,186 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         )}
 
         <div className="w-full max-w-2xl bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden mt-8">
-          <div className="bg-[#2E7D32]/5 border-b border-stone-100 p-8 text-center relative">
-            <button 
-              onClick={() => setShowDemoModal(true)}
-              className="absolute top-6 right-6 flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-stone-200 shadow-sm rounded-full text-xs font-bold text-stone-600 hover:text-[#2E7D32] hover:border-[#2E7D32]/30 transition-all"
-            >
-              <PlayCircle className="w-4 h-4" />
-              <span>Watch Demo</span>
+          {/* Header */}
+          <div className="bg-[#2E7D32]/5 border-b border-stone-100 p-6 text-center relative">
+            <button onClick={() => setShowDemoModal(true)}
+              className="absolute top-5 right-5 flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-stone-200 shadow-sm rounded-full text-xs font-bold text-stone-600 hover:text-[#2E7D32] hover:border-[#2E7D32]/30 transition-all">
+              <PlayCircle className="w-4 h-4" /><span>Watch Demo</span>
             </button>
-            <div className="flex justify-center mb-4 mt-2">
-              <div className="scale-150 transform mb-2">
-                <Logo />
-              </div>
+            <div className="flex justify-center mb-3 mt-1"><div className="scale-125 transform"><Logo /></div></div>
+            <h1 className="text-3xl font-[800] text-stone-900 mb-1 tracking-tight">Build Your Grant Profile</h1>
+            <p className="text-stone-500 text-sm">The more you share, the better our AI matches you with funding.</p>
+            {/* Step progress */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              {[1,2,3].map(s => (
+                <div key={s} className="flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                    onboardStep > s ? 'bg-[#2E7D32] text-white' :
+                    onboardStep === s ? 'bg-[#2E7D32] text-white ring-4 ring-[#2E7D32]/20' :
+                    'bg-stone-100 text-stone-400'
+                  }`}>{onboardStep > s ? '✓' : s}</div>
+                  {s < 3 && <div className={`w-12 h-0.5 rounded-full ${onboardStep > s ? 'bg-[#2E7D32]' : 'bg-stone-200'}`} />}
+                </div>
+              ))}
             </div>
-            <h1 className="text-4xl font-[800] text-stone-900 mb-2 tracking-tight">CivicPath</h1>
-            <p className="text-stone-500 text-lg font-medium">Your community. Funded.</p>
+            <div className="flex justify-center gap-8 mt-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              <span className={onboardStep >= 1 ? 'text-[#2E7D32]' : ''}>Organization</span>
+              <span className={onboardStep >= 2 ? 'text-[#2E7D32]' : ''}>Mission</span>
+              <span className={onboardStep >= 3 ? 'text-[#2E7D32]' : ''}>Funding Goal</span>
+            </div>
           </div>
-          
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-stone-700 flex items-center">
-                  <Building2 className="w-4 h-4 mr-2 text-stone-400" />
-                  Company / Project Name
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Sunrise Tech Nonprofit"
-                  value={profile.companyName}
-                  onChange={e => setProfile({...profile, companyName: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] transition-all outline-none text-stone-900 placeholder:text-stone-400"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-stone-700 flex items-center">
-                  <MapPin className="w-4 h-4 mr-2 text-stone-400" />
-                  Location
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Orlando, FL"
-                  value={profile.location}
-                  onChange={e => setProfile({...profile, location: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] transition-all outline-none text-stone-900 placeholder:text-stone-400"
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-stone-700 flex items-center">
-                <Cpu className="w-4 h-4 mr-2 text-stone-400" />
-                Technology Focus Area
-              </label>
-              <input 
-                type="text" 
-                placeholder="e.g. AI-driven agricultural optimization"
-                value={profile.focusArea}
-                onChange={e => setProfile({...profile, focusArea: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] transition-all outline-none text-stone-900 placeholder:text-stone-400"
-              />
-            </div>
+          <div className="p-8 space-y-5">
+            {/* ── STEP 1: Organization ─── */}
+            {onboardStep === 1 && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700 flex items-center"><Building2 className="w-4 h-4 mr-2 text-stone-400" />Organization Name *</label>
+                    <input type="text" placeholder="e.g. Sunrise Tech Nonprofit"
+                      value={profile.companyName} onChange={e => setProfile({...profile, companyName: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Organization Type *</label>
+                    <select value={profile.orgType} onChange={e => setProfile({...profile, orgType: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select type...</option>
+                      <option value="501c3">501(c)(3) Nonprofit</option>
+                      <option value="startup">AI / Tech Startup</option>
+                      <option value="small-business">Small Business</option>
+                      <option value="government">Government / Public Agency</option>
+                      <option value="university">University / Research</option>
+                      <option value="individual">Individual / Researcher</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700 flex items-center"><MapPin className="w-4 h-4 mr-2 text-stone-400" />City, State *</label>
+                    <input type="text" placeholder="e.g. Miami, FL"
+                      value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Website or LinkedIn</label>
+                    <input type="text" placeholder="https://yourorg.com"
+                      value={profile.website} onChange={e => setProfile({...profile, website: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                </div>
+              </>
+            )}
 
-            <div className="space-y-2 pt-2">
-              <label className="text-sm font-semibold text-stone-700 flex items-center justify-between">
-                <span className="flex items-center">
-                  <FileText className="w-4 h-4 mr-2 text-[#2E7D32]" />
-                  Paste Resume / LinkedIn Details
-                </span>
-                <span className="text-[10px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-1 rounded-full border border-[#2E7D32]/20 uppercase tracking-wider">Highly Recommended</span>
-              </label>
-              <p className="text-xs text-stone-500 pb-1">Providing background context significantly increases match accuracy and proposal quality.</p>
-              <textarea 
-                rows={5}
-                placeholder="Paste your resume, LinkedIn summary, or detailed background here..."
-                value={profile.backgroundInfo}
-                onChange={e => setProfile({...profile, backgroundInfo: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] transition-all outline-none text-stone-900 placeholder:text-stone-400 resize-none"
-              />
-            </div>
+            {/* ── STEP 2: Mission & Impact ─── */}
+            {onboardStep === 2 && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700 flex items-center"><Cpu className="w-4 h-4 mr-2 text-stone-400" />Primary Focus Area *</label>
+                  <input type="text" placeholder="e.g. AI-driven civic technology, STEM education, community health"
+                    value={profile.focusArea} onChange={e => setProfile({...profile, focusArea: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700">Mission Statement *</label>
+                  <textarea rows={3} placeholder="We exist to... (describe your organization's core purpose)"
+                    value={profile.missionStatement} onChange={e => setProfile({...profile, missionStatement: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Who do you serve?</label>
+                    <input type="text" placeholder="e.g. Low-income youth in Miami-Dade"
+                      value={profile.targetPopulation} onChange={e => setProfile({...profile, targetPopulation: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Annual Budget Range</label>
+                    <select value={profile.annualBudget} onChange={e => setProfile({...profile, annualBudget: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select range...</option>
+                      <option value="<50k">Under $50K</option>
+                      <option value="50-250k">$50K – $250K</option>
+                      <option value="250k-1m">$250K – $1M</option>
+                      <option value=">1m">Over $1M</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Team Size</label>
+                    <select value={profile.teamSize} onChange={e => setProfile({...profile, teamSize: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select...</option>
+                      <option value="1">Just me</option>
+                      <option value="2-5">2–5 people</option>
+                      <option value="6-20">6–20 people</option>
+                      <option value="20+">20+ people</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Years Operating</label>
+                    <select value={profile.yearsOperating} onChange={e => setProfile({...profile, yearsOperating: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select...</option>
+                      <option value="<1">Less than 1 year</option>
+                      <option value="1-3">1–3 years</option>
+                      <option value="3-10">3–10 years</option>
+                      <option value="10+">10+ years</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── STEP 3: Funding Goal ─── */}
+            {onboardStep === 3 && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700 flex items-center justify-between">
+                    <span className="flex items-center"><FileText className="w-4 h-4 mr-2 text-[#2E7D32]" />What do you need funding for? *</span>
+                    <span className="text-[10px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-1 rounded-full border border-[#2E7D32]/20 uppercase tracking-wider">Key for AI matching</span>
+                  </label>
+                  <textarea rows={4}
+                    placeholder="Describe the specific project or program you want to fund. Be as detailed as possible — this is what agents use to write your proposal."
+                    value={profile.projectDescription} onChange={e => setProfile({...profile, projectDescription: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Funding Amount Needed</label>
+                    <select value={profile.fundingAmount} onChange={e => setProfile({...profile, fundingAmount: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select range...</option>
+                      <option value="<10k">Under $10K</option>
+                      <option value="10-50k">$10K – $50K</option>
+                      <option value="50-150k">$50K – $150K</option>
+                      <option value="150-500k">$150K – $500K</option>
+                      <option value="500k+">$500K+</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Previous Grants Received?</label>
+                    <select value={profile.previousGrants} onChange={e => setProfile({...profile, previousGrants: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      <option value="">Select...</option>
+                      <option value="none">No, this is our first</option>
+                      <option value="yes-small">Yes, under $50K</option>
+                      <option value="yes-large">Yes, over $50K</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700">Additional Background / LinkedIn / Resume</label>
+                  <p className="text-xs text-stone-400">Paste anything extra — bio, track record, prior awards. Helps Drafter write stronger proposals.</p>
+                  <textarea rows={4}
+                    placeholder="Paste your LinkedIn summary, team bios, prior accomplishments, or any context that strengthens your application..."
+                    value={profile.backgroundInfo} onChange={e => setProfile({...profile, backgroundInfo: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+              </>
+            )}
 
             {/* Active Copilots Section (Genspark style) */}
             <div className="mt-6 border-t border-stone-100 pt-6">
@@ -785,14 +922,30 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               )}
             </div>
 
-            <div className="pt-4 flex space-x-4">
-              <button 
-                onClick={() => setStep('dashboard')}
-                className="flex-1 flex items-center justify-center py-4 px-6 text-white font-bold text-lg rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
-              >
-                Access Action Platform
-                <Play className="w-5 h-5 ml-2 fill-current" />
-              </button>
+            {/* Step nav */}
+            <div className="pt-4 flex gap-3">
+              {onboardStep > 1 && (
+                <button onClick={() => setOnboardStep(s => s - 1)}
+                  className="px-5 py-3.5 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 transition-colors">
+                  ← Back
+                </button>
+              )}
+              {onboardStep < 3 ? (
+                <button
+                  onClick={() => setOnboardStep(s => s + 1)}
+                  disabled={onboardStep === 1 ? !isStep1Valid : !isStep2Valid}
+                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-md active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
+                  Continue →
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStep('dashboard')}
+                  disabled={!isStep3Valid}
+                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
+                  Launch My Grant Dashboard
+                  <Play className="w-5 h-5 ml-2 fill-current" />
+                </button>
+              )}
             </div>
           </div>
         </div>
