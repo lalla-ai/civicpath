@@ -77,32 +77,32 @@ export default function LandingPage() {
         <div className="mt-10 max-w-2xl mx-auto">
           <form onSubmit={handleHeroAsk} className="flex gap-2">
             <div className="flex-1 relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 text-sm">✨</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#76B900] text-sm">✨</span>
               <input
                 type="text"
                 value={heroQuery}
                 onChange={e => setHeroQuery(e.target.value)}
                 placeholder="Ask MyLalla: What grants does my nonprofit qualify for?"
-                className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-white border-2 border-stone-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none text-stone-900 text-sm shadow-sm transition-all"
+                className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-white border-2 border-stone-200 focus:border-[#76B900] focus:ring-2 focus:ring-[#76B900]/10 outline-none text-stone-900 text-sm shadow-sm transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={!heroQuery.trim() || heroLoading}
-              className="px-5 py-3.5 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-40 text-sm shadow-sm whitespace-nowrap"
+              className="px-5 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors disabled:opacity-40 text-sm shadow-sm whitespace-nowrap"
             >
               {heroLoading ? '...' : 'Ask →'}
             </button>
           </form>
           {heroAnswer && (
-            <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl text-left text-sm text-stone-700 leading-relaxed">
+            <div className="mt-4 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl text-left text-sm text-stone-700 leading-relaxed">
               <div className="flex items-start gap-2">
-                <span className="text-purple-400 text-base shrink-0 mt-0.5">✨</span>
+                <span className="text-[#76B900] text-base shrink-0 mt-0.5">✨</span>
                 <div>
-                  <span className="font-bold text-purple-700">MyLalla: </span>
+                  <span className="font-bold text-[#5a9000]">MyLalla: </span>
                   {heroAnswer}
                   <div className="mt-3">
-                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-purple-600 hover:text-purple-800 underline">Get your full personalized match →</button>
+                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-[#76B900] hover:text-[#5a9000] underline">Get your full personalized match →</button>
                   </div>
                 </div>
               </div>
