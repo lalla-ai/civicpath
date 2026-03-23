@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
+import { jsPDF } from 'jspdf';
+import { draftProposal } from '../gemini';
 import { 
   Search, 
   BrainCircuit, 
@@ -68,12 +70,20 @@ export default function SeekerDashboard() {
   const navigate = useNavigate();
   const [step, setStep] = useState<AppStep>('onboarding');
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [profile, setProfile] = useState({
-    companyName: 'Sunrise Tech Nonprofit',
-    focusArea: 'AI-driven agricultural optimization',
-    location: 'Orlando, FL',
-    backgroundInfo: 'Focused on sustainable, AI-driven solutions for local communities in Florida. Our team has successfully deployed 3 pilot projects reducing resource usage by 15%.'
+  const [profile, setProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('civicpath_profile');
+      return saved ? JSON.parse(saved) : {
+        companyName: '', focusArea: '', location: '', backgroundInfo: ''
+      };
+    } catch { return { companyName: '', focusArea: '', location: '', backgroundInfo: '' }; }
   });
+
+  useEffect(() => {
+    localStorage.setItem('civicpath_profile', JSON.stringify(profile));
+  }, [profile]);
+
+  const [drafterOutput, setDrafterOutput] = useState<string | null>(null);
 
   const [showAgentsMenu, setShowAgentsMenu] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -275,28 +285,31 @@ Based on your background and focus in **${profile.focusArea || 'Tech'}**, here i
   const runDrafter = async () => {
     updateAgent('drafter', { status: 'working', logs: [], output: null });
     addLog('drafter', 'Connecting to Gemini 2.0 Flash via API...');
-    await delay(800);
-    
-    addGlobalLog(`[✍️ The Drafter]    Generating executive summary for Grant #1...`);
-    addLog('drafter', 'Loading grant rubric and agency specific guidelines...');
-    await delay(1000);
-    
-    addLog('drafter', 'Generating Section 2: Technical Merit...');
-    await delay(1000);
+    addGlobalLog(`[✍️ The Drafter]    Generating proposal for Grant #1...`);
+    addLog('drafter', 'Sending profile + grant context to Gemini...');
 
-    const drafterText = `
-### Draft Proposal: Executive Summary
+    let text = '';
+    try {
+      text = await draftProposal(
+        { name: profile.companyName || 'Our Organization', mission: profile.backgroundInfo || 'Community impact', location: profile.location || 'Florida', focusArea: profile.focusArea || 'Technology', background: profile.backgroundInfo || '' },
+        { name: 'State Innovation Match Fund', amount: '$150,000', deadline: 'Oct 15, 2026' }
+      );
+      addLog('drafter', 'Gemini response received. Streaming...');
+    } catch {
+      addLog('drafter', 'Gemini error — using template draft.');
+      text = `### Draft Proposal: Executive Summary
 
-**Problem & Solution**: Regional sectors face increasing volatility. Our platform addresses these challenges by providing real-time, sensor-based insights that maximize output while minimizing resource consumption.
+**Problem & Solution**: ${profile.location || 'Regional'} organizations face funding gaps. ${profile.companyName || 'Our organization'} addresses this through ${profile.focusArea || 'innovative technology'}.
 
-**Technical Merit**: Utilizing proprietary machine learning algorithms trained on specific regional data, our solution outperforms generic optimization tools. 
+**Technical Merit**: Our approach leverages cutting-edge methods tailored to regional needs, delivering measurable outcomes.
 
-**Economic Impact**: We anticipate a 15% reduction in resource usage and a significant boost to the local economy. Expansion plan includes creating 25 high-wage technical jobs within the next 18 months.
-`;
-    await streamOutput('drafter', drafterText);
-    
-    addGlobalLog(`[✍️ The Drafter]    Draft complete and formatted to PDF standards ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Drafter → Controller: "Draft complete (847 words). Requesting compliance check before presenting."`);
+**Economic Impact**: We project 15% efficiency gains and 25 new jobs within 18 months.`;
+    }
+
+    setDrafterOutput(text);
+    await streamOutput('drafter', text);
+    addGlobalLog(`[✍️ The Drafter]    Draft complete ✓`);
+    addGlobalLog(`[🤖 ACTIVITY]       Drafter → Controller: "Draft complete. Requesting compliance check."`);
     updateAgent('drafter', { status: 'completed' });
     return true;
   };
@@ -1103,10 +1116,37 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 </div>
                 <div className="flex space-x-3">
-                  <button onClick={() => alert('Demo: Downloading proposal_final.pdf...')} className="flex items-center px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 font-bold text-sm shadow-sm transition-colors">
+                  <button
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      doc.setFontSize(20); doc.setFont('helvetica','bold');
+                      doc.text('CivicPath Grant Proposal', 20, 20);
+                      doc.setFontSize(11); doc.setFont('helvetica','normal');
+                      doc.text(`Organization: ${profile.companyName || 'N/A'}`, 20, 35);
+                      doc.text(`Location: ${profile.location || 'N/A'}`, 20, 43);
+                      doc.text(`Focus Area: ${profile.focusArea || 'N/A'}`, 20, 51);
+                      doc.text(`Target Grant: State Innovation Match Fund ($150,000)`, 20, 59);
+                      doc.setDrawColor(46,125,50); doc.line(20, 65, 190, 65);
+                      doc.setFontSize(10);
+                      const body = (drafterOutput || 'Run the pipeline first to generate a proposal.')
+                        .replace(/#{1,3} /g,'').replace(/\*\*/g,'');
+                      const lines = doc.splitTextToSize(body, 170);
+                      doc.text(lines, 20, 75);
+                      doc.save(`${profile.companyName || 'proposal'}_civicpath.pdf`);
+                    }}
+                    className="flex items-center px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 font-bold text-sm shadow-sm transition-colors"
+                  >
                     <Download className="w-4 h-4 mr-2 text-[#2E7D32]" /> Download PDF Proposal
                   </button>
-                  <button onClick={() => alert('Demo: Booking 3 milestone events to Google Calendar...')} className="flex items-center px-4 py-2 bg-[#2E7D32] text-white rounded-lg hover:bg-[#1B5E20] font-bold text-sm shadow-sm transition-colors">
+                  <button
+                    onClick={() => {
+                      const grantName = 'State Innovation Match Fund';
+                      const deadline = '20261015';
+                      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Grant Deadline: ' + grantName)}&dates=${deadline}/${deadline}&details=${encodeURIComponent('Apply for ' + grantName + ' — CivicPath')}`;
+                      window.open(url, '_blank');
+                    }}
+                    className="flex items-center px-4 py-2 bg-[#2E7D32] text-white rounded-lg hover:bg-[#1B5E20] font-bold text-sm shadow-sm transition-colors"
+                  >
                     <Calendar className="w-4 h-4 mr-2" /> Book Deadlines to G-Cal
                   </button>
                 </div>
