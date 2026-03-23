@@ -12,6 +12,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const results: any[] = [];
   let total = 0;
 
+  // --- SOURCE 0: NSF + NIH mock data (Phase 2 — live API wiring planned) ---
+  const nsfNihMock = [
+    {
+      id: 'nsf-mock-2410001',
+      title: 'NSF SBIR Phase I: AI-Driven Civic Technology',
+      agency: 'National Science Foundation',
+      openDate: '2026-01-15',
+      closeDate: '2026-06-15',
+      source: 'NSF (Phase 2)',
+      url: 'https://www.nsf.gov/funding/pgm_summ.jsp?pims_id=5527',
+    },
+    {
+      id: 'nsf-mock-2410002',
+      title: 'NSF STEM Education Innovation Grant — Florida Region',
+      agency: 'National Science Foundation',
+      openDate: '2026-02-01',
+      closeDate: '2026-07-31',
+      source: 'NSF (Phase 2)',
+      url: 'https://www.nsf.gov/funding/education.jsp',
+    },
+    {
+      id: 'nsf-mock-2410003',
+      title: 'NSF Convergence Accelerator: Community Data & AI',
+      agency: 'National Science Foundation',
+      openDate: '2026-03-01',
+      closeDate: '2026-08-30',
+      source: 'NSF (Phase 2)',
+      url: 'https://www.nsf.gov/od/oia/convergence-accelerator/',
+    },
+    {
+      id: 'nih-mock-2410001',
+      title: 'NIH SBIR Phase I: Health Tech Startup R&D Award',
+      agency: 'National Institutes of Health',
+      openDate: '2026-01-20',
+      closeDate: '2026-09-05',
+      source: 'NIH (Phase 2)',
+      url: 'https://grants.nih.gov/grants/guide/pa-files/PA-21-259.html',
+    },
+    {
+      id: 'nih-mock-2410002',
+      title: 'NIH Community Health Innovation Award — Southeast',
+      agency: 'National Institutes of Health',
+      openDate: '2026-02-10',
+      closeDate: '2026-10-15',
+      source: 'NIH (Phase 2)',
+      url: 'https://grants.nih.gov/grants/guide/pa-files/PAR-22-105.html',
+    },
+  ];
+  results.push(...nsfNihMock);
+  total += nsfNihMock.length;
+
   // --- SOURCE 1: Grants.gov ---
   try {
     const r = await fetch('https://apply07.grants.gov/grantsws/rest/opportunities/search/', {

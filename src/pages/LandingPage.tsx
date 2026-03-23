@@ -172,7 +172,8 @@ export default function LandingPage() {
             {[
               { emoji: '🏛️', name: 'Grants.gov', desc: 'Official U.S. federal grants database. 1,000s of active opportunities across all agencies.', tag: 'Live API', url: 'https://www.grants.gov' },
               { emoji: '🚀', name: 'SBA SBIR / STTR', desc: 'Small Business Innovation Research. AI, deep tech, and R&D grants for startups.', tag: 'Live API', url: 'https://www.sbir.gov' },
-              { emoji: '🔬', name: 'NSF Grants', desc: 'National Science Foundation funding for research, AI, and STEM organizations.', tag: 'Live API', url: 'https://www.nsf.gov/funding' },
+              { emoji: '🔬', name: 'NSF Grants', desc: 'National Science Foundation funding for research, AI, and STEM organizations.', tag: 'Phase 2', url: 'https://www.nsf.gov/funding' },
+              { emoji: '🧬', name: 'NIH Grants', desc: 'National Institutes of Health funding for health tech, biotech, and community health orgs.', tag: 'Phase 2', url: 'https://grants.nih.gov' },
               { emoji: '🧠', name: 'NVIDIA Inception', desc: 'AI startup program offering cloud credits, co-marketing, and VC access.', tag: 'Program', url: 'https://www.nvidia.com/inception' },
               { emoji: '☁️', name: 'Google for Startups', desc: 'Google Cloud credits up to $200K + mentorship for eligible AI startups.', tag: 'Program', url: 'https://cloud.google.com/startup' },
               { emoji: '🏷️', name: 'Florida MGRP', desc: 'Florida Matching Grant Research Program for state-based tech companies.', tag: 'State', url: 'https://www.floridajobs.org' },
@@ -186,6 +187,7 @@ export default function LandingPage() {
                   <span className="text-2xl">{s.emoji}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     s.tag === 'Live API' ? 'bg-[#76B900]/10 text-[#76B900]' :
+                    s.tag === 'Phase 2' ? 'bg-amber-50 text-amber-600' :
                     s.tag === 'Coming Soon' ? 'bg-stone-100 text-stone-400' :
                     'bg-blue-50 text-blue-600'
                   }`}>{s.tag}</span>
@@ -245,6 +247,68 @@ export default function LandingPage() {
           {['🏛️ Nonprofits','🚀 AI Startups','🏫 Education','🏥 Healthcare','🏠 Housing','🎨 Arts & Culture','💼 Small Business','🌱 Environment','💰 Loans & Capital','🎪 Events','👩 Women-Owned','🎖️ Veteran-Owned','🔬 Research','🏙️ Government'].map((p,i) => (
             <span key={i} className="border border-stone-200 rounded-full px-4 py-2 text-sm text-stone-500 hover:border-[#76B900] hover:text-[#76B900] cursor-pointer transition-colors bg-white">{p}</span>
           ))}
+        </div>
+      </section>
+
+      {/* ALLMYAI ECOSYSTEM */}
+      <section className="py-20 px-6 bg-[#1A1A1A]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-3">THE ECOSYSTEM</p>
+            <h2 className="text-4xl font-bold text-white">Part of AllMyAI</h2>
+            <p className="text-stone-400 mt-3 max-w-xl mx-auto">CivicPath is one product in a suite of AI tools built for professionals who move fast and think deep.</p>
+            <a href="https://allmyai.ai" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-4 text-sm text-[#76B900] hover:underline font-semibold">Visit AllMyAI.ai →</a>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* CivicPath */}
+            <div className="bg-[#232323] border-2 border-[#76B900] rounded-2xl p-7 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-2.5 h-2.5 bg-[#76B900] rounded-full"></span>
+                <span className="text-xs font-bold text-[#76B900] uppercase tracking-widest">Current Product</span>
+              </div>
+              <div className="text-2xl font-black text-white mb-2">CivicPath</div>
+              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">The 6-Agent Grant Engine</div>
+              <p className="text-stone-400 text-sm leading-relaxed flex-1">6 AI agents find, score, draft, and submit grants automatically. You just approve. The sovereign grant pipeline built for communities and organizations.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {['Hunter','Matchmaker','Drafter','Controller','Submitter','Watcher'].map(a => (
+                  <span key={a} className="text-[10px] font-bold bg-[#76B900]/10 text-[#76B900] px-2 py-0.5 rounded-full">{a}</span>
+                ))}
+              </div>
+            </div>
+            {/* Ask MyLalla */}
+            <div className="bg-[#232323] border border-[#333333] rounded-2xl p-7 flex flex-col hover:border-[#76B900] transition-colors">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-2.5 h-2.5 bg-purple-400 rounded-full"></span>
+                <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">In App Now</span>
+              </div>
+              <div className="text-2xl font-black text-white mb-2">Ask MyLalla</div>
+              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">Your Deep AI Grant Advisor</div>
+              <p className="text-stone-400 text-sm leading-relaxed flex-1">Like talking to a senior grant advisor who knows you. Research grants in depth, explain strategy, plan your approach. Full conversation — not just commands.</p>
+              <div className="mt-5 p-3 bg-[#1A1A1A] rounded-xl border border-[#333333]">
+                <div className="text-[10px] text-stone-500 mb-2">Example conversation:</div>
+                <div className="text-xs text-stone-300">“Which NSF grants are best for an AI startup in Miami with 3 employees?”</div>
+                <div className="text-xs text-purple-400 mt-2">“Based on your profile, I’d focus on NSF SBIR Phase I — here’s why...”</div>
+              </div>
+            </div>
+            {/* Omninor */}
+            <div className="bg-[#232323] border border-[#333333] rounded-2xl p-7 flex flex-col hover:border-[#76B900] transition-colors">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-2.5 h-2.5 bg-blue-400 rounded-full"></span>
+                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">Coming Soon</span>
+              </div>
+              <div className="text-2xl font-black text-white mb-2">Omninor</div>
+              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">The AI Command Bar</div>
+              <p className="text-stone-400 text-sm leading-relaxed flex-1">Superhuman for grant operations. Hit ⌘K anywhere. Type what you need. Done in 2 seconds. Omninor guides every action — like having an AI co-pilot watching your every move.</p>
+              <div className="mt-5 p-3 bg-[#1A1A1A] rounded-xl border border-[#333333]">
+                <div className="text-[10px] text-stone-500 mb-2">⌘K command bar:</div>
+                <div className="flex items-center gap-2 bg-[#2A2A2A] px-3 py-2 rounded-lg">
+                  <span className="text-stone-400 text-xs">⌘K</span>
+                  <span className="text-xs text-white">draft proposal for SBIR Phase I</span>
+                  <span className="ml-auto text-[10px] text-blue-400">Enter →</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
