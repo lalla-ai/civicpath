@@ -134,11 +134,24 @@ export default function SeekerDashboard() {
       const saved = localStorage.getItem('civicpath_profile');
       if (saved) {
         const p = JSON.parse(saved);
-        if (p.companyName?.trim() && p.location?.trim() && p.orgType) return 'dashboard';
+        // Just need a name to restore dashboard — user can complete profile later
+        if (p.companyName?.trim().length >= 2) return 'dashboard';
       }
     } catch {}
     return 'onboarding';
   });
+
+  // Page title + meta description — "Find My Grant"
+  useEffect(() => {
+    document.title = 'Find My Grant | CivicPath — AI Grant Discovery';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', 'Find My Grant with CivicPath. 6 AI agents scan every federal and state grant, score your fit, draft a winning proposal, and submit — automatically. Free to start.');
+    const canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (canonical) canonical.href = 'https://civicpath.ai/find-my-grant';
+    return () => {
+      document.title = 'CivicPath — AI Grant Finder | Find, Draft & Submit Grants Automatically';
+    };
+  }, []);
 
   // Persist step so returning users skip onboarding
   const setStepPersisted = (s: AppStep) => {
@@ -855,9 +868,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   };
 
   // ── Onboarding wizard ──────────────────────────────────────────────────────
-  const isStep1Valid = profile.companyName.trim() && profile.orgType && profile.location.trim();
-  const isStep2Valid = profile.focusArea.trim() && profile.missionStatement.trim();
-  const isStep3Valid = true; // Always allow launch — users can add project details from dashboard
+  // Streamlined validation — just one required field per step
+  const isStep1Valid = profile.companyName.trim().length >= 2; // just org name
+  const isStep2Valid = profile.focusArea.trim().length >= 3;    // just focus area
+  const isStep3Valid = true; // always launchable
 
   if (step === 'onboarding') {
     return (
@@ -1010,7 +1024,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             </button>
             <div className="flex justify-center mb-3 mt-1"><div className="scale-125 transform"><Logo /></div></div>
             <h1 className="text-3xl font-[800] text-stone-900 mb-1 tracking-tight">Build Your Grant Profile</h1>
-            <p className="text-stone-500 text-sm">The more you share, the better our AI matches you with funding.</p>
+            <p className="text-stone-500 text-sm">Tell us your org name to get started — everything else is optional.</p>
             {/* Step progress */}
             <div className="flex items-center justify-center gap-2 mt-4">
               {[1,2,3].map(s => (
