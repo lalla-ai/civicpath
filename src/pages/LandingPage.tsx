@@ -202,21 +202,39 @@ export default function LandingPage() {
       <section id="how" className="bg-stone-100 border-y border-stone-200 py-24 px-6">
         <div className="text-center mb-16">
           <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">HOW IT WORKS</p>
-          <h2 className="text-4xl font-bold text-stone-900">Profile to proposal in 60 seconds</h2>
+          <h2 className="text-4xl font-bold text-stone-900">Fully agentic. You just approve.</h2>
+          <p className="text-stone-500 mt-3 max-w-xl mx-auto">Like Notion × Motion × Warp — but for finding and winning grants. Your 6-agent team runs 24/7 while you focus on your mission.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {[
-            {n:'01',e:'🏢',t:'Create your profile',d:'Enter your org name, mission, and location. Under 30 seconds.'},
-            {n:'02',e:'🤖',t:'AI finds your matches',d:'6 agents scan thousands of grants and score each one for compatibility.'},
-            {n:'03',e:'📄',t:'Apply in one click',d:'Review proposals, verify eligibility, download PDF, track every deadline.'},
-          ].map((s,i) => (
-            <div key={i}>
-              <div className="text-6xl font-bold text-stone-200">{s.n}</div>
-              <div className="w-10 h-10 bg-[#76B900]/10 rounded-full flex items-center justify-center text-lg mt-4">{s.e}</div>
-              <div className="text-xl font-semibold text-stone-900 mt-4">{s.t}</div>
-              <div className="text-stone-500 text-sm leading-relaxed mt-2">{s.d}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* Step 1 */}
+          <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm">
+            <div className="text-6xl font-black text-stone-100">01</div>
+            <div className="w-12 h-12 bg-[#76B900]/10 rounded-full flex items-center justify-center text-2xl mt-4">🏢</div>
+            <div className="text-xl font-bold text-stone-900 mt-4">Tell us your mission</div>
+            <div className="text-stone-500 text-sm leading-relaxed mt-2">30 seconds. Your org name, location, focus area, and background. That’s all the agents need to get to work.</div>
+          </div>
+          {/* Step 2 */}
+          <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-stone-800 shadow-sm">
+            <div className="text-6xl font-black text-stone-800">02</div>
+            <div className="w-12 h-12 bg-[#76B900]/20 rounded-full flex items-center justify-center text-2xl mt-4">🤖</div>
+            <div className="text-xl font-bold text-white mt-4">Agents do everything</div>
+            <div className="text-stone-400 text-sm leading-relaxed mt-2">Your 6-agent team runs automatically:</div>
+            <div className="mt-3 space-y-1.5">
+              {['🔍 Hunter scans Grants.gov + SBA SBIR live','🎯 Matchmaker scores every grant 0–100','✍️ Drafter writes your full proposal via Gemini','✅ Controller checks compliance','📤 Submitter queues for your approval','👁️ Watcher monitors 24/7 for new matches'].map((a,i) => (
+                <div key={i} className="text-xs text-stone-300 flex items-start gap-2">
+                  <span className="text-[#76B900] mt-0.5">‣</span>{a}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          {/* Step 3 */}
+          <div className="rounded-2xl p-8 border-2 border-[#76B900] shadow-sm" style={{background:'#76B900'}}>
+            <div className="text-6xl font-black text-[#5a9000]">03</div>
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl mt-4">✅</div>
+            <div className="text-xl font-bold text-white mt-4">You approve. They submit.</div>
+            <div className="text-white/80 text-sm leading-relaxed mt-2">Review your AI-drafted proposal. One click to approve. Agents send it, book your calendar, and keep watching for new opportunities.</div>
+            <div className="mt-4 px-3 py-2 bg-white/20 rounded-lg text-xs text-white font-semibold">🛡️ Sovereign differentiator — AI works, you control</div>
+          </div>
         </div>
       </section>
 

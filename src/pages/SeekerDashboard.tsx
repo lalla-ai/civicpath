@@ -35,7 +35,6 @@ import {
   CheckSquare,
   ListTodo,
   Video,
-  DollarSign,
   Link,
   Mail,
   LogOut
@@ -84,6 +83,10 @@ export default function SeekerDashboard() {
   }, [profile]);
 
   const [drafterOutput, setDrafterOutput] = useState<string | null>(null);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedProposal, setEditedProposal] = useState('');
+  const [discoveredGrants, setDiscoveredGrants] = useState<Array<{title:string;agency:string;closeDate:string;url:string}>>([]);
 
   const [showAgentsMenu, setShowAgentsMenu] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -234,6 +237,9 @@ export default function SeekerDashboard() {
       const grants = data.grants || [];
       const total = data.total || 0;
 
+      // Store for dynamic scheduler
+      setDiscoveredGrants(grants.filter((g: any) => g.closeDate && g.closeDate !== 'Rolling').slice(0, 5));
+
       addLog('hunter', `Grants.gov returned ${total} live opportunities.`);
       addGlobalLog(`[🔍 The Hunter]     Found ${total} matching opportunities ✓`);
       addGlobalLog(`[🤖 ACTIVITY]       Hunter → Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
@@ -319,10 +325,12 @@ Based on your background and focus in **${profile.focusArea || 'Tech'}**, here i
     }
 
     setDrafterOutput(text);
+    setEditedProposal(text);
     await streamOutput('drafter', text);
     addGlobalLog(`[✍️ The Drafter]    Draft complete ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Drafter → Controller: "Draft complete. Requesting compliance check."`);
+    addGlobalLog(`[🤖 ACTIVITY]       Drafter → HUMAN: "⏸️ Awaiting your approval before submission."`); 
     updateAgent('drafter', { status: 'completed' });
+    setAwaitingApproval(true); // ← PAUSE for human review
     return true;
   };
 
@@ -392,10 +400,27 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
     // Watcher stays in 'working' state to show it's persistent
   };
 
+  const handleApproveAndSubmit = async () => {
+    if (editMode) {
+      setDrafterOutput(editedProposal);
+      setEditMode(false);
+    }
+    setAwaitingApproval(false);
+    addGlobalLog(`[✅ HUMAN APPROVED]  Proposal approved. Resuming pipeline...`);
+    const passed = await runController();
+    if (passed) {
+      if (!await runSubmitter()) return;
+      runWatcher();
+      setNextAction({ type: 'success', message: 'MISSION ACCOMPLISHED: Proposal approved, verified, and sent via Gmail. Milestones booked to Calendar.' });
+    }
+    setIsRunning(false);
+  };
+
   const handleExecute = async () => {
     if (isRunning) return;
     
     setIsRunning(true);
+    setAwaitingApproval(false);
     setNextAction(null);
     setGlobalLogs([]);
     setAgents(prev => prev.map(a => ({ ...a, status: 'idle', logs: [], output: null })));
@@ -403,7 +428,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
     try {
       if (!await runHunter()) throw new Error('Hunter failed');
       if (!await runMatchmaker()) throw new Error('Matchmaker failed');
-      if (!await runDrafter()) throw new Error('Drafter failed');
+      await runDrafter(); // Pipeline pauses here — awaiting approval
+      // Controller + Submitter run only after human approves (handleApproveAndSubmit)
+      return; // Don't set isRunning=false yet — waiting for approval
       const passed = await runController();
       
       if (passed) {
@@ -882,8 +909,12 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-in fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#2E7D32]" /> Auto-Scheduled Work Plan</h2>
-                <p className="text-sm text-stone-500 mt-1">AI has allocated 23 hours across 3 active grants based on deadlines and priority.</p>
+                <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#2E7D32]" /> AI Work Plan</h2>
+                <p className="text-sm text-stone-500 mt-1">
+                  {discoveredGrants.length > 0
+                    ? `AI generated ${discoveredGrants.length * 4} work blocks across ${discoveredGrants.length} live grants from your pipeline.`
+                    : 'Run the pipeline first to generate your personalized schedule from real grant deadlines.'}
+                </p>
               </div>
               <button
                 onClick={() => {
@@ -903,52 +934,57 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </button>
             </div>
             
-            <div className="space-y-6">
-              {/* Day 1 */}
-              <div>
-                <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100">Monday, March 23</h3>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-[#2E7D32] flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 9:00 AM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Research + Executive Summary</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k) • <span className="text-amber-600 font-bold">High Priority</span></div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">4 hrs block</div>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-stone-50 border border-stone-200 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-stone-500 flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 2:00 PM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Budget Narrative Prep</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k)</div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">3 hrs block</div>
-                  </div>
-                </div>
+            {discoveredGrants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <CalendarDays className="w-12 h-12 text-stone-300 mb-4" />
+                <p className="text-stone-500 font-semibold">No schedule yet.</p>
+                <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the AI pipeline on the Dashboard tab to discover real grants and auto-generate your work plan with deadlines.</p>
               </div>
-              {/* Day 2 */}
-              <div>
-                <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100">Tuesday, March 24</h3>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-[#2E7D32] flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 9:00 AM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Review AI Draft + Submit <span className="ml-2">✅</span></div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k) • <span className="text-[#2E7D32] font-bold">Final Review</span></div>
+            ) : (
+              <div className="space-y-6">
+                {discoveredGrants.map((grant, gi) => {
+                  const deadlineDate = new Date(grant.closeDate);
+                  const blocks = [
+                    { label: 'Research + Executive Summary', days: 30, hours: '4 hrs', priority: 'High Priority', color: true },
+                    { label: 'Write Full Proposal', days: 20, hours: '6 hrs', priority: 'In Progress', color: true },
+                    { label: 'Review + Compliance Check', days: 10, hours: '3 hrs', priority: 'Review', color: false },
+                    { label: 'Final Check + Submit', days: 5, hours: '2 hrs', priority: 'Final', color: false },
+                  ];
+                  return (
+                    <div key={gi}>
+                      <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100 flex items-center justify-between">
+                        <span>{grant.title}</span>
+                        <a href={grant.url} target="_blank" rel="noopener noreferrer" className="text-[#2E7D32] hover:underline normal-case font-medium">View on Grants.gov →</a>
+                      </h3>
+                      <div className="space-y-3">
+                        {blocks.map((b, bi) => {
+                          const blockDate = new Date(deadlineDate);
+                          blockDate.setDate(blockDate.getDate() - b.days);
+                          const dateStr = blockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          const calDate = blockDate.toISOString().replace(/-/g,'').split('T')[0];
+                          const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(grant.title + ': ' + b.label)}&dates=${calDate}/${calDate}&details=${encodeURIComponent('CivicPath — ' + grant.title)}`;
+                          return (
+                            <div key={bi} className={`flex flex-col md:flex-row md:items-center p-4 rounded-xl gap-4 border ${b.color ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-stone-50 border-stone-200'}`}>
+                              <div className="w-24 shrink-0 text-xs font-bold text-stone-500 flex items-center"><Clock className="w-3.5 h-3.5 mr-1" />{dateStr}</div>
+                              <div className="flex-1">
+                                <div className="text-sm font-bold text-stone-800">{b.label}</div>
+                                <div className="text-xs text-stone-500 mt-0.5">{grant.agency} • Due: {grant.closeDate} • <span className={b.color ? 'text-amber-600 font-bold' : 'text-stone-400'}>{b.priority}</span></div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600">{b.hours}</span>
+                                <button onClick={() => window.open(calUrl, '_blank')} className="p-1.5 text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg transition-colors" title="Add to Google Calendar">
+                                  <Calendar className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">3 hrs block</div>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-stone-50 border border-stone-200 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-stone-500 flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 1:00 PM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant C: Profile Alignment Analysis</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">Regional Sustainability Initiative ($50k)</div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">2 hrs block</div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1029,25 +1065,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
         {activeTab === 'dashboard' && (
           <>
-            {/* Impact Metrics Dashboard */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-16 h-16 bg-[#2E7D32]/5 rounded-bl-full -mr-8 -mt-8"></div>
-                <div className="flex items-center text-stone-500 mb-1"><BarChart3 className="w-4 h-4 mr-1.5" /> <span className="text-xs font-bold uppercase tracking-wider">Grants Fetched Live</span></div>
-                <div className="text-2xl font-black text-stone-900 flex items-baseline">75 <span className="text-[10px] ml-2 font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</span></div>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-center">
-                <div className="flex items-center text-stone-500 mb-1"><Search className="w-4 h-4 mr-1.5" /> <span className="text-xs font-bold uppercase tracking-wider">Match Accuracy</span></div>
-                <div className="text-2xl font-black text-stone-900">94%</div>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-center">
-                <div className="flex items-center text-[#2E7D32] mb-1"><Clock className="w-4 h-4 mr-1.5" /> <span className="text-xs font-bold uppercase tracking-wider">Saved Per User</span></div>
-                <div className="text-2xl font-black text-[#2E7D32]">38 hrs</div>
-              </div>
-              <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-center">
-                <div className="flex items-center text-stone-500 mb-1"><DollarSign className="w-4 h-4 mr-1.5" /> <span className="text-xs font-bold uppercase tracking-wider">In Active Grants</span></div>
-                <div className="text-2xl font-black text-stone-900">$2.4M</div>
-              </div>
+            {/* Pipeline Status Banner */}
+            <div className="mb-6 p-4 bg-white border border-stone-200 rounded-xl shadow-sm flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse"></div>
+              <span className="text-sm font-semibold text-stone-700">Live data powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#2E7D32] hover:underline">Grants.gov</a> + SBA SBIR — real-time federal grant database</span>
             </div>
 
             {/* Active Profile & Controls */}
@@ -1120,6 +1141,51 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   ))}
                   {isRunning && <div className="animate-pulse text-[#2E7D32] font-bold mt-1">_</div>}
                   <div ref={globalLogsEndRef} />
+                </div>
+              </div>
+            )}
+
+            {/* ⏸️ HUMAN-IN-THE-LOOP APPROVAL GATE */}
+            {awaitingApproval && (
+              <div className="mb-8 bg-white border-2 border-amber-400 rounded-xl shadow-lg overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="px-5 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⏸️</span>
+                    <span className="font-bold text-amber-800 text-sm">Awaiting Your Approval — Human in the Loop</span>
+                  </div>
+                  <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-300">AI paused — your decision required</span>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-stone-600 mb-4">The Drafter has completed your proposal. Review it below, then approve to proceed with verification and submission — or edit it first.</p>
+                  {editMode ? (
+                    <div className="mb-4">
+                      <label className="text-xs font-bold text-stone-600 uppercase tracking-wider block mb-2">Edit Proposal</label>
+                      <textarea
+                        rows={12}
+                        value={editedProposal}
+                        onChange={e => setEditedProposal(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 text-sm font-mono resize-none"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-4 p-4 bg-stone-50 rounded-xl border border-stone-200 max-h-48 overflow-y-auto text-xs text-stone-700 font-mono leading-relaxed whitespace-pre-wrap">
+                      {drafterOutput || 'No proposal generated yet.'}
+                    </div>
+                  )}
+                  <div className="flex gap-3 flex-wrap">
+                    <button onClick={handleApproveAndSubmit}
+                      className="flex items-center gap-2 px-6 py-3 bg-[#2E7D32] text-white font-bold rounded-xl hover:bg-[#1B5E20] transition-colors shadow-sm">
+                      <CheckCircle2 className="w-4 h-4" /> Approve & Submit
+                    </button>
+                    <button onClick={() => setEditMode(!editMode)}
+                      className="flex items-center gap-2 px-5 py-3 border-2 border-stone-300 text-stone-700 font-bold rounded-xl hover:border-stone-500 transition-colors">
+                      <FileText className="w-4 h-4" /> {editMode ? 'Preview' : 'Edit First'}
+                    </button>
+                    <button onClick={() => { setAwaitingApproval(false); setIsRunning(false); }}
+                      className="px-4 py-3 text-stone-400 hover:text-stone-600 text-sm font-medium transition-colors">
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
