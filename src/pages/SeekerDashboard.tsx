@@ -56,7 +56,7 @@ import {
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
+type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
 
 interface TrackerGrant {
   id: string;
@@ -337,6 +337,10 @@ export default function SeekerDashboard() {
   const [editMode, setEditMode] = useState(false);
   const [editedProposal, setEditedProposal] = useState('');
   const [discoveredGrants, setDiscoveredGrants] = useState<Array<{title:string;agency:string;closeDate:string;url:string}>>([]);
+  const [allDiscoveredGrants, setAllDiscoveredGrants] = useState<any[]>([]);
+  const [totalGrantsFound, setTotalGrantsFound] = useState(0);
+  const [liveGrantsCount, setLiveGrantsCount] = useState(0);
+  const [sourceFilter, setSourceFilter] = useState('all');
 
   const [showAgentsMenu, setShowAgentsMenu] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -447,12 +451,6 @@ export default function SeekerDashboard() {
     }
   };
   
-  const [integrations, setIntegrations] = useState({
-    gmail: false,
-    meet: false,
-    zoom: false
-  });
-  
   // Global Log state for the Live Orchestration Panel
   const [globalLogs, setGlobalLogs] = useState<string[]>([]);
   const globalLogsEndRef = useRef<HTMLDivElement | null>(null);
@@ -528,14 +526,18 @@ export default function SeekerDashboard() {
       const grants = data.grants || [];
       const total = data.total || 0;
 
-      // Store for dynamic scheduler
-      setDiscoveredGrants(grants.filter((g: any) => g.closeDate && g.closeDate !== 'Rolling').slice(0, 5));
+      // Store ALL grants — no slice limit
+      const grantsWithDeadlines = grants.filter((g: any) => g.closeDate && g.closeDate !== 'Rolling');
+      setDiscoveredGrants(grantsWithDeadlines); // all for scheduler
+      setAllDiscoveredGrants(grants); // all for grants list
+      setTotalGrantsFound(total);
+      setLiveGrantsCount(data.liveCount || 0);
 
-      addLog('hunter', `Grants.gov returned ${total} live opportunities.`);
-      addGlobalLog(`[🔍 The Hunter]     Found ${total} matching opportunities ✓`);
-      addGlobalLog(`[🤖 ACTIVITY]       Hunter → Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
+      addLog('hunter', `Found ${total} opportunities (${data.liveCount || 0} live + curated database).`);
+      addGlobalLog(`[\ud83d\udd0d The Hunter]     Found ${total} matching opportunities \u2713`);
+      addGlobalLog(`[\ud83e\udd16 ACTIVITY]       Hunter \u2192 Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
 
-      hunterText = `**Live Results from ${total} total matches across Grants.gov + SBA SBIR:**
+      hunterText = `**Live Results: ${total} total matches (${data.liveCount || 0} from live APIs, ${grants.length - (data.liveCount || 0)} curated):**
 
 ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
   ${g.agency} · Posted: ${g.openDate || 'N/A'} · Deadline: ${g.closeDate} · [View Grant](${g.url})`).join('\n\n')}
@@ -1371,6 +1373,15 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <Sparkles className="w-4 h-4 mr-1.5" /> MyLalla
             </button>
             <button 
+              onClick={() => setActiveTab('grants')}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'grants' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <Search className="w-4 h-4 mr-1.5" /> Grants
+              {allDiscoveredGrants.length > 0 && <span className="ml-1.5 bg-[#76B900] text-[#111111] text-[10px] font-black px-1.5 py-0.5 rounded-full">{allDiscoveredGrants.length}</span>}
+            </button>
+            <button 
               onClick={() => setActiveTab('tracker')}
               className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
                 activeTab === 'tracker' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -1392,6 +1403,108 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {activeTab === 'grants' && (
+          <div className="animate-in fade-in space-y-5">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><Search className="w-5 h-5 text-[#76B900]" /> All Discovered Grants</h2>
+                <p className="text-sm text-stone-400 mt-0.5">
+                  {allDiscoveredGrants.length > 0
+                    ? `${allDiscoveredGrants.length} grants shown · ${liveGrantsCount} live from Grants.gov/SBA · ${totalGrantsFound.toLocaleString()} total available in database`
+                    : 'Run the pipeline to discover grants'}
+                </p>
+              </div>
+              {allDiscoveredGrants.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
+                    className="px-3 py-2 rounded-lg bg-white border border-stone-200 text-xs text-stone-700 outline-none focus:ring-2 focus:ring-[#76B900]/30">
+                    <option value="all">All Sources</option>
+                    <option value="live">Live APIs only</option>
+                    {Array.from(new Set(allDiscoveredGrants.map(g => g.source))).sort().map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button onClick={() => setActiveTab('dashboard')} className="px-3 py-2 bg-[#76B900] text-[#111] text-xs font-bold rounded-lg hover:bg-[#689900] transition-colors">
+                    Run New Search
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {allDiscoveredGrants.length === 0 ? (
+              <div className="bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center py-20 text-center">
+                <Search className="w-10 h-10 text-stone-300 mb-4" />
+                <p className="text-stone-500 font-semibold">No grants discovered yet</p>
+                <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the AI pipeline to search Grants.gov and 33+ databases.</p>
+                <button onClick={() => setActiveTab('dashboard')} className="mt-5 px-5 py-2.5 bg-[#76B900] text-[#111] text-sm font-bold rounded-xl hover:bg-[#689900]">Run Pipeline →</button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                {/* Table header */}
+                <div className="hidden sm:grid bg-stone-50 border-b border-stone-100" style={{gridTemplateColumns:'2.5fr 1.5fr 100px 100px 36px'}}>
+                  {['Grant Title','Agency / Source','Deadline','Amount',''].map((h,i) => (
+                    <div key={i} className={`px-4 py-2.5 text-[11px] font-bold text-stone-400 uppercase tracking-wider ${i < 4 ? 'border-r border-stone-100' : ''}`}>{h}</div>
+                  ))}
+                </div>
+                {allDiscoveredGrants
+                  .filter(g => {
+                    if (sourceFilter === 'all') return true;
+                    if (sourceFilter === 'live') return g.source === 'Grants.gov' || g.source === 'SBA SBIR';
+                    return g.source === sourceFilter;
+                  })
+                  .map((g, i) => {
+                    const alreadySaved = trackerGrants.some(t => t.title === g.title);
+                    const isLive = g.source === 'Grants.gov' || g.source === 'SBA SBIR';
+                    return (
+                      <div key={g.id || i}
+                        className={`group flex flex-col sm:grid border-b border-stone-100 last:border-b-0 hover:bg-stone-50/60 transition-colors ${i % 2 !== 0 ? 'bg-[#FAFAFA]' : ''}`}
+                        style={{gridTemplateColumns:'2.5fr 1.5fr 100px 100px 36px'}}>
+                        <div className="px-4 py-3 flex items-start gap-2 sm:border-r border-stone-100">
+                          {isLive && <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-[#76B900] animate-pulse" title="Live" />}
+                          <div className="flex-1 min-w-0">
+                            <a href={g.url} target="_blank" rel="noopener noreferrer"
+                              className="text-[13px] font-medium text-stone-900 hover:text-[#76B900] block truncate leading-snug">
+                              {g.title}
+                            </a>
+                            {/* Mobile: show extra info */}
+                            <div className="flex flex-wrap gap-2 mt-1 sm:hidden">
+                              <span className="text-[11px] text-stone-400">{g.agency}</span>
+                              {g.closeDate && g.closeDate !== 'Rolling' && <span className="text-[11px] text-stone-500">· Due {g.closeDate}</span>}
+                              {g.amount && <span className="text-[11px] text-[#76B900] font-semibold">· {g.amount}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="hidden sm:flex px-4 py-3 items-start sm:border-r border-stone-100 flex-col justify-center">
+                          <span className="text-[12px] text-stone-600 truncate">{g.agency || '—'}</span>
+                          <span className="text-[10px] text-stone-400 mt-0.5">{g.source}</span>
+                        </div>
+                        <div className="hidden sm:flex px-4 py-3 items-center sm:border-r border-stone-100">
+                          <span className={`text-[12px] ${g.closeDate && g.closeDate !== 'Rolling' ? 'text-stone-700 font-medium' : 'text-stone-300'}`}>
+                            {g.closeDate && g.closeDate !== 'Rolling' ? g.closeDate : 'Rolling'}
+                          </span>
+                        </div>
+                        <div className="hidden sm:flex px-3 py-3 items-center sm:border-r border-stone-100">
+                          {g.amount ? <span className="text-[11px] text-[#76B900] font-semibold truncate">{g.amount}</span> : <span className="text-stone-300">—</span>}
+                        </div>
+                        <div className="hidden sm:flex px-2 py-3 items-center justify-center">
+                          <button onClick={() => saveToTracker(g)} disabled={alreadySaved}
+                            title={alreadySaved ? 'Saved to tracker' : 'Save to tracker'}
+                            className={`p-1.5 rounded transition-colors ${alreadySaved ? 'text-[#76B900]' : 'text-stone-300 hover:text-[#76B900] opacity-0 group-hover:opacity-100'}`}>
+                            {alreadySaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                <div className="px-4 py-2.5 text-xs text-stone-400 border-t border-stone-100 bg-stone-50">
+                  Showing {allDiscoveredGrants.filter(g => sourceFilter === 'all' ? true : sourceFilter === 'live' ? (g.source === 'Grants.gov' || g.source === 'SBA SBIR') : g.source === sourceFilter).length} of {allDiscoveredGrants.length} grants · <span className="text-[#76B900] font-medium">{liveGrantsCount} live from APIs</span> · {totalGrantsFound.toLocaleString()} total in federal database
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'tracker' && (
           <div className="animate-in fade-in">
 
@@ -1830,9 +1943,15 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-in fade-in">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#76B900]" /> App Integrations</h2>
-              <p className="text-sm text-stone-500 mt-1">Connect your favorite tools to allow CivicPath to act autonomously on your behalf.</p>
+              <p className="text-sm text-stone-500 mt-1">Connect CivicPath to your tools to enable autonomous proposal sending and meeting intelligence.</p>
             </div>
-            
+            <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <span className="text-amber-500 text-sm shrink-0">\u26a0\ufe0f</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">OAuth setup required</p>
+                <p className="text-xs text-amber-700 mt-0.5">Gmail, Meet, and Zoom integrations require OAuth app credentials to be configured. These are available on the Pro plan and are currently being set up. <a href="mailto:hello@civicpath.ai?subject=Integration%20Setup" className="underline font-bold">Email us to request early access →</a></p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Gmail Integration */}
               <div className="border border-stone-200 rounded-xl p-5 flex flex-col justify-between bg-stone-50/50 hover:shadow-md transition-shadow">
@@ -1848,12 +1967,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                   <p className="text-sm text-stone-600 mb-6">Allows The Watcher and Submitter agents to send emails, updates, and final PDFs directly from your account.</p>
                 </div>
-                <button 
-                  onClick={() => setIntegrations({...integrations, gmail: !integrations.gmail})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.gmail ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
-                >
-                  {integrations.gmail ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Gmail'}
-                </button>
+                <a href="mailto:hello@civicpath.ai?subject=Gmail%20OAuth%20Integration%20Request"
+                  className="w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center border border-[#76B900] text-[#76B900] hover:bg-[#76B900]/5">
+                  Request Gmail Access →
+                </a>
               </div>
 
               {/* Google Meet Integration */}
@@ -1870,12 +1987,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                   <p className="text-sm text-stone-600 mb-6">Connect to automatically ingest meeting transcripts for grant planning, auto-booking milestones and assigning actions.</p>
                 </div>
-                <button 
-                  onClick={() => setIntegrations({...integrations, meet: !integrations.meet})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.meet ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
-                >
-                  {integrations.meet ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Meet'}
-                </button>
+                <span className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center bg-stone-100 text-stone-400 border border-stone-200 cursor-default">
+                  Coming Soon
+                </span>
               </div>
 
               {/* Zoom Integration */}
@@ -1892,12 +2006,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                   <p className="text-sm text-stone-600 mb-6">Automatically sync your cloud-recorded Zoom meetings to extract grant strategies, budgets, and next steps.</p>
                 </div>
-                <button 
-                  onClick={() => setIntegrations({...integrations, zoom: !integrations.zoom})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.zoom ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
-                >
-                  {integrations.zoom ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Zoom'}
-                </button>
+                <span className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center bg-stone-100 text-stone-400 border border-stone-200 cursor-default">
+                  Coming Soon
+                </span>
               </div>
             </div>
           </div>

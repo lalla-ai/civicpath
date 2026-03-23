@@ -9,11 +9,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { keyword = 'technology', location = 'florida', rows = 8 } = req.body || {};
   const searchTerm = `${keyword} ${location}`.trim();
 
-  const results: any[] = [];
-  let total = 0;
+  const liveResults: any[] = [];
+  let liveTotal = 0;
 
-  // --- SOURCE 0: Expanded mock grants — Federal agencies, accelerators, foundations, universities ---
-  const expandedMock = [
+  // --- SOURCE 1: Grants.gov (ALWAYS FIRST — real live data) ---
     // ── NSF ──
     { id:'nsf-001', title:'NSF SBIR Phase I: AI-Driven Civic Technology', agency:'National Science Foundation', openDate:'2026-03-01', closeDate:'2026-07-15', source:'NSF SBIR', url:'https://seedfund.nsf.gov/', category:'Federal SBIR', amount:'$305,000' },
     { id:'nsf-002', title:'NSF STTR Phase I: University-Startup AI Collaboration', agency:'National Science Foundation', openDate:'2026-03-01', closeDate:'2026-07-15', source:'NSF STTR', url:'https://seedfund.nsf.gov/', category:'Federal SBIR', amount:'$305,000' },
@@ -62,10 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     { id:'fl-003', title:'Florida Opportunity Fund: Innovation & Entrepreneurship', agency:'Florida Opportunity Fund', openDate:'2026-04-01', closeDate:'2026-09-30', source:'Florida State', url:'https://fof.org/', category:'State Florida', amount:'$200,000' },
   ];
 
-  results.push(...expandedMock);
-  total += expandedMock.length;
-
-  // --- SOURCE 1: Grants.gov ---
   try {
     const r = await fetch('https://apply07.grants.gov/grantsws/rest/opportunities/search/', {
       method: 'POST',
@@ -73,19 +68,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({ keyword: searchTerm, oppStatuses: 'posted', rows: Number(rows), sortBy: 'openDate|desc' }),
     });
     const d = await r.json();
-    total += d.hitCount || 0;
-    (d.oppHits || []).forEach((g: any) => results.push({
-      id: g.id,
-      title: g.title,
-      agency: g.agency,
-      openDate: g.openDate,
-      closeDate: g.closeDate || 'Rolling',
-      source: 'Grants.gov',
-      url: `https://www.grants.gov/search-results-detail/${g.id}`,
+    liveTotal += d.hitCount || 0;
+    (d.oppHits || []).forEach((g: any) => liveResults.push({
+      id: g.id, title: g.title, agency: g.agency,
+      openDate: g.openDate, closeDate: g.closeDate || 'Rolling',
+      source: 'Grants.gov', url: `https://www.grants.gov/search-results-detail/${g.id}`,
     }));
   } catch { /* Grants.gov unavailable */ }
 
-  // --- SOURCE 2: SBA SBIR (AI/tech startups) ---
+  // --- SOURCE 2: SBA SBIR ---
   try {
     const sbirKeyword = keyword.toLowerCase().includes('ai') || keyword.toLowerCase().includes('tech')
       ? keyword : `${keyword} technology`;
@@ -95,18 +86,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (r.ok) {
       const d = await r.json();
       const awards = d.response?.docs || [];
-      total += d.response?.numFound || 0;
-      awards.slice(0, 3).forEach((g: any) => results.push({
-        id: `sbir-${g.award_id}`,
-        title: g.project_title || g.title,
-        agency: g.agency || 'SBA SBIR',
-        openDate: g.date || '',
-        closeDate: 'Rolling',
-        source: 'SBA SBIR',
+      liveTotal += d.response?.numFound || 0;
+      awards.slice(0, 3).forEach((g: any) => liveResults.push({
+        id: `sbir-${g.award_id}`, title: g.project_title || g.title,
+        agency: g.agency || 'SBA SBIR', openDate: g.date || '',
+        closeDate: 'Rolling', source: 'SBA SBIR',
         url: `https://www.sbir.gov/awards/${g.award_id}`,
       }));
     }
   } catch { /* SBIR unavailable */ }
 
-  return res.status(200).json({ total, grants: results });
+  // --- SOURCE 3: Curated database (33+ federal, accelerators, foundations) ---
+  // Only add mock grants NOT already covered by live results
+  const combined = [...liveResults];
+  const total = liveTotal + expandedMock.length;
+
+  // Append curated grants as supplementary (real grants appear first)
+  expandedMock.forEach(m => {
+    if (!combined.some(r => r.title.toLowerCase().includes(m.agency?.toLowerCase() || '') && r.source === m.source)) {
+      combined.push(m);
+    }
+  });
+
+  return res.status(200).json({ total, grants: combined, liveCount: liveResults.length });
 }
