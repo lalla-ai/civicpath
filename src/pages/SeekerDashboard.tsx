@@ -809,10 +809,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <p className="text-sm text-stone-600 mb-6">Allows The Watcher and Submitter agents to send emails, updates, and final PDFs directly from your account.</p>
                 </div>
                 <button 
-                  onClick={() => {
-                    alert('Demo: Initiating Gmail OAuth2 connection...');
-                    setIntegrations({...integrations, gmail: !integrations.gmail});
-                  }} 
+                  onClick={() => setIntegrations({...integrations, gmail: !integrations.gmail})}
                   className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.gmail ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
                 >
                   {integrations.gmail ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Gmail'}
@@ -834,10 +831,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <p className="text-sm text-stone-600 mb-6">Connect to automatically ingest meeting transcripts for grant planning, auto-booking milestones and assigning actions.</p>
                 </div>
                 <button 
-                  onClick={() => {
-                    alert('Demo: Redirecting to Google Workspace connection...');
-                    setIntegrations({...integrations, meet: !integrations.meet});
-                  }} 
+                  onClick={() => setIntegrations({...integrations, meet: !integrations.meet})}
                   className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.meet ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
                 >
                   {integrations.meet ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Meet'}
@@ -859,10 +853,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <p className="text-sm text-stone-600 mb-6">Automatically sync your cloud-recorded Zoom meetings to extract grant strategies, budgets, and next steps.</p>
                 </div>
                 <button 
-                  onClick={() => {
-                    alert('Demo: Contacting Zoom OAuth server...');
-                    setIntegrations({...integrations, zoom: !integrations.zoom});
-                  }} 
+                  onClick={() => setIntegrations({...integrations, zoom: !integrations.zoom})}
                   className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.zoom ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
                 >
                   {integrations.zoom ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Zoom'}
@@ -879,7 +870,20 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#2E7D32]" /> Auto-Scheduled Work Plan</h2>
                 <p className="text-sm text-stone-500 mt-1">AI has allocated 23 hours across 3 active grants based on deadlines and priority.</p>
               </div>
-              <button onClick={() => alert('Demo: Background Watcher is syncing these events to your Google Calendar.')} className="px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center w-full md:w-auto justify-center">
+              <button
+                onClick={() => {
+                  const events = [
+                    { name: 'State Innovation Match Fund', date: '20261015' },
+                    { name: 'Regional Sustainability Initiative', date: '20261201' },
+                    { name: 'Dept of Energy SBIR Phase I', date: '20270101' },
+                  ];
+                  events.forEach(e => {
+                    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Grant Deadline: ' + e.name)}&dates=${e.date}/${e.date}&details=${encodeURIComponent('CivicPath — Apply for ' + e.name)}`;
+                    window.open(url, '_blank');
+                  });
+                }}
+                className="px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center w-full md:w-auto justify-center"
+              >
                 <Calendar className="w-4 h-4 mr-2" /> Sync to Google Calendar
               </button>
             </div>
@@ -941,10 +945,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <p className="text-sm text-stone-500 mt-1">Paste your transcript or connect Google Meet to automatically extract actionable grant milestones.</p>
               </div>
               <div className="flex space-x-3">
-                <button onClick={() => alert('Demo: Connecting to Google Meet API (OAuth2)...')} className="flex-1 md:flex-none px-4 py-2 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
+                <button onClick={() => window.open('https://meet.google.com', '_blank')} className="flex-1 md:flex-none px-4 py-2 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
                   <Video className="w-4 h-4 mr-2 text-stone-500" /> Connect Meet
                 </button>
-                <button onClick={() => alert('Demo: Simulating transcript paste and processing...')} className="flex-1 md:flex-none px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center justify-center">
+                <button onClick={() => {}} className="flex-1 md:flex-none px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center justify-center">
                   <FileText className="w-4 h-4 mr-2" /> Paste Transcript
                 </button>
               </div>
