@@ -45,12 +45,32 @@ import {
   Globe,
   Share2,
   Linkedin,
-  UserCircle
+  UserCircle,
+  Kanban,
+  Bookmark,
+  BookmarkCheck,
+  ChevronRight,
+  Trophy,
+  Trash2,
+  Bell
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
+type ActiveTab = 'dashboard' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
+
+interface TrackerGrant {
+  id: string;
+  title: string;
+  agency: string;
+  amount: string;
+  closeDate: string;
+  url: string;
+  source: string;
+  status: 'saved' | 'applied' | 'in-review' | 'won';
+  addedAt: string;
+  notes: string;
+}
 
 interface Profile {
   // Step 1 — Your Organization
@@ -155,6 +175,60 @@ export default function SeekerDashboard() {
 
   // Viral share
   const [showShareBanner, setShowShareBanner] = useState(false);
+
+  // Grant Tracker
+  const [trackerGrants, setTrackerGrants] = useState<TrackerGrant[]>(() => {
+    try { return JSON.parse(localStorage.getItem('civicpath_tracker') || '[]'); } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('civicpath_tracker', JSON.stringify(trackerGrants));
+  }, [trackerGrants]);
+
+  const saveToTracker = (grant: {title:string;agency:string;closeDate:string;url:string;source?:string}) => {
+    const id = `tracker-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    setTrackerGrants(prev => {
+      if (prev.some(g => g.title === grant.title)) return prev; // no duplicates
+      return [...prev, {
+        id, title: grant.title, agency: grant.agency,
+        amount: '', closeDate: grant.closeDate, url: grant.url,
+        source: grant.source || 'Pipeline', status: 'saved',
+        addedAt: new Date().toLocaleDateString(), notes: ''
+      }];
+    });
+  };
+
+  const moveTrackerGrant = (id: string, status: TrackerGrant['status']) => {
+    setTrackerGrants(prev => prev.map(g => g.id === id ? {...g, status} : g));
+  };
+
+  const removeTrackerGrant = (id: string) => {
+    setTrackerGrants(prev => prev.filter(g => g.id !== id));
+  };
+
+  // Email digest
+  const [digestLoading, setDigestLoading] = useState(false);
+  const [digestMsg, setDigestMsg] = useState('');
+
+  const sendDigest = async () => {
+    if (!user?.email) return;
+    setDigestLoading(true);
+    setDigestMsg('');
+    try {
+      const res = await fetch('/api/send-digest', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name || 'there',
+          profile: { companyName: profile.companyName, location: profile.location, focusArea: profile.focusArea, missionStatement: profile.missionStatement }
+        })
+      });
+      const data = await res.json();
+      setDigestMsg(data.ok ? '\u2713 Digest sent to ' + user.email : 'Error: ' + (data.error || 'Try again'));
+    } catch { setDigestMsg('Network error. Try again.'); }
+    finally { setDigestLoading(false); setTimeout(() => setDigestMsg(''), 5000); }
+  };
 
   // Profile completeness — with content quality validation (min chars required)
   const q = (s: string, min = 3) => s.trim().length >= min;
@@ -1278,6 +1352,15 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <Sparkles className="w-4 h-4 mr-1.5" /> MyLalla
             </button>
             <button 
+              onClick={() => setActiveTab('tracker')}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'tracker' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <Kanban className="w-4 h-4 mr-1.5" /> Tracker
+              {trackerGrants.length > 0 && <span className="ml-1.5 bg-[#2E7D32] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">{trackerGrants.length}</span>}
+            </button>
+            <button 
               onClick={() => setActiveTab('profile')}
               className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
                 activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -1291,6 +1374,114 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         
+        {activeTab === 'tracker' && (
+          <div className="animate-in fade-in space-y-6">
+            {/* Header + email digest */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><Kanban className="w-5 h-5 text-[#2E7D32]" /> Grant Tracker</h2>
+                <p className="text-sm text-stone-500 mt-0.5">Move grants through your pipeline from saved to won.</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={sendDigest} disabled={digestLoading || !user?.email}
+                  className="flex items-center gap-2 px-4 py-2 border border-stone-200 text-stone-600 text-sm font-bold rounded-xl hover:border-[#2E7D32] hover:text-[#2E7D32] transition-colors disabled:opacity-50">
+                  {digestLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+                  Email Digest
+                </button>
+                {digestMsg && <span className="text-xs font-medium text-[#2E7D32] self-center">{digestMsg}</span>}
+              </div>
+            </div>
+
+            {/* Save grants from pipeline */}
+            {discoveredGrants.length > 0 && (
+              <div className="bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl p-4">
+                <p className="text-xs font-bold text-[#2E7D32] uppercase tracking-wider mb-3">From your last pipeline run — save grants to track</p>
+                <div className="flex flex-wrap gap-2">
+                  {discoveredGrants.map((g, i) => {
+                    const alreadySaved = trackerGrants.some(t => t.title === g.title);
+                    return (
+                      <button key={i} onClick={() => saveToTracker(g)}
+                        disabled={alreadySaved}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          alreadySaved
+                            ? 'bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/20 cursor-default'
+                            : 'bg-white border-stone-200 text-stone-700 hover:border-[#2E7D32] hover:text-[#2E7D32]'
+                        }`}>
+                        {alreadySaved ? <BookmarkCheck className="w-3 h-3" /> : <Bookmark className="w-3 h-3" />}
+                        {g.title.length > 30 ? g.title.slice(0,30) + '...' : g.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Kanban columns */}
+            {trackerGrants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Kanban className="w-12 h-12 text-stone-300 mb-4" />
+                <p className="text-stone-500 font-semibold">No grants tracked yet.</p>
+                <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the pipeline to discover grants, then save them here to track your applications.</p>
+                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-sm font-bold text-[#2E7D32] hover:underline">Run Pipeline →</button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {([
+                  {key:'saved', label:'Saved', color:'stone', icon:<Bookmark className="w-4 h-4" />, next:'applied'},
+                  {key:'applied', label:'Applied', color:'blue', icon:<Send className="w-4 h-4" />, next:'in-review'},
+                  {key:'in-review', label:'In Review', color:'amber', icon:<Clock className="w-4 h-4" />, next:'won'},
+                  {key:'won', label:'Won 🎉', color:'green', icon:<Trophy className="w-4 h-4" />, next:null},
+                ] as const).map(col => {
+                  const colGrants = trackerGrants.filter(g => g.status === col.key);
+                  const colorMap: Record<string, string> = {
+                    stone:'border-stone-300 bg-stone-50',
+                    blue:'border-blue-200 bg-blue-50',
+                    amber:'border-amber-200 bg-amber-50',
+                    green:'border-[#2E7D32]/30 bg-[#2E7D32]/5',
+                  };
+                  const headerMap: Record<string, string> = {
+                    stone:'text-stone-600',blue:'text-blue-700',amber:'text-amber-700',green:'text-[#2E7D32]'
+                  };
+                  return (
+                    <div key={col.key} className={`rounded-2xl border-2 ${colorMap[col.color]} p-3 min-h-[200px]`}>
+                      <div className={`flex items-center justify-between mb-3`}>
+                        <div className={`flex items-center gap-1.5 font-bold text-sm ${headerMap[col.color]}`}>
+                          {col.icon} {col.label}
+                        </div>
+                        <span className="text-xs font-black bg-white/80 text-stone-600 px-2 py-0.5 rounded-full border border-stone-200">{colGrants.length}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {colGrants.map(g => (
+                          <div key={g.id} className="bg-white rounded-xl border border-stone-200 p-3 shadow-sm">
+                            <div className="flex items-start justify-between gap-1 mb-1">
+                              <a href={g.url} target="_blank" rel="noopener noreferrer"
+                                className="text-xs font-bold text-stone-900 hover:text-[#2E7D32] leading-tight line-clamp-2">
+                                {g.title}
+                              </a>
+                              <button onClick={() => removeTrackerGrant(g.id)} className="shrink-0 text-stone-300 hover:text-red-400 transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-stone-400 mb-2">{g.agency} {g.closeDate && g.closeDate !== 'Rolling' ? `· Due ${g.closeDate}` : ''}</p>
+                            <p className="text-[10px] text-stone-400 mb-2">{g.source} · Added {g.addedAt}</p>
+                            {col.next && (
+                              <button onClick={() => moveTrackerGrant(g.id, col.next as TrackerGrant['status'])}
+                                className="w-full flex items-center justify-center gap-1 text-[10px] font-bold text-stone-500 hover:text-[#2E7D32] border border-stone-200 hover:border-[#2E7D32] rounded-lg py-1 transition-colors">
+                                Mark as {col.next === 'applied' ? 'Applied' : col.next === 'in-review' ? 'In Review' : 'Won'}
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'profile' && (
           <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in">
 
@@ -1998,11 +2189,22 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <button
                     onClick={() => {
                       const n = discoveredGrants.length || 3;
-                      const text = `Just found ${n} grant matches for ${profile.companyName || 'my org'} in under 60 seconds using @CivicPathAI 🤖\n\nFully agentic — AI drafted the proposal. I just approved. 🏆\n\ncivicpath.ai`;
+                      const shareUrl = `${window.location.origin}/share?org=${encodeURIComponent(profile.companyName || 'My Org')}&count=${n}&score=92&loc=${encodeURIComponent(profile.location || 'Florida')}`;
+                      const text = `Just found ${n} grants for ${profile.companyName || 'my org'} in 60s using @CivicPathAI 🤖\n\nFully agentic. I just approved.\n\n${shareUrl}`;
                       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
                     }}
                     className="flex items-center gap-1.5 px-3 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:bg-sky-600 transition-colors">
                     <Share2 className="w-3.5 h-3.5" /> Share on X
+                  </button>
+                  <button
+                    onClick={() => {
+                      const n = discoveredGrants.length || 3;
+                      const shareUrl = `${window.location.origin}/share?org=${encodeURIComponent(profile.companyName || 'My Org')}&count=${n}&score=92&loc=${encodeURIComponent(profile.location || 'Florida')}`;
+                      navigator.clipboard.writeText(shareUrl).catch(() => {});
+                      setShowShareBanner(false);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-stone-700 text-white text-xs font-bold rounded-lg hover:bg-stone-600 transition-colors">
+                    🔗 Copy Link
                   </button>
                   <button onClick={() => setShowShareBanner(false)} className="p-2 text-stone-400 hover:text-stone-200">
                     <X className="w-4 h-4" />

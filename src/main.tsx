@@ -11,6 +11,7 @@ import Pricing from './pages/Pricing.tsx'
 import Privacy from './pages/Privacy.tsx'
 import Terms from './pages/Terms.tsx'
 import DemoPage from './pages/DemoPage.tsx'
+import SharePage from './pages/SharePage.tsx'
 import OmninorChat from './components/OmninorChat.tsx'
 
 const Spinner = () => (
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
           <Route path="/demo" element={<DemoPage />} />
           <Route path="/workspace" element={<DemoPage />} />
+          <Route path="/share" element={<SharePage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
