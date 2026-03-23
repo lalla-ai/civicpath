@@ -98,7 +98,9 @@ export default function Pricing() {
       <nav className="bg-white border-b border-stone-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-stone-900 hover:text-[#76B900] transition-colors">
-            <img src="/favicon.svg" alt="CivicPath" className="w-7 h-7" />
+            <svg width="28" height="27" viewBox="0 0 48 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#76B900" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+            </svg>
             ← CivicPath
           </Link>
           <Link to="/login?role=seeker" className="text-sm font-semibold bg-[#76B900] text-[#111] px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors">Get Started Free</Link>

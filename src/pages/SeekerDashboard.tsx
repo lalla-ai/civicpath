@@ -1243,51 +1243,47 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             </div>
           </div>
           
-          {/* Tabs */}
-          <div className="flex space-x-6 border-b border-stone-200">
+          {/* Tabs — scrollable on mobile */}
+          <div className="flex gap-1 border-b border-stone-200 overflow-x-auto scrollbar-none -mb-px">
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
-              <BarChart3 className="w-4 h-4 mr-2" /> AI Dashboard
+              <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
             </button>
             <button 
               onClick={() => setActiveTab('scheduler')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${activeTab === 'scheduler' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'scheduler' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
-              <CalendarDays className="w-4 h-4 mr-2" /> Grant Scheduler
+              <CalendarDays className="w-4 h-4 mr-1.5" /> Scheduler
             </button>
             <button 
               onClick={() => setActiveTab('meetings')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${activeTab === 'meetings' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'meetings' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
-              <Users className="w-4 h-4 mr-2" /> Meeting Summaries
+              <Users className="w-4 h-4 mr-1.5" /> Meetings
             </button>
             <button 
               onClick={() => setActiveTab('integrations')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${activeTab === 'integrations' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'integrations' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
-              <Link className="w-4 h-4 mr-2" /> Integrations
+              <Link className="w-4 h-4 mr-1.5" /> Integrations
             </button>
             <button 
               onClick={() => setActiveTab('lalla')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${
-                activeTab === 'lalla'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-stone-500 hover:text-stone-700'
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'lalla' ? 'border-purple-500 text-purple-600' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <Sparkles className="w-4 h-4 mr-2" /> Ask MyLalla
+              <Sparkles className="w-4 h-4 mr-1.5" /> MyLalla
             </button>
             <button 
               onClick={() => setActiveTab('profile')}
-              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${
-                activeTab === 'profile'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-stone-500 hover:text-stone-700'
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <UserCircle className="w-4 h-4 mr-2" /> My Profile
+              <UserCircle className="w-4 h-4 mr-1.5" /> Profile
             </button>
           </div>
         </div>

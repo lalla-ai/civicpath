@@ -16,14 +16,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // When Firebase auth state updates, redirect to correct dashboard
+  // When Firebase auth state updates: redirect + send welcome email
   useEffect(() => {
     if (user) {
-      // Use role from URL param first, then chosen role, then user's saved role
       const urlRole = searchParams.get('role') as 'seeker' | 'funder' | null;
       const targetRole = urlRole || role || user.role || 'seeker';
       if (targetRole !== user.role) {
         localStorage.setItem('civicpath_role', targetRole);
+      }
+      // Send welcome email for Google signups (only if first time — check creationTime)
+      if (googleLoading && user.email) {
+        sendWelcomeEmail(user.name || '', user.email, targetRole);
       }
       navigate(targetRole === 'funder' ? '/funder' : '/seeker', { replace: true });
     }
@@ -34,8 +37,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     try {
       await loginWithGoogle(role);
-      // For Google we can't easily distinguish new vs returning — send welcome silently
-      if (user?.email) sendWelcomeEmail(user.name || '', user.email, role);
+      // Welcome email is sent in useEffect below when user state resolves
     } catch (err: any) {
       const msg = err?.code || err?.message || '';
       if (msg.includes('popup-closed') || msg.includes('cancelled')) {
