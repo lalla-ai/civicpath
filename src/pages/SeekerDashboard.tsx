@@ -244,6 +244,40 @@ export default function SeekerDashboard() {
   const [digestLoading, setDigestLoading] = useState(false);
   const [digestMsg, setDigestMsg] = useState('');
 
+  // Meeting transcript analysis
+  const [showTranscriptModal, setShowTranscriptModal] = useState(false);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [analyzingTranscript, setAnalyzingTranscript] = useState(false);
+  const [transcriptAnalysis, setTranscriptAnalysis] = useState<string | null>(null);
+
+  const analyzeTranscript = async () => {
+    if (!transcriptText.trim()) return;
+    setAnalyzingTranscript(true);
+    try {
+      const prompt = `You are an expert grant strategy assistant. Analyze this meeting transcript and extract a structured summary.
+
+TRANSCRIPT:
+${transcriptText.slice(0, 4000)}
+
+Respond in clean markdown with EXACTLY these 4 sections:
+### Decisions Made
+(bullet list of key decisions)
+### Risks Flagged
+(bullet list of risks or blockers)
+### Action Items
+(bullet list with [Owner] Task — Due Date format)
+### Grant Strategy Insights
+(1-2 sentences on how this meeting advances the grant application)`;
+      const result = await callGeminiProxy(prompt);
+      setTranscriptAnalysis(result);
+      setShowTranscriptModal(false);
+    } catch {
+      setTranscriptAnalysis('Could not analyze transcript. Please try again.');
+    } finally {
+      setAnalyzingTranscript(false);
+    }
+  };
+
   const sendDigest = async () => {
     if (!user?.email) return;
     setDigestLoading(true);
@@ -2327,21 +2361,72 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <button onClick={() => window.open('https://meet.google.com', '_blank')} className="flex-1 md:flex-none px-4 py-2 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
                   <Video className="w-4 h-4 mr-2 text-stone-500" /> Connect Meet
                 </button>
-                <button onClick={() => {}} className="flex-1 md:flex-none px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center justify-center">
+                <button onClick={() => setShowTranscriptModal(true)} className="flex-1 md:flex-none px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center justify-center">
                   <FileText className="w-4 h-4 mr-2" /> Paste Transcript
                 </button>
               </div>
             </div>
             
+            {/* Transcript paste modal */}
+            {showTranscriptModal && (
+              <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+                <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-2xl flex flex-col">
+                  <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-[#76B900]" />
+                      <h3 className="font-bold text-stone-900">Analyze Meeting Transcript</h3>
+                    </div>
+                    <button onClick={() => setShowTranscriptModal(false)} className="text-stone-400 hover:text-stone-700 text-xl leading-none">&times;</button>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-sm text-stone-500 mb-3">Paste your Zoom, Meet, or Teams transcript below. AI will extract decisions, risks, action items, and grant strategy insights.</p>
+                    <textarea
+                      rows={10}
+                      value={transcriptText}
+                      onChange={e => setTranscriptText(e.target.value)}
+                      placeholder="Paste your meeting transcript here..."
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 text-sm resize-none font-mono"
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button onClick={() => setShowTranscriptModal(false)} className="px-4 py-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition-colors">Cancel</button>
+                      <button
+                        onClick={analyzeTranscript}
+                        disabled={!transcriptText.trim() || analyzingTranscript}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#76B900] text-[#111] font-bold rounded-xl hover:bg-[#689900] transition-colors disabled:opacity-40 text-sm"
+                      >
+                        {analyzingTranscript ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Sparkles className="w-4 h-4" /> Analyze with AI</>}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="p-6">
+              {/* AI-generated analysis result */}
+              {transcriptAnalysis && (
+                <div className="mb-6 bg-white border border-[#76B900]/30 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-stone-900 flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#76B900]" /> AI Meeting Summary</h3>
+                    <div className="flex gap-2">
+                      <span className="text-[10px] font-black text-[#76B900] bg-[#76B900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#76B900]/20">AI Generated</span>
+                      <button onClick={() => { setTranscriptAnalysis(null); setTranscriptText(''); }} className="text-[10px] text-stone-400 hover:text-stone-600 font-medium">Clear</button>
+                    </div>
+                  </div>
+                  <div className="prose prose-sm prose-stone max-w-none prose-headings:text-stone-800 prose-headings:text-sm prose-headings:uppercase prose-headings:tracking-wider prose-headings:font-bold prose-li:my-0.5">
+                    <ReactMarkdown>{transcriptAnalysis}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white border border-[#76B900]/20 rounded-xl p-6 shadow-md relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-[#76B900]"></div>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                   <div>
-                    <h3 className="text-lg font-black text-stone-800 uppercase tracking-tight">GRANT PREP MEETING SUMMARY</h3>
-                    <p className="text-xs font-medium text-stone-500 mt-1.5">Date: March 21, 2026 | Duration: 47 min | Grant: NSF SBIR Phase I — $200K</p>
+                    <h3 className="text-lg font-black text-stone-800 uppercase tracking-tight">EXAMPLE MEETING SUMMARY</h3>
+                    <p className="text-xs font-medium text-stone-500 mt-1.5">Paste your own transcript above to replace this with real AI analysis</p>
                   </div>
-                  <span className="px-3 py-1 bg-[#76B900]/10 text-[#76B900] text-[10px] font-black uppercase tracking-wider rounded-md border border-[#76B900]/20">AI Generated</span>
+                  <span className="px-3 py-1 bg-stone-100 text-stone-500 text-[10px] font-black uppercase tracking-wider rounded-md border border-stone-200">Demo</span>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
