@@ -16,7 +16,7 @@ import OmninorChat from './components/OmninorChat.tsx'
 
 const Spinner = () => (
   <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
-    <div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin" />
+    <div className="w-8 h-8 border-4 border-[#76B900] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 

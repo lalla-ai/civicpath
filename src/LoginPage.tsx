@@ -132,11 +132,11 @@ export default function LoginPage() {
         {/* Tabs */}
         <div className="flex border-b border-stone-100">
           <button onClick={() => { setMode('login'); setError(''); }}
-            className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'login' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
+            className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'login' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
             Sign In
           </button>
           <button onClick={() => { setMode('signup'); setError(''); }}
-            className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'signup' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
+            className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'signup' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
             Create Account
           </button>
         </div>
@@ -169,18 +169,18 @@ export default function LoginPage() {
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-stone-600 flex items-center"><User className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Full Name</label>
                 <input type="text" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} required
-                  className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+                  className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
               </div>
             )}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-stone-600 flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Email</label>
               <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-stone-600 flex items-center"><Lock className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Password</label>
               <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
             </div>
 
             {error && (
@@ -190,7 +190,7 @@ export default function LoginPage() {
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full py-3 bg-[#2E7D32] hover:bg-[#1B5E20] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center disabled:opacity-60">
+              className="w-full py-3 bg-[#76B900] hover:bg-[#689900] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center disabled:opacity-60">
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>

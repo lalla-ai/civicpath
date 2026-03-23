@@ -6,7 +6,7 @@ import { chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import ReactMarkdown from 'react-markdown';
 
-const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#2E7D32]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
+const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
 type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
 interface Grant { id: string; name: string; amount: string; focus: string[]; location: string; deadline: string; status: 'active'|'draft'; applications: number; }
 interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; }
@@ -96,8 +96,8 @@ export default function FunderDashboard() {
           <div className="bg-white rounded-2xl p-10 text-center shadow-2xl max-w-sm mx-4">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-black text-stone-900 mb-2">Award Sent!</h2>
-            <p className="text-stone-600 text-sm mb-4"><span className="font-bold text-[#2E7D32]">{celebration}</span> has been notified. Onboarding meeting scheduled.</p>
-            <div className="flex items-center justify-center gap-2 text-xs text-[#2E7D32] font-semibold bg-[#2E7D32]/10 px-3 py-2 rounded-lg"><CheckCircle2 className="w-4 h-4" /> Award email sent · Calendar booked</div>
+            <p className="text-stone-600 text-sm mb-4"><span className="font-bold text-[#76B900]">{celebration}</span> has been notified. Onboarding meeting scheduled.</p>
+            <div className="flex items-center justify-center gap-2 text-xs text-[#76B900] font-semibold bg-[#76B900]/10 px-3 py-2 rounded-lg"><CheckCircle2 className="w-4 h-4" /> Award email sent · Calendar booked</div>
           </div>
         </div>
       )}
@@ -112,14 +112,14 @@ export default function FunderDashboard() {
               <div><span className="font-bold text-stone-800">Organization:</span> {proposalModal.org}</div>
               <div><span className="font-bold text-stone-800">Mission:</span> {proposalModal.mission}</div>
               <div><span className="font-bold text-stone-800">Location:</span> {proposalModal.location}</div>
-              <div><span className="font-bold text-stone-800">Match Score:</span> <span className="text-[#2E7D32] font-bold">{proposalModal.score}/100</span></div>
-              <div className="p-4 bg-[#2E7D32]/5 rounded-xl border border-[#2E7D32]/20">
+              <div><span className="font-bold text-stone-800">Match Score:</span> <span className="text-[#76B900] font-bold">{proposalModal.score}/100</span></div>
+              <div className="p-4 bg-[#76B900]/5 rounded-xl border border-[#76B900]/20">
                 <p className="font-bold text-stone-800 mb-2">Why they match:</p>
                 <ul className="space-y-1"><li>• Strong mission alignment with grant objectives</li><li>• Location matches geographic requirements</li><li>• Demonstrated community impact track record</li></ul>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-stone-100 flex gap-3">
-              <button onClick={() => { handleApprove(proposalModal.id); setProposalModal(null); }} className="flex-1 py-2.5 bg-[#2E7D32] text-white font-bold rounded-xl hover:bg-[#1B5E20] text-sm">Approve & Fund</button>
+              <button onClick={() => { handleApprove(proposalModal.id); setProposalModal(null); }} className="flex-1 py-2.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] text-sm">Approve & Fund</button>
               <button onClick={() => { handleReject(proposalModal.id); setProposalModal(null); }} className="flex-1 py-2.5 border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 text-sm">Reject</button>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function FunderDashboard() {
               <button key={t.id} onClick={() => setActiveTab(t.id)}
                 className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${
                   activeTab === t.id
-                    ? (t.purple ? 'border-purple-500 text-purple-600' : 'border-[#2E7D32] text-[#2E7D32]')
+                    ? (t.purple ? 'border-purple-500 text-purple-600' : 'border-[#76B900] text-[#76B900]')
                     : 'border-transparent text-stone-500 hover:text-stone-700'
                 }`}>{t.label}</button>
             ))}
@@ -156,7 +156,7 @@ export default function FunderDashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[{l:'Grants Posted',v:grants.length,c:'text-stone-900'},{l:'Total Applications',v:totalApps,c:'text-stone-900'},{l:'Avg Match Score',v:`${avgScore}%`,c:'text-[#2E7D32]'},{l:'Orgs Funded',v:funded,c:'text-[#2E7D32]'}].map((s,i) => (
+              {[{l:'Grants Posted',v:grants.length,c:'text-stone-900'},{l:'Total Applications',v:totalApps,c:'text-stone-900'},{l:'Avg Match Score',v:`${avgScore}%`,c:'text-[#76B900]'},{l:'Orgs Funded',v:funded,c:'text-[#76B900]'}].map((s,i) => (
                 <div key={i} className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
                   <div className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">{s.l}</div>
                   <div className={`text-2xl font-black ${s.c}`}>{s.v}</div>
@@ -166,24 +166,24 @@ export default function FunderDashboard() {
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-stone-900">Active Grants</h2>
-                <button onClick={() => setActiveTab('post')} className="flex items-center gap-1.5 px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg hover:bg-[#1B5E20]"><Plus className="w-4 h-4" /> Post New</button>
+                <button onClick={() => setActiveTab('post')} className="flex items-center gap-1.5 px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg hover:bg-[#689900]"><Plus className="w-4 h-4" /> Post New</button>
               </div>
               <div className="space-y-3">
                 {grants.map(g => (
                   <div key={g.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl border border-stone-200">
                     <div><div className="font-bold text-stone-900 text-sm">{g.name}</div><div className="text-xs text-stone-500 mt-0.5 flex items-center gap-3"><span>{g.amount}</span><span>{g.location}</span><span>Due {g.deadline}</span></div></div>
-                    <div className="flex items-center gap-3"><span className="text-xs font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-1 rounded-full">{g.applications} apps</span><button onClick={() => setActiveTab('applicants')} className="text-xs font-bold text-stone-400 hover:text-[#2E7D32]">View →</button></div>
+                    <div className="flex items-center gap-3"><span className="text-xs font-bold text-[#76B900] bg-[#76B900]/10 px-2 py-1 rounded-full">{g.applications} apps</span><button onClick={() => setActiveTab('applicants')} className="text-xs font-bold text-stone-400 hover:text-[#76B900]">View →</button></div>
                   </div>
                 ))}
               </div>
             </div>
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-stone-900">Top Applicants</h2><button onClick={() => setActiveTab('applicants')} className="text-sm font-bold text-[#2E7D32] hover:underline">View all →</button></div>
+              <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-stone-900">Top Applicants</h2><button onClick={() => setActiveTab('applicants')} className="text-sm font-bold text-[#76B900] hover:underline">View all →</button></div>
               <div className="space-y-3">
                 {applicants.slice(0,3).map(a => (
                   <div key={a.id} className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-100">
                     <div className="flex items-center gap-3"><span className="text-xl">{heart(a.score)}</span><div><div className="font-bold text-stone-900 text-sm">{a.org}</div><div className="text-xs text-stone-500">{a.grant}</div></div></div>
-                    <span className="text-sm font-black text-[#2E7D32]">{a.score}%</span>
+                    <span className="text-sm font-black text-[#76B900]">{a.score}%</span>
                   </div>
                 ))}
               </div>
@@ -196,16 +196,16 @@ export default function FunderDashboard() {
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-8">
               <h2 className="text-xl font-bold text-stone-900 mb-6">Post a New Grant</h2>
               <div className="space-y-5">
-                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Grant Name *</label><input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Digital Equity Fund" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900" /></div>
-                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Description</label><textarea rows={3} value={form.description} onChange={e => setForm({...form,description:e.target.value})} placeholder="Describe the grant purpose..." className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 resize-none" /></div>
+                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Grant Name *</label><input value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="e.g. Digital Equity Fund" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
+                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Description</label><textarea rows={3} value={form.description} onChange={e => setForm({...form,description:e.target.value})} placeholder="Describe the grant purpose..." className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 resize-none" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Amount *</label><input value={form.amount} onChange={e => setForm({...form,amount:e.target.value})} placeholder="e.g. up to $50,000" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900" /></div>
-                  <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Deadline</label><input type="date" value={form.deadline} onChange={e => setForm({...form,deadline:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900" /></div>
+                  <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Amount *</label><input value={form.amount} onChange={e => setForm({...form,amount:e.target.value})} placeholder="e.g. up to $50,000" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
+                  <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Deadline</label><input type="date" value={form.deadline} onChange={e => setForm({...form,deadline:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                 </div>
-                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Location Scope</label><select value={form.location} onChange={e => setForm({...form,location:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900"><option>Miami Dade County</option><option>South Florida</option><option>Statewide Florida</option><option>Federal</option></select></div>
-                <div><label className="text-sm font-semibold text-stone-700 block mb-2">Focus Areas</label><div className="flex flex-wrap gap-2">{FOCUS_AREAS.map(f => (<button key={f} onClick={() => setForm(prev => ({...prev,focus:prev.focus.includes(f)?prev.focus.filter(x=>x!==f):[...prev.focus,f]}))} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${form.focus.includes(f)?'bg-[#2E7D32] text-white border-[#2E7D32]':'border-stone-200 text-stone-600 hover:border-[#2E7D32] hover:text-[#2E7D32]'}`}>{f}</button>))}</div></div>
+                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Location Scope</label><select value={form.location} onChange={e => setForm({...form,location:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900"><option>Miami Dade County</option><option>South Florida</option><option>Statewide Florida</option><option>Federal</option></select></div>
+                <div><label className="text-sm font-semibold text-stone-700 block mb-2">Focus Areas</label><div className="flex flex-wrap gap-2">{FOCUS_AREAS.map(f => (<button key={f} onClick={() => setForm(prev => ({...prev,focus:prev.focus.includes(f)?prev.focus.filter(x=>x!==f):[...prev.focus,f]}))} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${form.focus.includes(f)?'bg-[#76B900] text-[#111111] border-[#76B900]':'border-stone-200 text-stone-600 hover:border-[#76B900] hover:text-[#76B900]'}`}>{f}</button>))}</div></div>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={handlePost} className="flex-1 py-3.5 bg-[#2E7D32] text-white font-bold rounded-xl hover:bg-[#1B5E20] shadow-sm">Publish Grant</button>
+                  <button onClick={handlePost} className="flex-1 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] shadow-sm">Publish Grant</button>
                   <button onClick={() => setActiveTab('overview')} className="px-6 py-3.5 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50">Cancel</button>
                 </div>
               </div>
@@ -217,18 +217,18 @@ export default function FunderDashboard() {
           <div className="animate-in fade-in space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div><h2 className="text-xl font-bold text-stone-900">All Applicants</h2><p className="text-sm text-stone-500 mt-0.5">{applicants.length} total applications across {grants.length} grants</p></div>
-              <div className="flex items-center gap-2"><Filter className="w-4 h-4 text-stone-400" /><select value={filterGrant} onChange={e => setFilterGrant(e.target.value)} className="px-3 py-2 rounded-lg bg-white border border-stone-200 text-sm text-stone-700 outline-none focus:ring-2 focus:ring-[#2E7D32]/40"><option value="all">All Grants</option>{grants.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}</select></div>
+              <div className="flex items-center gap-2"><Filter className="w-4 h-4 text-stone-400" /><select value={filterGrant} onChange={e => setFilterGrant(e.target.value)} className="px-3 py-2 rounded-lg bg-white border border-stone-200 text-sm text-stone-700 outline-none focus:ring-2 focus:ring-[#76B900]/40"><option value="all">All Grants</option>{grants.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}</select></div>
             </div>
             <div className="space-y-4">
               {filtered.map(a => (
-                <div key={a.id} className={`bg-white rounded-xl border shadow-sm p-5 ${a.status==='approved'?'border-[#2E7D32]/40 bg-[#2E7D32]/5':a.status==='rejected'?'border-red-200 bg-red-50/30':'border-stone-200'}`}>
+                <div key={a.id} className={`bg-white rounded-xl border shadow-sm p-5 ${a.status==='approved'?'border-[#76B900]/40 bg-[#76B900]/5':a.status==='rejected'?'border-red-200 bg-red-50/30':'border-stone-200'}`}>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
                       <span className="text-2xl mt-0.5">{heart(a.score)}</span>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-stone-900">{a.org}</span>
-                          {a.status==='approved'&&<span className="text-[10px] font-black text-white bg-[#2E7D32] px-2 py-0.5 rounded uppercase">Funded ✓</span>}
+                          {a.status==='approved'&&<span className="text-[10px] font-black text-white bg-[#76B900] px-2 py-0.5 rounded uppercase">Funded ✓</span>}
                           {a.status==='rejected'&&<span className="text-[10px] font-black text-white bg-red-500 px-2 py-0.5 rounded uppercase">Rejected</span>}
                           {a.status==='review'&&<span className="text-[10px] font-black text-white bg-amber-500 px-2 py-0.5 rounded uppercase">Under Review</span>}
                         </div>
@@ -237,11 +237,11 @@ export default function FunderDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-3 shrink-0">
-                      <div className="text-2xl font-black text-[#2E7D32]">{a.score}%</div>
+                      <div className="text-2xl font-black text-[#76B900]">{a.score}%</div>
                       {(a.status==='pending'||a.status==='review')&&(
                         <div className="flex gap-2">
-                          <button onClick={() => setProposalModal(a)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-stone-200 text-stone-600 rounded-lg hover:border-[#2E7D32] hover:text-[#2E7D32]"><Eye className="w-3.5 h-3.5" /> Proposal</button>
-                          <button onClick={() => handleApprove(a.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-[#2E7D32] text-white rounded-lg hover:bg-[#1B5E20]"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
+                          <button onClick={() => setProposalModal(a)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-stone-200 text-stone-600 rounded-lg hover:border-[#76B900] hover:text-[#76B900]"><Eye className="w-3.5 h-3.5" /> Proposal</button>
+                          <button onClick={() => handleApprove(a.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-[#76B900] text-[#111111] rounded-lg hover:bg-[#689900]"><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
                           <button onClick={() => handleReject(a.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-red-200 text-red-600 rounded-lg hover:bg-red-50"><XCircle className="w-3.5 h-3.5" /> Reject</button>
                           <button onClick={() => handleSchedule(a)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"><Calendar className="w-3.5 h-3.5" /> Call</button>
                         </div>
@@ -303,7 +303,7 @@ export default function FunderDashboard() {
                     </div>
                   )}
                   <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === 'user' ? 'bg-[#2E7D32] text-white rounded-br-sm' : 'bg-stone-50 border border-stone-200 text-stone-800 rounded-bl-sm'
+                    msg.role === 'user' ? 'bg-[#76B900] text-[#111111] rounded-br-sm' : 'bg-stone-50 border border-stone-200 text-stone-800 rounded-bl-sm'
                   }`}>
                     {msg.role === 'assistant' ? (
                       <div className="prose prose-sm max-w-none prose-stone prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-strong:text-stone-900">
@@ -312,8 +312,8 @@ export default function FunderDashboard() {
                     ) : msg.content}
                   </div>
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-[#2E7D32]">{(user?.name?.[0] || 'F').toUpperCase()}</span>
+                    <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[#76B900]">{(user?.name?.[0] || 'F').toUpperCase()}</span>
                     </div>
                   )}
                 </div>
@@ -353,21 +353,21 @@ export default function FunderDashboard() {
             <h2 className="text-xl font-bold text-stone-900">Analytics</h2>
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
               <h3 className="font-bold text-stone-800 mb-5">Applications Per Grant</h3>
-              <div className="space-y-3">{grants.map(g => (<div key={g.id} className="flex items-center gap-3"><div className="w-48 text-xs text-stone-600 truncate shrink-0">{g.name}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className="h-full bg-[#2E7D32] rounded-full" style={{width:`${Math.round((g.applications/57)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-8 text-right">{g.applications}</span></div>))}</div>
+              <div className="space-y-3">{grants.map(g => (<div key={g.id} className="flex items-center gap-3"><div className="w-48 text-xs text-stone-600 truncate shrink-0">{g.name}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className="h-full bg-[#76B900] rounded-full" style={{width:`${Math.round((g.applications/57)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-8 text-right">{g.applications}</span></div>))}</div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
                 <h3 className="font-bold text-stone-800 mb-4">Match Score Distribution</h3>
-                <div className="space-y-3">{[{l:'90-100% ❤️',c:applicants.filter(a=>a.score>=90).length},{l:'80-89% 🧡',c:applicants.filter(a=>a.score>=80&&a.score<90).length},{l:'70-79% 💚',c:applicants.filter(a=>a.score<80).length}].map((b,i) => (<div key={i} className="flex items-center gap-3"><div className="w-24 text-xs text-stone-600 shrink-0">{b.l}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className="h-full bg-[#2E7D32] rounded-full" style={{width:`${Math.round((b.c/applicants.length)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-4">{b.c}</span></div>))}</div>
+                <div className="space-y-3">{[{l:'90-100% ❤️',c:applicants.filter(a=>a.score>=90).length},{l:'80-89% 🧡',c:applicants.filter(a=>a.score>=80&&a.score<90).length},{l:'70-79% 💚',c:applicants.filter(a=>a.score<80).length}].map((b,i) => (<div key={i} className="flex items-center gap-3"><div className="w-24 text-xs text-stone-600 shrink-0">{b.l}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className="h-full bg-[#76B900] rounded-full" style={{width:`${Math.round((b.c/applicants.length)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-4">{b.c}</span></div>))}</div>
               </div>
               <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
                 <h3 className="font-bold text-stone-800 mb-4">Application Status</h3>
-                <div className="space-y-3">{[{l:'Pending',c:applicants.filter(a=>a.status==='pending').length,col:'bg-stone-400'},{l:'Under Review',c:applicants.filter(a=>a.status==='review').length,col:'bg-amber-400'},{l:'Funded',c:applicants.filter(a=>a.status==='approved').length,col:'bg-[#2E7D32]'},{l:'Rejected',c:applicants.filter(a=>a.status==='rejected').length,col:'bg-red-400'}].map((s,i) => (<div key={i} className="flex items-center gap-3"><div className="w-24 text-xs text-stone-600 shrink-0">{s.l}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className={`h-full ${s.col} rounded-full`} style={{width:`${Math.round((s.c/applicants.length)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-4">{s.c}</span></div>))}</div>
+                <div className="space-y-3">{[{l:'Pending',c:applicants.filter(a=>a.status==='pending').length,col:'bg-stone-400'},{l:'Under Review',c:applicants.filter(a=>a.status==='review').length,col:'bg-amber-400'},{l:'Funded',c:applicants.filter(a=>a.status==='approved').length,col:'bg-[#76B900]'},{l:'Rejected',c:applicants.filter(a=>a.status==='rejected').length,col:'bg-red-400'}].map((s,i) => (<div key={i} className="flex items-center gap-3"><div className="w-24 text-xs text-stone-600 shrink-0">{s.l}</div><div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden"><div className={`h-full ${s.col} rounded-full`} style={{width:`${Math.round((s.c/applicants.length)*100)}%`}} /></div><span className="text-sm font-bold text-stone-700 w-4">{s.c}</span></div>))}</div>
               </div>
             </div>
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
               <h3 className="font-bold text-stone-800 mb-4">Top Scoring Applicants</h3>
-              <div className="space-y-2">{[...applicants].sort((a,b)=>b.score-a.score).map((a,i) => (<div key={a.id} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl"><span className="text-sm font-black text-stone-400 w-5">#{i+1}</span><span className="text-lg">{heart(a.score)}</span><div className="flex-1"><div className="font-bold text-stone-900 text-sm">{a.org}</div><div className="text-xs text-stone-500">{a.grant}</div></div><span className="font-black text-[#2E7D32]">{a.score}%</span></div>))}</div>
+              <div className="space-y-2">{[...applicants].sort((a,b)=>b.score-a.score).map((a,i) => (<div key={a.id} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl"><span className="text-sm font-black text-stone-400 w-5">#{i+1}</span><span className="text-lg">{heart(a.score)}</span><div className="flex-1"><div className="font-bold text-stone-900 text-sm">{a.org}</div><div className="text-xs text-stone-500">{a.grant}</div></div><span className="font-black text-[#76B900]">{a.score}%</span></div>))}</div>
             </div>
           </div>
         )}

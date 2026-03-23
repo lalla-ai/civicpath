@@ -113,12 +113,12 @@ interface AgentState {
   output: string | null;
 }
 
-// CivicPath Green accent: #2E7D32
-// Hover Green: #1B5E20
+// CivicPath Green accent: #76B900
+// Hover Green: #689900
 // Claude-style Beige: #F9F7F2
 
 const Logo = () => (
-  <div className="relative inline-flex items-center justify-center w-8 h-8 text-[#2E7D32]">
+  <div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]">
     <Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} />
     <ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} />
   </div>
@@ -251,8 +251,8 @@ export default function SeekerDashboard() {
     q(profile.impactMetrics, 10),         // NEW
   ].filter(Boolean).length / 16 * 100);
 
-  const profileScoreColor = profileScore >= 80 ? 'text-[#2E7D32]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
-  const profileBarColor = profileScore >= 80 ? 'bg-[#2E7D32]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
+  const profileScoreColor = profileScore >= 80 ? 'text-[#76B900]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
+  const profileBarColor = profileScore >= 80 ? 'bg-[#76B900]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
 
   const handleAIFillFromUrl = async () => {
     const urls = [profile.website, profile.linkedinUrl, profile.twitterUrl].filter(Boolean).join(', ');
@@ -356,13 +356,13 @@ export default function SeekerDashboard() {
       text: "Tell us your mission — 30 seconds. Agents do the rest.",
       duration: 2800,
       screen: <div className="bg-white rounded-2xl p-5 w-3/4 max-w-sm shadow-2xl">
-        <div className="text-xs font-bold text-[#2E7D32] uppercase mb-3 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Your Profile</div>
+        <div className="text-xs font-bold text-[#76B900] uppercase mb-3 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Your Profile</div>
         <div className="space-y-2.5">
           <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">🏢 Sunrise Tech Nonprofit</div>
           <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">📍 Orlando, FL</div>
           <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">🎯 AI Civic Technology</div>
         </div>
-        <div className="mt-3 bg-[#2E7D32] text-white rounded-lg py-2 text-center text-sm font-bold">Launch My Dashboard →</div>
+        <div className="mt-3 bg-[#76B900] text-[#111111] rounded-lg py-2 text-center text-sm font-bold">Launch My Dashboard →</div>
       </div>
     },
     {
@@ -749,8 +749,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   const getStatusIcon = (status: AgentStatus) => {
     switch (status) {
       case 'idle': return <div className="w-2 h-2 rounded-full bg-stone-300" />;
-      case 'working': return <Loader2 className="w-4 h-4 text-[#2E7D32] animate-spin" />;
-      case 'completed': return <CheckCircle2 className="w-4 h-4 text-[#2E7D32]" />;
+      case 'working': return <Loader2 className="w-4 h-4 text-[#76B900] animate-spin" />;
+      case 'completed': return <CheckCircle2 className="w-4 h-4 text-[#76B900]" />;
       case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
     }
   };
@@ -758,8 +758,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   const getStatusClasses = (status: AgentStatus) => {
     switch (status) {
       case 'idle': return 'bg-white/50 text-stone-500 border-stone-200';
-      case 'working': return 'bg-white border-[#2E7D32]/50 shadow-sm ring-1 ring-[#2E7D32]/20';
-      case 'completed': return 'bg-white border-[#2E7D32] shadow-sm';
+      case 'working': return 'bg-white border-[#76B900]/50 shadow-sm ring-1 ring-[#76B900]/20';
+      case 'completed': return 'bg-white border-[#76B900] shadow-sm';
       case 'error': return 'bg-white border-red-200 shadow-sm ring-1 ring-red-100';
     }
   };
@@ -771,7 +771,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
   if (step === 'onboarding') {
     return (
-      <div className="min-h-screen bg-[#F9F7F2] text-stone-900 flex flex-col items-center justify-center p-4 selection:bg-[#2E7D32]/20 font-sans relative">
+      <div className="min-h-screen bg-[#F9F7F2] text-stone-900 flex flex-col items-center justify-center p-4 selection:bg-[#76B900]/20 font-sans relative">
         
         {/* Video Tutorial Modal */}
         {showDemoModal && (
@@ -779,7 +779,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-stone-200 flex flex-col max-h-[90vh] overflow-hidden">
               <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50 shrink-0">
                 <div className="flex items-center space-x-2">
-                  <PlayCircle className="w-5 h-5 text-[#2E7D32]" />
+                  <PlayCircle className="w-5 h-5 text-[#76B900]" />
                   <h3 className="font-bold text-stone-800">CivicPath Interactive Demo & Q&A</h3>
                 </div>
                 <button 
@@ -796,19 +796,19 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   {/* Subtle warm gradient */}
                   <div className="absolute inset-0">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-[#76B900]/8 rounded-full blur-[80px]" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#2E7D32]/6 rounded-full blur-[60px]" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#76B900]/6 rounded-full blur-[60px]" />
                   </div>
 
                   {!isDemoPlaying ? (
                     <div className="z-10 flex flex-col items-center text-center px-12">
-                      <div className="w-24 h-24 bg-[#2E7D32]/10 rounded-full flex items-center justify-center mb-6 border-2 border-[#2E7D32]/20 shadow-lg">
-                        <Play className="w-10 h-10 text-[#2E7D32] fill-current ml-1" />
+                      <div className="w-24 h-24 bg-[#76B900]/10 rounded-full flex items-center justify-center mb-6 border-2 border-[#76B900]/20 shadow-lg">
+                        <Play className="w-10 h-10 text-[#76B900] fill-current ml-1" />
                       </div>
                       <h4 className="text-3xl font-black text-stone-900 mb-4">See CivicPath in Action</h4>
                       <p className="text-stone-500 max-w-md mb-8">4 slides. 12 seconds. See exactly how the 6 agents work.</p>
                       <button 
                         onClick={startDemo}
-                        className="px-8 py-4 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-all shadow-lg hover:scale-105 active:scale-95"
+                        className="px-8 py-4 bg-[#76B900] text-[#111111] rounded-xl font-bold hover:bg-[#689900] transition-all shadow-lg hover:scale-105 active:scale-95"
                       >
                         Start Demo →
                       </button>
@@ -852,7 +852,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <div className="flex gap-3 justify-center">
                       <button
                         onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
-                        className="px-6 py-3 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-colors shadow-md">
+                        className="px-6 py-3 bg-[#76B900] text-[#111111] rounded-xl font-bold hover:bg-[#689900] transition-colors shadow-md">
                         Start Building My Profile →
                       </button>
                       <button
@@ -896,7 +896,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         <details key={i} className="bg-white border border-stone-200 rounded-xl overflow-hidden group">
                           <summary className="px-5 py-4 font-semibold text-stone-800 text-sm cursor-pointer list-none flex items-center justify-between hover:bg-stone-50 transition-colors">
                             {item.q}
-                            <span className="text-[#2E7D32] text-lg shrink-0 ml-3 group-open:rotate-45 transition-transform inline-block">+</span>
+                            <span className="text-[#76B900] text-lg shrink-0 ml-3 group-open:rotate-45 transition-transform inline-block">+</span>
                           </summary>
                           <div className="px-5 pb-4 text-sm text-stone-600 leading-relaxed border-t border-stone-100 pt-3">
                             {item.a}
@@ -913,9 +913,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
         <div className="w-full max-w-2xl bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden mt-8">
           {/* Header */}
-          <div className="bg-[#2E7D32]/5 border-b border-stone-100 p-6 text-center relative">
+          <div className="bg-[#76B900]/5 border-b border-stone-100 p-6 text-center relative">
             <button onClick={() => setShowDemoModal(true)}
-              className="absolute top-5 right-5 flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-stone-200 shadow-sm rounded-full text-xs font-bold text-stone-600 hover:text-[#2E7D32] hover:border-[#2E7D32]/30 transition-all">
+              className="absolute top-5 right-5 flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-stone-200 shadow-sm rounded-full text-xs font-bold text-stone-600 hover:text-[#76B900] hover:border-[#76B900]/30 transition-all">
               <PlayCircle className="w-4 h-4" /><span>Watch Demo</span>
             </button>
             <div className="flex justify-center mb-3 mt-1"><div className="scale-125 transform"><Logo /></div></div>
@@ -926,18 +926,18 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               {[1,2,3].map(s => (
                 <div key={s} className="flex items-center gap-2">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                    onboardStep > s ? 'bg-[#2E7D32] text-white' :
-                    onboardStep === s ? 'bg-[#2E7D32] text-white ring-4 ring-[#2E7D32]/20' :
+                    onboardStep > s ? 'bg-[#76B900] text-[#111111]' :
+                    onboardStep === s ? 'bg-[#76B900] text-[#111111] ring-4 ring-[#76B900]/20' :
                     'bg-stone-100 text-stone-400'
                   }`}>{onboardStep > s ? '✓' : s}</div>
-                  {s < 3 && <div className={`w-12 h-0.5 rounded-full ${onboardStep > s ? 'bg-[#2E7D32]' : 'bg-stone-200'}`} />}
+                  {s < 3 && <div className={`w-12 h-0.5 rounded-full ${onboardStep > s ? 'bg-[#76B900]' : 'bg-stone-200'}`} />}
                 </div>
               ))}
             </div>
             <div className="flex justify-center gap-8 mt-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-              <span className={onboardStep >= 1 ? 'text-[#2E7D32]' : ''}>Organization</span>
-              <span className={onboardStep >= 2 ? 'text-[#2E7D32]' : ''}>Mission</span>
-              <span className={onboardStep >= 3 ? 'text-[#2E7D32]' : ''}>Funding Goal</span>
+              <span className={onboardStep >= 1 ? 'text-[#76B900]' : ''}>Organization</span>
+              <span className={onboardStep >= 2 ? 'text-[#76B900]' : ''}>Mission</span>
+              <span className={onboardStep >= 3 ? 'text-[#76B900]' : ''}>Funding Goal</span>
             </div>
           </div>
 
@@ -950,12 +950,12 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Building2 className="w-4 h-4 mr-2 text-stone-400" />Organization Name *</label>
                     <input type="text" placeholder="e.g. Sunrise Tech Nonprofit"
                       value={profile.companyName} onChange={e => setProfile({...profile, companyName: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Organization Type *</label>
                     <select value={profile.orgType} onChange={e => setProfile({...profile, orgType: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select type...</option>
                       <option value="501c3">501(c)(3) Nonprofit</option>
                       <option value="startup">AI / Tech Startup</option>
@@ -972,13 +972,13 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><MapPin className="w-4 h-4 mr-2 text-stone-400" />City, State *</label>
                     <input type="text" placeholder="e.g. Miami, FL"
                       value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Globe className="w-4 h-4 mr-2 text-stone-400" />Website</label>
                     <input type="text" placeholder="https://yourorg.com"
                       value={profile.website} onChange={e => setProfile({...profile, website: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -986,13 +986,13 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Linkedin className="w-4 h-4 mr-2 text-blue-500" />LinkedIn URL</label>
                     <input type="text" placeholder="linkedin.com/in/yourname or /company/yourorg"
                       value={profile.linkedinUrl} onChange={e => setProfile({...profile, linkedinUrl: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Twitter className="w-4 h-4 mr-2 text-sky-400" />Twitter / X Handle</label>
                     <input type="text" placeholder="@yourhandle"
                       value={profile.twitterUrl} onChange={e => setProfile({...profile, twitterUrl: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1000,24 +1000,24 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <label className="text-sm font-semibold text-stone-700">Tagline / Pitch <span className="text-stone-400 font-normal text-xs">(optional)</span></label>
                     <input type="text" placeholder="e.g. AI grant pipeline for Florida communities"
                       value={profile.tagline} onChange={e => setProfile({...profile, tagline: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Year Founded <span className="text-stone-400 font-normal text-xs">(required for many grants)</span></label>
                     <input type="text" placeholder="e.g. 2019"
                       value={profile.yearFounded} onChange={e => setProfile({...profile, yearFounded: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                 </div>
                 {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
                   <button onClick={handleAIFillFromUrl} disabled={aiFilling}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#2E7D32]/40 text-[#2E7D32] text-sm font-semibold rounded-xl hover:bg-[#2E7D32]/5 transition-colors disabled:opacity-50">
+                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#76B900]/40 text-[#76B900] text-sm font-semibold rounded-xl hover:bg-[#76B900]/5 transition-colors disabled:opacity-50">
                     {aiFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     {aiFilling ? aiFillMsg : '\u2728 Let AI analyze your online presence and pre-fill profile'}
                   </button>
                 )}
                 {aiFillMsg && !aiFilling && (
-                  <p className="text-xs text-center text-[#2E7D32] font-medium">{aiFillMsg}</p>
+                  <p className="text-xs text-center text-[#76B900] font-medium">{aiFillMsg}</p>
                 )}
               </>
             )}
@@ -1029,25 +1029,25 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <label className="text-sm font-semibold text-stone-700 flex items-center"><Cpu className="w-4 h-4 mr-2 text-stone-400" />Primary Focus Area *</label>
                   <input type="text" placeholder="e.g. AI-driven civic technology, STEM education, community health"
                     value={profile.focusArea} onChange={e => setProfile({...profile, focusArea: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700">Mission Statement *</label>
                   <textarea rows={3} placeholder="We exist to... (describe your organization's core purpose)"
                     value={profile.missionStatement} onChange={e => setProfile({...profile, missionStatement: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Who do you serve?</label>
                     <input type="text" placeholder="e.g. Low-income youth in Miami-Dade"
                       value={profile.targetPopulation} onChange={e => setProfile({...profile, targetPopulation: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Annual Budget Range</label>
                     <select value={profile.annualBudget} onChange={e => setProfile({...profile, annualBudget: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select range...</option>
                       <option value="<50k">Under $50K</option>
                       <option value="50-250k">$50K – $250K</option>
@@ -1060,7 +1060,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Team Size</label>
                     <select value={profile.teamSize} onChange={e => setProfile({...profile, teamSize: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select...</option>
                       <option value="1">Just me</option>
                       <option value="2-5">2–5 people</option>
@@ -1071,7 +1071,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Years Operating</label>
                     <select value={profile.yearsOperating} onChange={e => setProfile({...profile, yearsOperating: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select...</option>
                       <option value="<1">Less than 1 year</option>
                       <option value="1-3">1–3 years</option>
@@ -1088,19 +1088,19 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700 flex items-center justify-between">
-                    <span className="flex items-center"><FileText className="w-4 h-4 mr-2 text-[#2E7D32]" />What do you need funding for? *</span>
-                    <span className="text-[10px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-1 rounded-full border border-[#2E7D32]/20 uppercase tracking-wider">Key for AI matching</span>
+                    <span className="flex items-center"><FileText className="w-4 h-4 mr-2 text-[#76B900]" />What do you need funding for? *</span>
+                    <span className="text-[10px] font-bold text-[#76B900] bg-[#76B900]/10 px-2 py-1 rounded-full border border-[#76B900]/20 uppercase tracking-wider">Key for AI matching</span>
                   </label>
                   <textarea rows={4}
                     placeholder="Describe the specific project or program you want to fund. Be as detailed as possible — this is what agents use to write your proposal."
                     value={profile.projectDescription} onChange={e => setProfile({...profile, projectDescription: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Funding Amount Needed</label>
                     <select value={profile.fundingAmount} onChange={e => setProfile({...profile, fundingAmount: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select range...</option>
                       <option value="<10k">Under $10K</option>
                       <option value="10-50k">$10K – $50K</option>
@@ -1112,7 +1112,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700">Previous Grants Received?</label>
                     <select value={profile.previousGrants} onChange={e => setProfile({...profile, previousGrants: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900">
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900">
                       <option value="">Select...</option>
                       <option value="none">No, this is our first</option>
                       <option value="yes-small">Yes, under $50K</option>
@@ -1128,7 +1128,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <textarea rows={4}
                     placeholder="Paste your LinkedIn About section, resume text, team bios, prior grant wins, or any background that strengthens your application..."
                     value={profile.backgroundInfo} onChange={e => setProfile({...profile, backgroundInfo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
                 </div>
                 {/* Federal Grant Credentials */}
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-4">
@@ -1155,10 +1155,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-stone-700">Impact Metrics <span className="text-[10px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-0.5 rounded-full border border-[#2E7D32]/20 uppercase tracking-wider ml-1">Boosts Matching</span></label>
+                  <label className="text-sm font-semibold text-stone-700">Impact Metrics <span className="text-[10px] font-bold text-[#76B900] bg-[#76B900]/10 px-2 py-0.5 rounded-full border border-[#76B900]/20 uppercase tracking-wider ml-1">Boosts Matching</span></label>
                   <input type="text" placeholder="e.g. 500 students served · $2M secured · 12 grants won · 3 counties impacted"
                     value={profile.impactMetrics} onChange={e => setProfile({...profile, impactMetrics: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                   <p className="text-xs text-stone-400">Numbers beat adjectives. Funders see 200+ applications — specific metrics make you stand out.</p>
                 </div>
                 {/* Grant History */}
@@ -1167,23 +1167,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <textarea rows={3}
                     placeholder="e.g. NSF SBIR Phase I ($150K) — Won 2024 · FL STEM Initiative — Applied 2025 · Miami-Dade Cultural Affairs — In Review"
                     value={profile.grantHistoryText} onChange={e => setProfile({...profile, grantHistoryText: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
                 </div>
                 {/* Team Members */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700">Team Members</label>
                   <input type="text" placeholder="e.g. Jane Smith (Executive Director), John Doe (Grant Writer), Maria Lopez (CFO)"
                     value={profile.teamMembersText} onChange={e => setProfile({...profile, teamMembersText: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                 </div>
                 {/* Resume Upload */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700 flex items-center gap-2">
                     <Upload className="w-4 h-4 text-stone-400" />Upload Resume / Portfolio (TXT, PDF)
                   </label>
-                  <label className="flex items-center justify-center gap-3 w-full py-4 border-2 border-dashed border-stone-200 rounded-xl cursor-pointer hover:border-[#2E7D32]/40 hover:bg-[#2E7D32]/5 transition-colors group">
-                    <Upload className="w-5 h-5 text-stone-400 group-hover:text-[#2E7D32] transition-colors" />
-                    <span className="text-sm text-stone-500 group-hover:text-[#2E7D32] transition-colors">
+                  <label className="flex items-center justify-center gap-3 w-full py-4 border-2 border-dashed border-stone-200 rounded-xl cursor-pointer hover:border-[#76B900]/40 hover:bg-[#76B900]/5 transition-colors group">
+                    <Upload className="w-5 h-5 text-stone-400 group-hover:text-[#76B900] transition-colors" />
+                    <span className="text-sm text-stone-500 group-hover:text-[#76B900] transition-colors">
                       {profile.resumeText ? '\u2713 Resume loaded — click to replace' : 'Click to upload or drag & drop'}
                     </span>
                     <input type="file" accept=".txt,.pdf,.md,.doc" className="hidden"
@@ -1200,7 +1200,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </label>
                   {aiFillMsg && (
                     <p className={`text-xs font-medium flex items-center gap-1 ${
-                      aiFilling ? 'text-stone-500' : 'text-[#2E7D32]'
+                      aiFilling ? 'text-stone-500' : 'text-[#76B900]'
                     }`}>
                       {aiFilling && <Loader2 className="w-3 h-3 animate-spin" />}
                       {aiFillMsg}
@@ -1216,7 +1216,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <h3 className="text-sm font-bold text-stone-700 uppercase tracking-wider">6 Active Action Agents</h3>
                 <button 
                   onClick={() => setShowAgentsMenu(!showAgentsMenu)}
-                  className="flex items-center text-xs font-bold text-[#2E7D32] bg-[#2E7D32]/10 hover:bg-[#2E7D32]/20 px-3 py-1.5 rounded-full transition-colors"
+                  className="flex items-center text-xs font-bold text-[#76B900] bg-[#76B900]/10 hover:bg-[#76B900]/20 px-3 py-1.5 rounded-full transition-colors"
                 >
                   {showAgentsMenu ? <X className="w-3 h-3 mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
                   {showAgentsMenu ? 'Hide Agents' : 'View All Agents'}
@@ -1226,12 +1226,12 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               {!showAgentsMenu ? (
                 <div className="flex items-center space-x-3">
                   <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[60] shadow-sm"><Search className="w-4 h-4 text-[#2E7D32]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[50] shadow-sm"><BrainCircuit className="w-4 h-4 text-[#2E7D32]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[40] shadow-sm"><FileEdit className="w-4 h-4 text-[#2E7D32]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[30] shadow-sm"><ShieldCheck className="w-4 h-4 text-[#2E7D32]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[20] shadow-sm"><Send className="w-4 h-4 text-[#2E7D32]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/30 flex items-center justify-center z-[10] shadow-sm"><Eye className="w-4 h-4 text-[#2E7D32] animate-pulse" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[60] shadow-sm"><Search className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[50] shadow-sm"><BrainCircuit className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[40] shadow-sm"><FileEdit className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[30] shadow-sm"><ShieldCheck className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[20] shadow-sm"><Send className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/30 flex items-center justify-center z-[10] shadow-sm"><Eye className="w-4 h-4 text-[#76B900] animate-pulse" /></div>
                   </div>
                   <span className="text-xs text-stone-500 font-medium">6 Agents Ready to Act</span>
                 </div>
@@ -1246,7 +1246,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     { id: 'watcher', name: 'The Watcher (New)', desc: '24/7 background agent. Polls API & auto-books calendar deadlines.', icon: <Eye className="w-5 h-5" /> }
                   ].map(ag => (
                     <div key={ag.id} className="flex items-start p-3 bg-stone-50 rounded-xl border border-stone-200">
-                      <div className={`p-2 bg-white rounded-lg border border-stone-200 mr-3 text-[#2E7D32] shadow-sm shrink-0 ${ag.id === 'watcher' ? 'bg-[#2E7D32]/10 border-[#2E7D32]/30' : ''}`}>
+                      <div className={`p-2 bg-white rounded-lg border border-stone-200 mr-3 text-[#76B900] shadow-sm shrink-0 ${ag.id === 'watcher' ? 'bg-[#76B900]/10 border-[#76B900]/30' : ''}`}>
                         {ag.icon}
                       </div>
                       <div>
@@ -1271,14 +1271,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <button
                   onClick={() => setOnboardStep(s => s + 1)}
                   disabled={onboardStep === 1 ? !isStep1Valid : !isStep2Valid}
-                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-md active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#76B900] hover:bg-[#689900] transition-all shadow-md active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
                   Continue →
                 </button>
               ) : (
                 <button
                   onClick={() => setStep('dashboard')}
                   disabled={!isStep3Valid}
-                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#76B900] hover:bg-[#689900] transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
                   Launch My Grant Dashboard
                   <Play className="w-5 h-5 ml-2 fill-current" />
                 </button>
@@ -1292,7 +1292,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
   // DASHBOARD STEP
   return (
-    <div className="min-h-screen bg-[#F9F7F2] text-stone-900 font-sans selection:bg-[#2E7D32]/20 flex flex-col">
+    <div className="min-h-screen bg-[#F9F7F2] text-stone-900 font-sans selection:bg-[#76B900]/20 flex flex-col">
       {/* Header & Nav Tabs */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -1303,7 +1303,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <h1 className="text-2xl font-[800] tracking-tight text-stone-900">
                   CivicPath
                 </h1>
-                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#2E7D32] text-white rounded">Hub</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#76B900] text-[#111111] rounded">Hub</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1321,25 +1321,25 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="flex gap-1 border-b border-stone-200 overflow-x-auto scrollbar-none -mb-px">
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
               <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
             </button>
             <button 
               onClick={() => setActiveTab('scheduler')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'scheduler' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'scheduler' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
               <CalendarDays className="w-4 h-4 mr-1.5" /> Scheduler
             </button>
             <button 
               onClick={() => setActiveTab('meetings')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'meetings' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'meetings' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
               <Users className="w-4 h-4 mr-1.5" /> Meetings
             </button>
             <button 
               onClick={() => setActiveTab('integrations')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'integrations' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'integrations' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
               <Link className="w-4 h-4 mr-1.5" /> Integrations
             </button>
@@ -1354,11 +1354,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             <button 
               onClick={() => setActiveTab('tracker')}
               className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === 'tracker' ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'
+                activeTab === 'tracker' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
               <Kanban className="w-4 h-4 mr-1.5" /> Tracker
-              {trackerGrants.length > 0 && <span className="ml-1.5 bg-[#2E7D32] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">{trackerGrants.length}</span>}
+              {trackerGrants.length > 0 && <span className="ml-1.5 bg-[#76B900] text-[#111111] text-[10px] font-black px-1.5 py-0.5 rounded-full">{trackerGrants.length}</span>}
             </button>
             <button 
               onClick={() => setActiveTab('profile')}
@@ -1379,23 +1379,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Header + email digest */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><Kanban className="w-5 h-5 text-[#2E7D32]" /> Grant Tracker</h2>
+                <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><Kanban className="w-5 h-5 text-[#76B900]" /> Grant Tracker</h2>
                 <p className="text-sm text-stone-500 mt-0.5">Move grants through your pipeline from saved to won.</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={sendDigest} disabled={digestLoading || !user?.email}
-                  className="flex items-center gap-2 px-4 py-2 border border-stone-200 text-stone-600 text-sm font-bold rounded-xl hover:border-[#2E7D32] hover:text-[#2E7D32] transition-colors disabled:opacity-50">
+                  className="flex items-center gap-2 px-4 py-2 border border-stone-200 text-stone-600 text-sm font-bold rounded-xl hover:border-[#76B900] hover:text-[#76B900] transition-colors disabled:opacity-50">
                   {digestLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
                   Email Digest
                 </button>
-                {digestMsg && <span className="text-xs font-medium text-[#2E7D32] self-center">{digestMsg}</span>}
+                {digestMsg && <span className="text-xs font-medium text-[#76B900] self-center">{digestMsg}</span>}
               </div>
             </div>
 
             {/* Save grants from pipeline */}
             {discoveredGrants.length > 0 && (
-              <div className="bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl p-4">
-                <p className="text-xs font-bold text-[#2E7D32] uppercase tracking-wider mb-3">From your last pipeline run — save grants to track</p>
+              <div className="bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl p-4">
+                <p className="text-xs font-bold text-[#76B900] uppercase tracking-wider mb-3">From your last pipeline run — save grants to track</p>
                 <div className="flex flex-wrap gap-2">
                   {discoveredGrants.map((g, i) => {
                     const alreadySaved = trackerGrants.some(t => t.title === g.title);
@@ -1404,8 +1404,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         disabled={alreadySaved}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                           alreadySaved
-                            ? 'bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/20 cursor-default'
-                            : 'bg-white border-stone-200 text-stone-700 hover:border-[#2E7D32] hover:text-[#2E7D32]'
+                            ? 'bg-[#76B900]/10 text-[#76B900] border-[#76B900]/20 cursor-default'
+                            : 'bg-white border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900]'
                         }`}>
                         {alreadySaved ? <BookmarkCheck className="w-3 h-3" /> : <Bookmark className="w-3 h-3" />}
                         {g.title.length > 30 ? g.title.slice(0,30) + '...' : g.title}
@@ -1422,7 +1422,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <Kanban className="w-12 h-12 text-stone-300 mb-4" />
                 <p className="text-stone-500 font-semibold">No grants tracked yet.</p>
                 <p className="text-sm text-stone-400 mt-1 max-w-sm">Run the pipeline to discover grants, then save them here to track your applications.</p>
-                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-sm font-bold text-[#2E7D32] hover:underline">Run Pipeline →</button>
+                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-sm font-bold text-[#76B900] hover:underline">Run Pipeline →</button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1437,10 +1437,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     stone:'border-stone-300 bg-stone-50',
                     blue:'border-blue-200 bg-blue-50',
                     amber:'border-amber-200 bg-amber-50',
-                    green:'border-[#2E7D32]/30 bg-[#2E7D32]/5',
+                    green:'border-[#76B900]/30 bg-[#76B900]/5',
                   };
                   const headerMap: Record<string, string> = {
-                    stone:'text-stone-600',blue:'text-blue-700',amber:'text-amber-700',green:'text-[#2E7D32]'
+                    stone:'text-stone-600',blue:'text-blue-700',amber:'text-amber-700',green:'text-[#76B900]'
                   };
                   return (
                     <div key={col.key} className={`rounded-2xl border-2 ${colorMap[col.color]} p-3 min-h-[200px]`}>
@@ -1455,7 +1455,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                           <div key={g.id} className="bg-white rounded-xl border border-stone-200 p-3 shadow-sm">
                             <div className="flex items-start justify-between gap-1 mb-1">
                               <a href={g.url} target="_blank" rel="noopener noreferrer"
-                                className="text-xs font-bold text-stone-900 hover:text-[#2E7D32] leading-tight line-clamp-2">
+                                className="text-xs font-bold text-stone-900 hover:text-[#76B900] leading-tight line-clamp-2">
                                 {g.title}
                               </a>
                               <button onClick={() => removeTrackerGrant(g.id)} className="shrink-0 text-stone-300 hover:text-red-400 transition-colors">
@@ -1466,7 +1466,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                             <p className="text-[10px] text-stone-400 mb-2">{g.source} · Added {g.addedAt}</p>
                             {col.next && (
                               <button onClick={() => moveTrackerGrant(g.id, col.next as TrackerGrant['status'])}
-                                className="w-full flex items-center justify-center gap-1 text-[10px] font-bold text-stone-500 hover:text-[#2E7D32] border border-stone-200 hover:border-[#2E7D32] rounded-lg py-1 transition-colors">
+                                className="w-full flex items-center justify-center gap-1 text-[10px] font-bold text-stone-500 hover:text-[#76B900] border border-stone-200 hover:border-[#76B900] rounded-lg py-1 transition-colors">
                                 Mark as {col.next === 'applied' ? 'Applied' : col.next === 'in-review' ? 'In Review' : 'Won'}
                                 <ChevronRight className="w-3 h-3" />
                               </button>
@@ -1487,14 +1487,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
             {/* Cover + Avatar + Logo Upload */}
             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-              <div className="h-28 bg-gradient-to-r from-[#2E7D32] to-[#1B5E20] relative">
+              <div className="h-28 bg-gradient-to-r from-[#76B900] to-[#689900] relative">
                 <div className="absolute inset-0 opacity-10" style={{backgroundImage:'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)',backgroundSize:'20px 20px'}} />
               </div>
               <div className="px-6 pb-6">
                 <div className="-mt-10 mb-4 flex items-end justify-between">
                   {/* Avatar with upload */}
                   <div className="relative group">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#2E7D32] flex items-center justify-center shadow-lg overflow-hidden">
+                    <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#76B900] flex items-center justify-center shadow-lg overflow-hidden">
                       {profile.logoDataUrl
                         ? <img src={profile.logoDataUrl} alt="logo" className="w-full h-full object-cover" />
                         : user?.photo
@@ -1514,7 +1514,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         }} />
                     </label>
                   </div>
-                  <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-sm font-bold text-stone-600 hover:border-[#2E7D32] hover:text-[#2E7D32] transition-colors">
+                  <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-sm font-bold text-stone-600 hover:border-[#76B900] hover:text-[#76B900] transition-colors">
                     Edit Profile
                   </button>
                 </div>
@@ -1522,14 +1522,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 {profile.tagline && <p className="text-stone-500 text-sm mt-1 italic">{profile.tagline}</p>}
                 <p className="text-stone-400 text-xs mt-0.5">{user?.email}</p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  {profile.orgType && <span className="text-xs font-bold bg-[#2E7D32]/10 text-[#2E7D32] px-2.5 py-1 rounded-full">{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType === 'small-business' ? 'Small Business' : profile.orgType}</span>}
+                  {profile.orgType && <span className="text-xs font-bold bg-[#76B900]/10 text-[#76B900] px-2.5 py-1 rounded-full">{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType === 'small-business' ? 'Small Business' : profile.orgType}</span>}
                   {profile.location && <span className="text-xs text-stone-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{profile.location}</span>}
                   {profile.yearFounded && <span className="text-xs text-stone-500">Est. {profile.yearFounded}</span>}
                   {profile.teamSize && <span className="text-xs text-stone-500">{profile.teamSize} team</span>}
                 </div>
                 {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {profile.website && <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#2E7D32] hover:underline flex items-center gap-1"><Globe className="w-3 h-3" />Website</a>}
+                    {profile.website && <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#76B900] hover:underline flex items-center gap-1"><Globe className="w-3 h-3" />Website</a>}
                     {profile.linkedinUrl && <a href={profile.linkedinUrl.startsWith('http') ? profile.linkedinUrl : `https://${profile.linkedinUrl}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1"><Linkedin className="w-3 h-3" />LinkedIn</a>}
                     {profile.twitterUrl && <span className="text-xs text-sky-500 flex items-center gap-1"><Twitter className="w-3 h-3" />{profile.twitterUrl}</span>}
                   </div>
@@ -1557,11 +1557,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   {label:'Impact Metrics', ok: profile.impactMetrics.length >= 10},
                 ].map(item => (
                   <span key={item.label} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    item.ok ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : 'bg-stone-100 text-stone-400'
+                    item.ok ? 'bg-[#76B900]/10 text-[#76B900]' : 'bg-stone-100 text-stone-400'
                   }`}>{item.ok ? '✓' : '✕'} {item.label}</span>
                 ))}
               </div>
-              {profileScore < 80 && <p className="text-xs text-stone-400 mt-2">Complete your profile to improve AI grant matching accuracy. <button onClick={() => setStep('onboarding')} className="text-[#2E7D32] font-bold hover:underline">Complete now →</button></p>}
+              {profileScore < 80 && <p className="text-xs text-stone-400 mt-2">Complete your profile to improve AI grant matching accuracy. <button onClick={() => setStep('onboarding')} className="text-[#76B900] font-bold hover:underline">Complete now →</button></p>}
             </div>
 
             {/* Stats */}
@@ -1586,19 +1586,19 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl border ${
-                  profile.ein ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-amber-50 border-amber-200'
+                  profile.ein ? 'bg-[#76B900]/5 border-[#76B900]/20' : 'bg-amber-50 border-amber-200'
                 }">
                   <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
-                    profile.ein ? 'text-[#2E7D32]' : 'text-amber-600'
+                    profile.ein ? 'text-[#76B900]' : 'text-amber-600'
                   }">{profile.ein ? '✓ EIN / Tax ID' : '⚠️ EIN / Tax ID — Required'}</div>
                   <div className="text-sm font-mono text-stone-800">{profile.ein || <span className="text-stone-400 italic">Not added yet — needed for federal grants</span>}
                   </div>
                 </div>
                 <div className="p-4 rounded-xl border ${
-                  profile.dunsNumber ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-amber-50 border-amber-200'
+                  profile.dunsNumber ? 'bg-[#76B900]/5 border-[#76B900]/20' : 'bg-amber-50 border-amber-200'
                 }">
                   <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
-                    profile.dunsNumber ? 'text-[#2E7D32]' : 'text-amber-600'
+                    profile.dunsNumber ? 'text-[#76B900]' : 'text-amber-600'
                   }">{profile.dunsNumber ? '✓ DUNS / SAM Number' : '⚠️ DUNS / SAM — Required for Grants.gov'}</div>
                   <div className="text-sm font-mono text-stone-800">{profile.dunsNumber || <span className="text-stone-400 italic">Not added yet — register at sam.gov</span>}
                   </div>
@@ -1609,10 +1609,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Impact Metrics */}
             {profile.impactMetrics ? (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#2E7D32]" /> Impact Metrics</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#76B900]" /> Impact Metrics</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.impactMetrics.split(/[·,;]+/).map((m, i) => m.trim() && (
-                    <span key={i} className="bg-[#2E7D32]/10 text-[#2E7D32] text-sm font-semibold px-3 py-1.5 rounded-full">{m.trim()}</span>
+                    <span key={i} className="bg-[#76B900]/10 text-[#76B900] text-sm font-semibold px-3 py-1.5 rounded-full">{m.trim()}</span>
                   ))}
                 </div>
               </div>
@@ -1630,7 +1630,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Mission */}
             {(profile.focusArea || profile.missionStatement) && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Cpu className="w-4 h-4 text-[#2E7D32]" /> Mission & Focus</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Cpu className="w-4 h-4 text-[#76B900]" /> Mission & Focus</h3>
                 {profile.focusArea && <span className="inline-block text-sm font-bold bg-stone-100 text-stone-700 px-3 py-1 rounded-full mb-3">{profile.focusArea}</span>}
                 {profile.missionStatement && <p className="text-stone-600 text-sm leading-relaxed">{profile.missionStatement}</p>}
                 {profile.targetPopulation && <p className="text-stone-500 text-xs mt-3 flex items-center gap-1"><Users className="w-3 h-3" /> Serving: {profile.targetPopulation}</p>}
@@ -1640,11 +1640,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Team Members */}
             {profile.teamMembersText && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-[#2E7D32]" /> Team</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-[#76B900]" /> Team</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.teamMembersText.split(',').map((m, i) => m.trim() && (
                     <div key={i} className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2">
-                      <div className="w-7 h-7 bg-[#2E7D32]/10 rounded-full flex items-center justify-center text-xs font-black text-[#2E7D32]">{m.trim()[0]?.toUpperCase()}</div>
+                      <div className="w-7 h-7 bg-[#76B900]/10 rounded-full flex items-center justify-center text-xs font-black text-[#76B900]">{m.trim()[0]?.toUpperCase()}</div>
                       <span className="text-sm text-stone-700">{m.trim()}</span>
                     </div>
                   ))}
@@ -1655,7 +1655,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Grant History */}
             {profile.grantHistoryText && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#2E7D32]" /> Grant History</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#76B900]" /> Grant History</h3>
                 <div className="space-y-2">
                   {profile.grantHistoryText.split(/[·;\n]+/).map((entry, i) => {
                     const text = entry.trim();
@@ -1665,7 +1665,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     return (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
                         <span className={`text-xs font-black px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${
-                          isWon ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : isReview ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'
+                          isWon ? 'bg-[#76B900]/10 text-[#76B900]' : isReview ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'
                         }`}>{isWon ? 'Won' : isReview ? 'In Review' : 'Applied'}</span>
                         <span className="text-sm text-stone-700">{text}</span>
                       </div>
@@ -1678,7 +1678,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Funding Goal */}
             {profile.projectDescription && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Current Funding Goal</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#76B900]" /> Current Funding Goal</h3>
                 <p className="text-stone-600 text-sm leading-relaxed">{profile.projectDescription}</p>
               </div>
             )}
@@ -1686,7 +1686,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Background */}
             {(profile.backgroundInfo || profile.resumeText) && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Background & Experience</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#76B900]" /> Background & Experience</h3>
                 <p className="text-stone-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.backgroundInfo || profile.resumeText}</p>
               </div>
             )}
@@ -1702,10 +1702,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
             {/* Empty state */}
             {profileScore < 20 && (
-              <div className="bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-2xl p-8 text-center">
+              <div className="bg-[#76B900]/5 border border-[#76B900]/20 rounded-2xl p-8 text-center">
                 <p className="text-stone-700 font-semibold mb-3">Your profile is mostly empty.</p>
                 <p className="text-stone-500 text-sm mb-4">A complete profile gets 3x better grant matches from our AI agents.</p>
-                <button onClick={() => setStep('onboarding')} className="bg-[#2E7D32] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1B5E20] transition-colors">
+                <button onClick={() => setStep('onboarding')} className="bg-[#76B900] text-[#111111] font-bold px-6 py-3 rounded-xl hover:bg-[#689900] transition-colors">
                   Complete My Profile →
                 </button>
               </div>
@@ -1716,7 +1716,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         {activeTab === 'integrations' && (
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-in fade-in">
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#2E7D32]" /> App Integrations</h2>
+              <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#76B900]" /> App Integrations</h2>
               <p className="text-sm text-stone-500 mt-1">Connect your favorite tools to allow CivicPath to act autonomously on your behalf.</p>
             </div>
             
@@ -1737,9 +1737,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 <button 
                   onClick={() => setIntegrations({...integrations, gmail: !integrations.gmail})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.gmail ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
+                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.gmail ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
                 >
-                  {integrations.gmail ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Gmail'}
+                  {integrations.gmail ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Gmail'}
                 </button>
               </div>
 
@@ -1759,9 +1759,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 <button 
                   onClick={() => setIntegrations({...integrations, meet: !integrations.meet})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.meet ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
+                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.meet ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
                 >
-                  {integrations.meet ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Meet'}
+                  {integrations.meet ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Meet'}
                 </button>
               </div>
 
@@ -1781,9 +1781,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 <button 
                   onClick={() => setIntegrations({...integrations, zoom: !integrations.zoom})}
-                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.zoom ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]'}`}
+                  className={`w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center ${integrations.zoom ? 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900]'}`}
                 >
-                  {integrations.zoom ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#2E7D32]" /> Connected</> : 'Connect Zoom'}
+                  {integrations.zoom ? <><CheckCircle2 className="w-4 h-4 mr-2 text-[#76B900]" /> Connected</> : 'Connect Zoom'}
                 </button>
               </div>
             </div>
@@ -1794,7 +1794,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-in fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#2E7D32]" /> AI Work Plan</h2>
+                <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#76B900]" /> AI Work Plan</h2>
                 <p className="text-sm text-stone-500 mt-1">
                   {discoveredGrants.length > 0
                     ? `AI generated ${discoveredGrants.length * 4} work blocks across ${discoveredGrants.length} live grants from your pipeline.`
@@ -1813,7 +1813,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     window.open(url, '_blank');
                   });
                 }}
-                className="px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center w-full md:w-auto justify-center"
+                className="px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center w-full md:w-auto justify-center"
               >
                 <Calendar className="w-4 h-4 mr-2" /> Sync to Google Calendar
               </button>
@@ -1839,7 +1839,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <div key={gi}>
                       <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100 flex items-center justify-between">
                         <span>{grant.title}</span>
-                        <a href={grant.url} target="_blank" rel="noopener noreferrer" className="text-[#2E7D32] hover:underline normal-case font-medium">View on Grants.gov →</a>
+                        <a href={grant.url} target="_blank" rel="noopener noreferrer" className="text-[#76B900] hover:underline normal-case font-medium">View on Grants.gov →</a>
                       </h3>
                       <div className="space-y-3">
                         {blocks.map((b, bi) => {
@@ -1849,7 +1849,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                           const calDate = blockDate.toISOString().replace(/-/g,'').split('T')[0];
                           const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(grant.title + ': ' + b.label)}&dates=${calDate}/${calDate}&details=${encodeURIComponent('CivicPath — ' + grant.title)}`;
                           return (
-                            <div key={bi} className={`flex flex-col md:flex-row md:items-center p-4 rounded-xl gap-4 border ${b.color ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-stone-50 border-stone-200'}`}>
+                            <div key={bi} className={`flex flex-col md:flex-row md:items-center p-4 rounded-xl gap-4 border ${b.color ? 'bg-[#76B900]/5 border-[#76B900]/20' : 'bg-stone-50 border-stone-200'}`}>
                               <div className="w-24 shrink-0 text-xs font-bold text-stone-500 flex items-center"><Clock className="w-3.5 h-3.5 mr-1" />{dateStr}</div>
                               <div className="flex-1">
                                 <div className="text-sm font-bold text-stone-800">{b.label}</div>
@@ -1857,7 +1857,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600">{b.hours}</span>
-                                <button onClick={() => window.open(calUrl, '_blank')} className="p-1.5 text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg transition-colors" title="Add to Google Calendar">
+                                <button onClick={() => window.open(calUrl, '_blank')} className="p-1.5 text-[#76B900] hover:bg-[#76B900]/10 rounded-lg transition-colors" title="Add to Google Calendar">
                                   <Calendar className="w-4 h-4" />
                                 </button>
                               </div>
@@ -1877,37 +1877,37 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden animate-in fade-in">
             <div className="p-6 border-b border-stone-100 flex flex-col md:flex-row justify-between gap-4 bg-stone-50/50">
               <div>
-                <h2 className="text-xl font-bold text-stone-800 flex items-center"><Users className="w-5 h-5 mr-2 text-[#2E7D32]" /> Meeting Summary Agent</h2>
+                <h2 className="text-xl font-bold text-stone-800 flex items-center"><Users className="w-5 h-5 mr-2 text-[#76B900]" /> Meeting Summary Agent</h2>
                 <p className="text-sm text-stone-500 mt-1">Paste your transcript or connect Google Meet to automatically extract actionable grant milestones.</p>
               </div>
               <div className="flex space-x-3">
                 <button onClick={() => window.open('https://meet.google.com', '_blank')} className="flex-1 md:flex-none px-4 py-2 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
                   <Video className="w-4 h-4 mr-2 text-stone-500" /> Connect Meet
                 </button>
-                <button onClick={() => {}} className="flex-1 md:flex-none px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center justify-center">
+                <button onClick={() => {}} className="flex-1 md:flex-none px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center justify-center">
                   <FileText className="w-4 h-4 mr-2" /> Paste Transcript
                 </button>
               </div>
             </div>
             
             <div className="p-6">
-              <div className="bg-white border border-[#2E7D32]/20 rounded-xl p-6 shadow-md relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-[#2E7D32]"></div>
+              <div className="bg-white border border-[#76B900]/20 rounded-xl p-6 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-[#76B900]"></div>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                   <div>
                     <h3 className="text-lg font-black text-stone-800 uppercase tracking-tight">GRANT PREP MEETING SUMMARY</h3>
                     <p className="text-xs font-medium text-stone-500 mt-1.5">Date: March 21, 2026 | Duration: 47 min | Grant: NSF SBIR Phase I — $200K</p>
                   </div>
-                  <span className="px-3 py-1 bg-[#2E7D32]/10 text-[#2E7D32] text-[10px] font-black uppercase tracking-wider rounded-md border border-[#2E7D32]/20">AI Generated</span>
+                  <span className="px-3 py-1 bg-[#76B900]/10 text-[#76B900] text-[10px] font-black uppercase tracking-wider rounded-md border border-[#76B900]/20">AI Generated</span>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
-                    <h4 className="text-sm font-bold text-stone-700 mb-3 flex items-center uppercase tracking-wider"><CheckSquare className="w-4 h-4 mr-2 text-[#2E7D32]" /> Decisions Made</h4>
+                    <h4 className="text-sm font-bold text-stone-700 mb-3 flex items-center uppercase tracking-wider"><CheckSquare className="w-4 h-4 mr-2 text-[#76B900]" /> Decisions Made</h4>
                     <ul className="space-y-2.5 text-sm text-stone-600 font-medium">
-                      <li className="flex items-start"><span className="mr-2 text-[#2E7D32]">•</span> CEO will sign off on budget section by Thursday</li>
-                      <li className="flex items-start"><span className="mr-2 text-[#2E7D32]">•</span> Legal to review IP clause in section 3.2</li>
-                      <li className="flex items-start"><span className="mr-2 text-[#2E7D32]">•</span> Demo video needed — assign to marketing team</li>
+                      <li className="flex items-start"><span className="mr-2 text-[#76B900]">•</span> CEO will sign off on budget section by Thursday</li>
+                      <li className="flex items-start"><span className="mr-2 text-[#76B900]">•</span> Legal to review IP clause in section 3.2</li>
+                      <li className="flex items-start"><span className="mr-2 text-[#76B900]">•</span> Demo video needed — assign to marketing team</li>
                     </ul>
                   </div>
                   <div>
@@ -1920,28 +1920,28 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 
                 <div className="mt-8 pt-6 border-t border-stone-100">
-                  <h4 className="text-sm font-bold text-stone-700 mb-4 flex items-center uppercase tracking-wider"><ListTodo className="w-4 h-4 mr-2 text-[#2E7D32]" /> Action Items</h4>
+                  <h4 className="text-sm font-bold text-stone-700 mb-4 flex items-center uppercase tracking-wider"><ListTodo className="w-4 h-4 mr-2 text-[#76B900]" /> Action Items</h4>
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#2E7D32] w-20 bg-[#2E7D32]/10 px-2 py-0.5 rounded text-center mr-3">[John]</span> <span className="font-medium text-stone-800">Budget finalization</span></div>
+                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#76B900] w-20 bg-[#76B900]/10 px-2 py-0.5 rounded text-center mr-3">[John]</span> <span className="font-medium text-stone-800">Budget finalization</span></div>
                       <div className="text-xs font-bold text-stone-500 bg-white px-2 py-1 border border-stone-200 rounded">Due Wed March 23</div>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#2E7D32] w-20 bg-[#2E7D32]/10 px-2 py-0.5 rounded text-center mr-3">[Sarah]</span> <span className="font-medium text-stone-800">IP review</span></div>
+                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#76B900] w-20 bg-[#76B900]/10 px-2 py-0.5 rounded text-center mr-3">[Sarah]</span> <span className="font-medium text-stone-800">IP review</span></div>
                       <div className="text-xs font-bold text-stone-500 bg-white px-2 py-1 border border-stone-200 rounded">Due Fri March 25</div>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#2E7D32] w-20 bg-[#2E7D32]/10 px-2 py-0.5 rounded text-center mr-3">[Team]</span> <span className="font-medium text-stone-800">Video production</span></div>
+                      <div className="flex items-center text-sm mb-2 sm:mb-0"><span className="font-bold text-[#76B900] w-20 bg-[#76B900]/10 px-2 py-0.5 rounded text-center mr-3">[Team]</span> <span className="font-medium text-stone-800">Video production</span></div>
                       <div className="text-xs font-bold text-stone-500 bg-white px-2 py-1 border border-stone-200 rounded">Due Mon March 28</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 bg-[#2E7D32]/5 p-4 rounded-xl border border-[#2E7D32]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center text-sm font-bold text-[#2E7D32]">
+                <div className="mt-6 bg-[#76B900]/5 p-4 rounded-xl border border-[#76B900]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center text-sm font-bold text-[#76B900]">
                     <Calendar className="w-5 h-5 mr-2" /> Next Meeting: Friday 2:00 PM
                   </div>
-                  <span className="text-[10px] font-black text-white bg-[#2E7D32] px-2 py-1 rounded uppercase tracking-wider shadow-sm">Auto-booked in G-Cal</span>
+                  <span className="text-[10px] font-black text-white bg-[#76B900] px-2 py-1 rounded uppercase tracking-wider shadow-sm">Auto-booked in G-Cal</span>
                 </div>
               </div>
             </div>
@@ -2004,7 +2004,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   )}
                   <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-[#2E7D32] text-white rounded-br-sm'
+                      ? 'bg-[#76B900] text-[#111111] rounded-br-sm'
                       : 'bg-stone-50 border border-stone-200 text-stone-800 rounded-bl-sm'
                   }`}>
                     {msg.role === 'assistant' ? (
@@ -2014,8 +2014,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     ) : msg.content}
                   </div>
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-[#2E7D32]">{(user?.name?.[0] || 'U').toUpperCase()}</span>
+                    <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[#76B900]">{(user?.name?.[0] || 'U').toUpperCase()}</span>
                     </div>
                   )}
                 </div>
@@ -2066,15 +2066,15 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <>
             {/* Pipeline Status Banner */}
             <div className="mb-6 p-4 bg-white border border-stone-200 rounded-xl shadow-sm flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse"></div>
-              <span className="text-sm font-semibold text-stone-700">Live data powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#2E7D32] hover:underline">Grants.gov</a> + SBA SBIR — real-time federal grant database</span>
+              <div className="w-2 h-2 rounded-full bg-[#76B900] animate-pulse"></div>
+              <span className="text-sm font-semibold text-stone-700">Live data powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#76B900] hover:underline">Grants.gov</a> + SBA SBIR — real-time federal grant database</span>
             </div>
 
             {/* Active Profile & Controls */}
             <div className="mb-6 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
               <div className="flex flex-wrap items-center gap-3 p-5">
                 <div className="text-sm font-semibold text-stone-400 flex items-center uppercase tracking-wider shrink-0">
-                  <Building2 className="w-4 h-4 mr-2 text-[#2E7D32]" />
+                  <Building2 className="w-4 h-4 mr-2 text-[#76B900]" />
                   Profile:
                 </div>
                 <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.companyName || 'Anonymous'}</span>
@@ -2084,7 +2084,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">Edit Profile</button>
                   <button onClick={handleExecute} disabled={isRunning}
                     className={`inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                      isRunning ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20] shadow-sm active:scale-[0.98]'
+                      isRunning ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900] shadow-sm active:scale-[0.98]'
                     }`}>
                     {isRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Agents Acting...</> : <><Play className="w-4 h-4 mr-2 fill-current" />Run Full Pipeline</>}
                   </button>
@@ -2098,7 +2098,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 <span className={`text-xs font-black ${profileScoreColor}`}>{profileScore}%</span>
                 {profileScore < 80 && (
-                  <button onClick={() => setStep('onboarding')} className="text-[10px] text-[#2E7D32] font-bold hover:underline whitespace-nowrap">+ Complete profile →</button>
+                  <button onClick={() => setStep('onboarding')} className="text-[10px] text-[#76B900] font-bold hover:underline whitespace-nowrap">+ Complete profile →</button>
                 )}
               </div>
             </div>
@@ -2106,14 +2106,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* 🌟 GLOBAL LIVE ORCHESTRATION LOG PANEL 🌟 */}
             {(isRunning || globalLogs.length > 0) && (
               <div className="mb-8 bg-stone-900 rounded-xl shadow-2xl border border-stone-800 overflow-hidden relative transform transition-all duration-500">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#2E7D32] via-emerald-400 to-[#2E7D32] opacity-90 shadow-[0_0_10px_rgba(46,125,50,0.5)]"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#76B900] via-emerald-400 to-[#76B900] opacity-90 shadow-[0_0_10px_rgba(46,125,50,0.5)]"></div>
                 <div className="px-5 py-3 border-b border-stone-800 flex items-center justify-between bg-stone-950/80">
                   <div className="flex items-center space-x-2">
-                    <TerminalSquare className="w-4 h-4 text-[#2E7D32]" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#2E7D32]">Live Agent Comm Stream</span>
+                    <TerminalSquare className="w-4 h-4 text-[#76B900]" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#76B900]">Live Agent Comm Stream</span>
                   </div>
                   {isRunning ? (
-                    <Loader2 className="w-4 h-4 text-[#2E7D32] animate-spin" />
+                    <Loader2 className="w-4 h-4 text-[#76B900] animate-spin" />
                   ) : (
                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider px-2 py-0.5 border border-stone-700 rounded bg-stone-800">Pipeline Complete</span>
                   )}
@@ -2124,7 +2124,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       {log}
                     </div>
                   ))}
-                  {isRunning && <div className="animate-pulse text-[#2E7D32] font-bold mt-1">_</div>}
+                  {isRunning && <div className="animate-pulse text-[#76B900] font-bold mt-1">_</div>}
                   <div ref={globalLogsEndRef} />
                 </div>
               </div>
@@ -2149,7 +2149,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         rows={12}
                         value={editedProposal}
                         onChange={e => setEditedProposal(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 text-sm font-mono resize-none"
+                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 text-sm font-mono resize-none"
                       />
                     </div>
                   ) : (
@@ -2159,7 +2159,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   )}
                   <div className="flex gap-3 flex-wrap">
                     <button onClick={handleApproveAndSubmit}
-                      className="flex items-center gap-2 px-6 py-3 bg-[#2E7D32] text-white font-bold rounded-xl hover:bg-[#1B5E20] transition-colors shadow-sm">
+                      className="flex items-center gap-2 px-6 py-3 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors shadow-sm">
                       <CheckCircle2 className="w-4 h-4" /> Approve & Submit
                     </button>
                     <button onClick={() => setEditMode(!editMode)}
@@ -2215,9 +2215,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
             {/* Completion Actions (Calendar & PDF) */}
             {nextAction?.type === 'success' && (
-              <div className="mb-8 p-6 bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-8 p-6 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-[#2E7D32] text-white rounded-full"><CheckCircle2 className="w-6 h-6" /></div>
+                  <div className="p-3 bg-[#76B900] text-[#111111] rounded-full"><CheckCircle2 className="w-6 h-6" /></div>
                   <div>
                     <h3 className="font-bold text-stone-900 text-lg">Action Pipeline Complete</h3>
                     <p className="text-sm text-stone-600">Proposal drafted, verified, and sent. The Watcher is now monitoring.</p>
@@ -2244,7 +2244,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     }}
                     className="flex items-center px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 font-bold text-sm shadow-sm transition-colors"
                   >
-                    <Download className="w-4 h-4 mr-2 text-[#2E7D32]" /> Download PDF Proposal
+                    <Download className="w-4 h-4 mr-2 text-[#76B900]" /> Download PDF Proposal
                   </button>
                   <button
                     onClick={() => {
@@ -2253,7 +2253,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Grant Deadline: ' + grantName)}&dates=${deadline}/${deadline}&details=${encodeURIComponent('Apply for ' + grantName + ' — CivicPath')}`;
                       window.open(url, '_blank');
                     }}
-                    className="flex items-center px-4 py-2 bg-[#2E7D32] text-white rounded-lg hover:bg-[#1B5E20] font-bold text-sm shadow-sm transition-colors"
+                    className="flex items-center px-4 py-2 bg-[#76B900] text-[#111111] rounded-lg hover:bg-[#689900] font-bold text-sm shadow-sm transition-colors"
                   >
                     <Calendar className="w-4 h-4 mr-2" /> Book Deadlines to G-Cal
                   </button>
@@ -2282,8 +2282,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <div className="px-5 py-4 border-b border-inherit bg-stone-50/50 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className={`p-2 rounded-xl border ${
-                        agent.status === 'working' ? 'bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/20' :
-                        agent.status === 'completed' ? 'bg-[#2E7D32]/5 text-[#2E7D32] border-[#2E7D32]/10' :
+                        agent.status === 'working' ? 'bg-[#76B900]/10 text-[#76B900] border-[#76B900]/20' :
+                        agent.status === 'completed' ? 'bg-[#76B900]/5 text-[#76B900] border-[#76B900]/10' :
                         agent.status === 'error' ? 'bg-red-50 text-red-500 border-red-100' :
                         'bg-stone-100 text-stone-400 border-stone-200'
                       }`}>
@@ -2293,8 +2293,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     </div>
                     <div className="flex items-center space-x-2 bg-white px-2.5 py-1 rounded-lg border border-stone-200 shadow-sm">
                       <span className={`text-[9px] font-bold uppercase tracking-wider ${
-                         agent.status === 'working' ? 'text-[#2E7D32]' :
-                         agent.status === 'completed' ? 'text-[#2E7D32]' :
+                         agent.status === 'working' ? 'text-[#76B900]' :
+                         agent.status === 'completed' ? 'text-[#76B900]' :
                          agent.status === 'error' ? 'text-red-500' :
                          'text-stone-400'
                       }`}>
@@ -2312,12 +2312,12 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       )}
                       {agent.logs.map((log, i) => (
                         <div key={i} className="mb-1.5 text-stone-300">
-                          <span className="text-[#2E7D32] font-bold mr-1.5 opacity-70">❯</span>{log}
+                          <span className="text-[#76B900] font-bold mr-1.5 opacity-70">❯</span>{log}
                         </div>
                       ))}
                       {agent.status === 'working' && (
                         <div className="animate-pulse text-stone-500">
-                          <span className="text-[#2E7D32] font-bold mr-1.5">❯</span>_
+                          <span className="text-[#76B900] font-bold mr-1.5">❯</span>_
                         </div>
                       )}
                       <div ref={(el) => { logsEndRefs.current[agent.id] = el; }} />
@@ -2325,7 +2325,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
                     {/* Agent Output */}
                     {agent.output && (
-                      <div className="p-4 bg-white border-t border-inherit flex-1 prose prose-sm prose-stone max-w-none prose-a:text-[#2E7D32] prose-a:font-bold prose-a:no-underline hover:prose-a:underline text-xs leading-relaxed">
+                      <div className="p-4 bg-white border-t border-inherit flex-1 prose prose-sm prose-stone max-w-none prose-a:text-[#76B900] prose-a:font-bold prose-a:no-underline hover:prose-a:underline text-xs leading-relaxed">
                         <ReactMarkdown>{agent.output}</ReactMarkdown>
                       </div>
                     )}

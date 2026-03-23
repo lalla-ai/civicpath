@@ -111,13 +111,13 @@ export default function Pricing() {
 
         {/* Success banner */}
         {success && (
-          <div className="mb-10 p-5 bg-[#2E7D32]/10 border border-[#2E7D32]/30 rounded-2xl flex items-center gap-4">
-            <CheckCircle2 className="w-6 h-6 text-[#2E7D32] shrink-0" />
+          <div className="mb-10 p-5 bg-[#76B900]/10 border border-[#76B900]/30 rounded-2xl flex items-center gap-4">
+            <CheckCircle2 className="w-6 h-6 text-[#76B900] shrink-0" />
             <div>
-              <p className="font-bold text-[#1B5E20]">Welcome to CivicPath {successPlan === 'funder' ? 'Funder' : 'Pro'}! 🎉</p>
+              <p className="font-bold text-[#689900]">Welcome to CivicPath {successPlan === 'funder' ? 'Funder' : 'Pro'}! 🎉</p>
               <p className="text-sm text-stone-600">Your 14-day free trial has started. No charge until the trial ends.</p>
             </div>
-            <Link to={successPlan === 'funder' ? '/funder' : '/seeker'} className="ml-auto bg-[#2E7D32] text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-[#1B5E20] transition-colors whitespace-nowrap">
+            <Link to={successPlan === 'funder' ? '/funder' : '/seeker'} className="ml-auto bg-[#76B900] text-[#111111] font-bold px-4 py-2 rounded-xl text-sm hover:bg-[#689900] transition-colors whitespace-nowrap">
               Go to Dashboard →
             </Link>
           </div>
@@ -157,7 +157,7 @@ export default function Pricing() {
         <div className="text-center mb-16">
           <h1 className="text-5xl font-[900] text-stone-900 mb-4 tracking-tight">Simple, transparent pricing</h1>
           <p className="text-xl text-stone-500">Start free. Upgrade anytime. Cancel anytime.</p>
-          <div className="mt-4 inline-flex items-center gap-2 bg-[#76B90015] text-[#2E7D32] rounded-full px-4 py-1.5 text-sm font-semibold">
+          <div className="mt-4 inline-flex items-center gap-2 bg-[#76B90015] text-[#76B900] rounded-full px-4 py-1.5 text-sm font-semibold">
             ✨ All paid plans include a 14-day free trial
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function Pricing() {
               <ul className="space-y-3 flex-1 mb-8">
                 {p.features.map((f, j) => (
                   <li key={j} className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${p.highlight ? 'text-[#76B900]' : 'text-[#2E7D32]'}`} />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${p.highlight ? 'text-[#76B900]' : 'text-[#76B900]'}`} />
                     <span className={p.highlight ? 'text-stone-300' : 'text-stone-600'}>{f}</span>
                   </li>
                 ))}
