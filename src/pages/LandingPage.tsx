@@ -58,22 +58,20 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <section className="py-32 text-center px-6">
-        <div className="inline-flex items-center gap-2 bg-[#76B90020] text-[#76B900] rounded-full px-4 py-1 text-xs font-medium mb-2">
+      <section className="pt-24 pb-20 text-center px-6">
+        <div className="inline-flex items-center gap-2 bg-[#76B90015] text-[#5a9000] rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide">
           🏆 Google Cloud ADK Hackathon 2026 · Finalist
         </div>
-        <h1 className="mt-8 text-6xl font-bold tracking-tight text-stone-900 leading-[1.1] max-w-3xl mx-auto">
+        <h1 className="mt-7 text-6xl font-bold tracking-tight text-stone-900 leading-[1.08] max-w-3xl mx-auto">
           Find The Grant<br />
           <span className="text-[#76B900]">That Gets You.</span>
         </h1>
-        <p className="mt-6 text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed">
-          6 AI agents find, score, draft, and submit grants for your organization — automatically.<br />
-          <span className="text-sm text-stone-400">The only platform that goes from discovery to submission in one click. Free to start.</span>
+        <p className="mt-5 text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
+          6 AI agents find, score, draft, and submit grants for your org — automatically. First match in 60 seconds.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#8FD400] transition-colors">Find My Grants →</Link>
-          <Link to="/login?role=funder" className="border-2 border-stone-700 text-stone-800 font-semibold px-5 py-2.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors bg-white">I'm a Grant Funder</Link>
-          <Link to="/demo" className="border border-stone-300 text-stone-600 px-5 py-2.5 rounded-lg hover:border-stone-500 hover:text-stone-800 transition-colors flex items-center gap-2 bg-white">▶ Try Live Demo</Link>
+        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">Find My Grants →</Link>
+          <Link to="/login?role=funder" className="border border-stone-300 text-stone-700 font-semibold px-6 py-3 rounded-lg hover:border-stone-500 hover:text-stone-900 transition-colors bg-white">Give Grants</Link>
         </div>
         {/* MyLalla Hero Chat Bar */}
         <div className="mt-10 max-w-2xl mx-auto">
@@ -112,104 +110,132 @@ export default function LandingPage() {
           )}
         </div>
 
-        <p className="mt-4 text-xs text-stone-400">Free to start · No credit card · Sovereign data</p>
+        <p className="mt-5 text-xs text-stone-400 tracking-wide">Free · No credit card · Sovereign data</p>
       </section>
 
       {/* 6 AGENTS */}
-      <section className="py-24 px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">THE ENGINE</p>
-          <h2 className="text-4xl font-bold text-stone-900">Six AI agents. One click.</h2>
-          <p className="text-stone-500 max-w-xl mx-auto mt-4">From live grant discovery to proposal delivery — your AI team works 24/7 so you don't have to.</p>
+      <section className="py-20 px-6 bg-white border-t border-stone-100">
+        <div className="text-center mb-12">
+          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-3">THE ENGINE</p>
+          <h2 className="text-3xl font-bold text-stone-900 tracking-tight">Six AI agents. One click.</h2>
+          <p className="text-stone-400 max-w-md mx-auto mt-3 text-sm">From live grant discovery to proposal delivery — your AI team runs 24/7.</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
           {[
-            {e:'🔍',t:'Hunter',d:'Scans Grants.gov and 50+ state databases in real time for your exact profile.'},
-            {e:'🎯',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini semantic embeddings — not keywords.'},
-            {e:'✍️',t:'Drafter',d:'Writes a complete proposal in under 60 seconds using Gemini 2.0 Flash.'},
-            {e:'✅',t:'Controller',d:'Verifies your eligibility before you spend time applying.'},
-            {e:'📤',t:'Submitter',d:'Queues and sends your applications on your schedule.'},
-            {e:'👁️',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.'},
+            {n:'01',t:'Hunter',d:'Scans Grants.gov and 50+ databases live for your exact profile.'},
+            {n:'02',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini AI — not keywords.'},
+            {n:'03',t:'Drafter',d:'Writes your full proposal in under 60 seconds.'},
+            {n:'04',t:'Controller',d:'Verifies eligibility before you spend time applying.'},
+            {n:'05',t:'Submitter',d:'Queues and sends applications on your schedule.'},
+            {n:'06',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.'},
           ].map((a,i) => (
-            <div key={i} className="bg-white border border-stone-200 rounded-xl p-6 hover:border-[#76B900] transition-colors cursor-default shadow-sm">
-              <div className="w-10 h-10 bg-[#76B900]/10 rounded-full flex items-center justify-center text-lg mb-4">{a.e}</div>
-              <div className="text-stone-900 font-semibold mb-2">{a.t}</div>
-              <div className="text-stone-500 text-sm leading-relaxed">{a.d}</div>
+            <div key={i} className="bg-[#FAFAF8] border border-stone-200 rounded-xl p-5 hover:border-[#76B900] hover:bg-white transition-all cursor-default group">
+              <div className="text-[11px] font-black text-stone-300 mb-3 tracking-widest group-hover:text-[#76B900] transition-colors">{a.n}</div>
+              <div className="text-stone-900 font-semibold text-sm mb-1.5">{a.t}</div>
+              <div className="text-stone-400 text-xs leading-relaxed">{a.d}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="bg-stone-100 border-y border-stone-200 py-24 px-6">
-        <div className="text-center mb-16">
-          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium">HOW IT WORKS</p>
+      <section id="how" className="bg-[#F9F7F2] border-t border-stone-100 py-20 px-6">
+        <div className="text-center mb-12">
+          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold">HOW IT WORKS</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+
           {/* Step 1 */}
-          <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm">
-            <div className="text-6xl font-black text-stone-100">01</div>
-            <div className="w-12 h-12 bg-[#76B900]/10 rounded-full flex items-center justify-center text-2xl mt-4">🏢</div>
-            <div className="text-xl font-bold text-stone-900 mt-4">Tell us your mission</div>
-            <div className="text-stone-500 text-sm leading-relaxed mt-2">30 seconds. Your org name, location, focus area, and background. That’s all the agents need to get to work.</div>
+          <div className="bg-white rounded-2xl p-8 border border-stone-200">
+            <span className="text-[11px] font-black tracking-widest text-stone-200">01</span>
+            <div className="mt-5 w-11 h-11 bg-[#76B900]/10 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+            <h3 className="text-lg font-bold text-stone-900 mt-4">Tell us your mission</h3>
+            <p className="text-stone-400 text-sm leading-relaxed mt-2">30 seconds. Your org name, location, focus area, and background. That's all the agents need.</p>
           </div>
+
           {/* Step 2 */}
-          <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-stone-800 shadow-sm">
-            <div className="text-6xl font-black text-stone-800">02</div>
-            <div className="w-12 h-12 bg-[#76B900]/20 rounded-full flex items-center justify-center text-2xl mt-4">🤖</div>
-            <div className="text-xl font-bold text-white mt-4">Agents do everything</div>
-            <div className="text-stone-400 text-sm leading-relaxed mt-2">Your 6-agent team runs automatically:</div>
+          <div className="bg-[#111111] rounded-2xl p-8 border border-[#222]">
+            <span className="text-[11px] font-black tracking-widest text-[#222]">02</span>
+            <div className="mt-5 w-11 h-11 bg-[#76B900]/15 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mt-4">Agents do everything</h3>
+            <p className="text-stone-500 text-sm mt-2">Your 6-agent team runs automatically:</p>
             <div className="mt-3 space-y-1.5">
-              {['🔍 Hunter scans Grants.gov + SBA SBIR live','🎯 Matchmaker scores every grant 0–100','✍️ Drafter writes your full proposal via Gemini','✅ Controller checks compliance','📤 Submitter queues for your approval','👁️ Watcher monitors 24/7 for new matches'].map((a,i) => (
-                <div key={i} className="text-xs text-stone-300 flex items-start gap-2">
-                  <span className="text-[#76B900] mt-0.5">‣</span>{a}
+              {['Hunter scans Grants.gov + SBA live','Matchmaker scores every grant 0–100','Drafter writes your proposal via Gemini','Controller checks all compliance','Submitter queues for your approval','Watcher monitors 24/7 for new grants'].map((a,i) => (
+                <div key={i} className="text-xs text-stone-500 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-[#76B900] shrink-0" />{a}
                 </div>
               ))}
             </div>
           </div>
-          {/* Step 3 */}
-          <div className="rounded-2xl p-8 border-2 border-[#76B900] shadow-sm" style={{background:'#76B900'}}>
-            <div className="text-6xl font-black text-[#5a9000]">03</div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl mt-4">✅</div>
-            <div className="text-xl font-bold text-white mt-4">You approve. They submit.</div>
-            <div className="text-white/80 text-sm leading-relaxed mt-2">Review your AI-drafted proposal. One click to approve. Agents send it, book your calendar, and keep watching for new opportunities.</div>
-            <div className="mt-4 px-3 py-2 bg-white/20 rounded-lg text-xs text-white font-semibold">🛡️ Sovereign differentiator — AI works, you control</div>
+
+          {/* Step 3 — no more solid green */}
+          <div className="bg-white rounded-2xl p-8 border border-stone-200 border-l-4 border-l-[#76B900]">
+            <span className="text-[11px] font-black tracking-widest text-stone-200">03</span>
+            <div className="mt-5 w-11 h-11 bg-[#76B900]/10 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h3 className="text-lg font-bold text-stone-900 mt-4">You approve. They submit.</h3>
+            <p className="text-stone-400 text-sm leading-relaxed mt-2">Review your AI-drafted proposal. One click to approve. Agents send it, book your calendar, and keep watching.</p>
+            <div className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#76B900]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#76B900]"></span>
+              AI works. You control.
+            </div>
           </div>
         </div>
       </section>
 
       {/* SOVEREIGN */}
-      <section id="sovereign" className="px-6 my-24">
-        <div className="bg-white border border-[#76B900]/30 rounded-2xl max-w-5xl mx-auto p-16 text-center shadow-sm">
-          <div className="text-4xl mb-6">🛡️</div>
-          <h2 className="text-3xl font-bold text-stone-900">Built Sovereign. Built for Government.</h2>
-          <p className="mt-4 text-stone-500 max-w-xl mx-auto">All your data stays on your hardware. Never shared with commercial clouds. Privacy is not a policy — it's in the architecture.</p>
-          <div className="flex flex-wrap justify-center gap-8 mt-10 text-sm text-stone-500">
-            <span>🏗️ Local Infrastructure</span><span>🔒 Data Never Leaves</span><span>📖 Open Source Core</span><span>✅ Government Compliant</span>
+      <section id="sovereign" className="px-6 py-20 bg-white border-t border-stone-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-5">TRUST & SECURITY</p>
+          <h2 className="text-3xl font-bold text-stone-900 tracking-tight">Built Sovereign. Built for Government.</h2>
+          <p className="mt-4 text-stone-400 max-w-lg mx-auto text-sm leading-relaxed">Your data never leaves our infrastructure. Privacy is not a policy — it's baked into the architecture.</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+            {[
+              {label:'Local Infrastructure', detail:'Data never touches external clouds'},
+              {label:'E2E Encrypted', detail:'Profile, proposals, credentials'},
+              {label:'Open Source Core', detail:'Audit the code yourself'},
+              {label:'Government Ready', detail:'FedRAMP-aligned architecture'},
+            ].map((item, i) => (
+              <div key={i} className="bg-[#FAFAF8] border border-stone-200 rounded-xl p-4 text-left">
+                <div className="w-7 h-7 bg-[#76B900]/10 rounded-lg flex items-center justify-center mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#76B900]"></span>
+                </div>
+                <p className="text-xs font-bold text-stone-800">{item.label}</p>
+                <p className="text-xs text-stone-400 mt-0.5">{item.detail}</p>
+              </div>
+            ))}
           </div>
-          <div className="flex gap-3 justify-center mt-8 flex-wrap">
+          <div className="flex gap-2 justify-center mt-8 flex-wrap">
             {['Google Cloud ADK Finalist 2026','Patent Pending','Miami-Dade Pilot Partner'].map((b,i) => (
-              <span key={i} className="bg-[#76B90020] text-[#76B900] rounded-full px-3 py-1 text-xs">{b}</span>
+              <span key={i} className="bg-[#76B90015] text-[#5a9000] rounded-full px-3 py-1 text-xs font-medium">{b}</span>
             ))}
           </div>
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-32 text-center px-6 bg-stone-100 border-t border-stone-200">
-        <h2 className="text-5xl font-bold text-stone-900 max-w-2xl mx-auto leading-tight">Your community deserves<br />to be funded.</h2>
-        <p className="mt-6 text-stone-500 text-xl max-w-xl mx-auto">Connect to thousands of real federal and state grants. Let AI find the ones that fit you.</p>
-        <Link to="/login?role=seeker" className="mt-10 inline-block bg-[#76B900] text-[#111111] font-semibold px-8 py-4 text-lg rounded-xl hover:bg-[#8FD400] transition-colors">
-          Find My Grants Now →
+      <section className="py-28 text-center px-6 bg-[#111111]">
+        <h2 className="text-4xl font-bold text-white max-w-xl mx-auto leading-tight tracking-tight">Your community deserves<br />to be funded.</h2>
+        <p className="mt-4 text-stone-400 text-base max-w-md mx-auto">Connect to 33+ grant databases. Let AI find, draft, and submit the ones that fit you.</p>
+        <Link to="/login?role=seeker" className="mt-8 inline-block bg-[#76B900] text-[#111111] font-bold px-8 py-3.5 rounded-lg hover:bg-[#689900] transition-colors text-sm">
+          Find My Grants →
         </Link>
-        <p className="mt-4 text-xs text-[#555555]">Free to start · No credit card required · Sovereign data</p>
+        <p className="mt-4 text-xs text-stone-600">Free · No credit card · Sovereign data</p>
       </section>
 
       {/* FOOTER */}
       <footer className="bg-white border-t border-stone-200 py-12">
         <div className="max-w-5xl mx-auto px-6 flex justify-between items-center flex-wrap gap-4">
           <div>
-            <div className="font-bold text-stone-900"><span className="text-[#76B900]">●</span> CivicPath</div>
+            <div className="flex items-center gap-2">
+              <Logo />
+              <span className="font-bold text-stone-900 text-base">CivicPath</span>
+            </div>
             <div className="text-xs text-stone-400 mt-1">Your community. Funded.</div>
           </div>
           <div className="flex gap-6 text-sm text-stone-400">
