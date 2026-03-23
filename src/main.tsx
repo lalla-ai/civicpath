@@ -13,6 +13,7 @@ import Terms from './pages/Terms.tsx'
 import DemoPage from './pages/DemoPage.tsx'
 import SharePage from './pages/SharePage.tsx'
 import OmninorChat from './components/OmninorChat.tsx'
+import SovereignTerminal from './components/SovereignTerminal.tsx'
 
 const Spinner = () => (
   <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
@@ -46,6 +47,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <OmninorChat />
+        <SovereignTerminal />
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
