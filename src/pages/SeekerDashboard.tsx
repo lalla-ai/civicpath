@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
-import { draftProposal, chatWithLalla } from '../gemini';
+import { draftProposal, chatWithLalla, generateText } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import { 
   Search, 
@@ -39,7 +39,12 @@ import {
   Link,
   Mail,
   LogOut,
-  Sparkles
+  Sparkles,
+  Upload,
+  Twitter,
+  Globe,
+  Share2,
+  Linkedin
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
@@ -52,6 +57,8 @@ interface Profile {
   orgType: string;
   location: string;
   website: string;
+  linkedinUrl: string;
+  twitterUrl: string;
   // Step 2 — Mission & Impact
   focusArea: string;
   missionStatement: string;
@@ -65,6 +72,7 @@ interface Profile {
   fundingAmount: string;
   previousGrants: string;
   backgroundInfo: string;
+  resumeText: string;
 }
 
 interface AgentState {
@@ -96,19 +104,110 @@ export default function SeekerDashboard() {
   const [profile, setProfile] = useState<Profile>(() => {
     try {
       const saved = localStorage.getItem('civicpath_profile');
-      return saved ? JSON.parse(saved) : {
+      const defaults = {
         companyName: '', orgType: '', location: '', website: '',
+        linkedinUrl: '', twitterUrl: '',
         focusArea: '', missionStatement: '', targetPopulation: '',
         geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
-        projectDescription: '', fundingAmount: '', previousGrants: '', backgroundInfo: ''
+        projectDescription: '', fundingAmount: '', previousGrants: '',
+        backgroundInfo: '', resumeText: ''
       };
+      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
     } catch { return {
       companyName: '', orgType: '', location: '', website: '',
+      linkedinUrl: '', twitterUrl: '',
       focusArea: '', missionStatement: '', targetPopulation: '',
       geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
-      projectDescription: '', fundingAmount: '', previousGrants: '', backgroundInfo: ''
+      projectDescription: '', fundingAmount: '', previousGrants: '',
+      backgroundInfo: '', resumeText: ''
     }; }
   });
+
+  // AI auto-fill state
+  const [aiFilling, setAiFilling] = useState(false);
+  const [aiFillMsg, setAiFillMsg] = useState('');
+
+  // Auto-pipeline on first dashboard visit
+  const [hasAutoRun, setHasAutoRunState] = useState(() => localStorage.getItem('civicpath_pipeline_run') === 'true');
+
+  useEffect(() => {
+    if (step === 'dashboard' && !hasAutoRun && profile.companyName && profile.focusArea) {
+      const timer = setTimeout(() => {
+        setHasAutoRunState(true);
+        localStorage.setItem('civicpath_pipeline_run', 'true');
+        handleExecute();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // Viral share
+  const [showShareBanner, setShowShareBanner] = useState(false);
+
+  // Profile completeness score
+  const profileScore = Math.round([
+    profile.companyName, profile.orgType, profile.location,
+    profile.focusArea, profile.missionStatement, profile.targetPopulation,
+    profile.annualBudget, profile.teamSize, profile.projectDescription,
+    profile.fundingAmount, profile.previousGrants,
+    profile.backgroundInfo || profile.resumeText,
+    profile.linkedinUrl || profile.website || profile.twitterUrl,
+  ].filter(Boolean).length / 13 * 100);
+
+  const profileScoreColor = profileScore >= 80 ? 'text-[#2E7D32]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
+  const profileBarColor = profileScore >= 80 ? 'bg-[#2E7D32]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
+
+  const handleAIFillFromUrl = async () => {
+    const urls = [profile.website, profile.linkedinUrl, profile.twitterUrl].filter(Boolean).join(', ');
+    if (!urls) return;
+    setAiFilling(true);
+    setAiFillMsg('Analyzing your online presence...');
+    try {
+      const prompt = `Based on these URLs: ${urls}\n\nUsing any knowledge you have about this organization or person, or inferring from the domain/handle names, generate a grant-seeking profile. Return ONLY valid JSON (no markdown):\n{"companyName":"...","focusArea":"...","missionStatement":"...","targetPopulation":"..."}`;
+      const result = await generateText(prompt);
+      const parsed = JSON.parse(result.replace(/\`\`\`json|\`\`\`/g, '').trim());
+      setProfile(prev => ({
+        ...prev,
+        companyName: prev.companyName || parsed.companyName || prev.companyName,
+        focusArea: prev.focusArea || parsed.focusArea || prev.focusArea,
+        missionStatement: prev.missionStatement || parsed.missionStatement || prev.missionStatement,
+        targetPopulation: prev.targetPopulation || parsed.targetPopulation || prev.targetPopulation,
+      }));
+      setAiFillMsg('\u2713 Profile fields updated from your online presence');
+    } catch {
+      setAiFillMsg('Could not auto-fill — please fill fields manually');
+    } finally {
+      setAiFilling(false);
+      setTimeout(() => setAiFillMsg(''), 4000);
+    }
+  };
+
+  const handleAIFillFromResume = async (text: string) => {
+    if (!text.trim()) return;
+    setAiFilling(true);
+    setAiFillMsg('AI is reading your resume...');
+    try {
+      const prompt = `Extract a grant-seeking organizational profile from this text:\n\n${text.slice(0, 3000)}\n\nReturn ONLY valid JSON (no markdown):\n{"missionStatement":"...","focusArea":"...","targetPopulation":"...","backgroundInfo":"..."}`;
+      const result = await generateText(prompt);
+      const parsed = JSON.parse(result.replace(/\`\`\`json|\`\`\`/g, '').trim());
+      setProfile(prev => ({
+        ...prev,
+        missionStatement: parsed.missionStatement || prev.missionStatement,
+        focusArea: parsed.focusArea || prev.focusArea,
+        targetPopulation: parsed.targetPopulation || prev.targetPopulation,
+        backgroundInfo: parsed.backgroundInfo || prev.backgroundInfo,
+        resumeText: text,
+      }));
+      setAiFillMsg('\u2713 Resume parsed — fields auto-filled');
+    } catch {
+      setAiFillMsg('Parsed — text saved to background info');
+      setProfile(prev => ({ ...prev, resumeText: text, backgroundInfo: prev.backgroundInfo || text.slice(0, 500) }));
+    } finally {
+      setAiFilling(false);
+      setTimeout(() => setAiFillMsg(''), 4000);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('civicpath_profile', JSON.stringify(profile));
@@ -755,12 +854,36 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-stone-700">Website or LinkedIn</label>
+                    <label className="text-sm font-semibold text-stone-700 flex items-center"><Globe className="w-4 h-4 mr-2 text-stone-400" />Website</label>
                     <input type="text" placeholder="https://yourorg.com"
                       value={profile.website} onChange={e => setProfile({...profile, website: e.target.value})}
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700 flex items-center"><Linkedin className="w-4 h-4 mr-2 text-blue-500" />LinkedIn URL</label>
+                    <input type="text" placeholder="linkedin.com/in/yourname or /company/yourorg"
+                      value={profile.linkedinUrl} onChange={e => setProfile({...profile, linkedinUrl: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700 flex items-center"><Twitter className="w-4 h-4 mr-2 text-sky-400" />Twitter / X Handle</label>
+                    <input type="text" placeholder="@yourhandle"
+                      value={profile.twitterUrl} onChange={e => setProfile({...profile, twitterUrl: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                </div>
+                {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
+                  <button onClick={handleAIFillFromUrl} disabled={aiFilling}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#2E7D32]/40 text-[#2E7D32] text-sm font-semibold rounded-xl hover:bg-[#2E7D32]/5 transition-colors disabled:opacity-50">
+                    {aiFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {aiFilling ? aiFillMsg : '\u2728 Let AI analyze your online presence and pre-fill profile'}
+                  </button>
+                )}
+                {aiFillMsg && !aiFilling && (
+                  <p className="text-xs text-center text-[#2E7D32] font-medium">{aiFillMsg}</p>
+                )}
               </>
             )}
 
@@ -863,12 +986,45 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-stone-700">Additional Background / LinkedIn / Resume</label>
-                  <p className="text-xs text-stone-400">Paste anything extra — bio, track record, prior awards. Helps Drafter write stronger proposals.</p>
+                  <label className="text-sm font-semibold text-stone-700 flex items-center justify-between">
+                    <span>Background / LinkedIn Bio / Resume Text</span>
+                    <span className="text-[10px] text-stone-400 font-normal">Paste or upload</span>
+                  </label>
                   <textarea rows={4}
-                    placeholder="Paste your LinkedIn summary, team bios, prior accomplishments, or any context that strengthens your application..."
+                    placeholder="Paste your LinkedIn About section, resume text, team bios, prior grant wins, or any background that strengthens your application..."
                     value={profile.backgroundInfo} onChange={e => setProfile({...profile, backgroundInfo: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+                {/* Resume Upload */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-stone-400" />Upload Resume / Portfolio (TXT, PDF)
+                  </label>
+                  <label className="flex items-center justify-center gap-3 w-full py-4 border-2 border-dashed border-stone-200 rounded-xl cursor-pointer hover:border-[#2E7D32]/40 hover:bg-[#2E7D32]/5 transition-colors group">
+                    <Upload className="w-5 h-5 text-stone-400 group-hover:text-[#2E7D32] transition-colors" />
+                    <span className="text-sm text-stone-500 group-hover:text-[#2E7D32] transition-colors">
+                      {profile.resumeText ? '\u2713 Resume loaded — click to replace' : 'Click to upload or drag & drop'}
+                    </span>
+                    <input type="file" accept=".txt,.pdf,.md,.doc" className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                          const text = ev.target?.result as string;
+                          handleAIFillFromResume(text);
+                        };
+                        reader.readAsText(file);
+                      }} />
+                  </label>
+                  {aiFillMsg && (
+                    <p className={`text-xs font-medium flex items-center gap-1 ${
+                      aiFilling ? 'text-stone-500' : 'text-[#2E7D32]'
+                    }`}>
+                      {aiFilling && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {aiFillMsg}
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -1380,49 +1536,35 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             </div>
 
             {/* Active Profile & Controls */}
-            <div className="mb-6 flex flex-wrap items-center gap-4 p-5 bg-white border border-stone-200 rounded-xl shadow-sm">
-              <div className="text-sm font-semibold text-stone-400 flex items-center uppercase tracking-wider">
-                <Building2 className="w-4 h-4 mr-2 text-[#2E7D32]" />
-                Active Profile:
+            <div className="mb-6 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="flex flex-wrap items-center gap-3 p-5">
+                <div className="text-sm font-semibold text-stone-400 flex items-center uppercase tracking-wider shrink-0">
+                  <Building2 className="w-4 h-4 mr-2 text-[#2E7D32]" />
+                  Profile:
+                </div>
+                <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.companyName || 'Anonymous'}</span>
+                <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.focusArea || 'General'}</span>
+                <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.location || 'Anywhere'}</span>
+                <div className="ml-auto flex items-center gap-3">
+                  <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">Edit Profile</button>
+                  <button onClick={handleExecute} disabled={isRunning}
+                    className={`inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${
+                      isRunning ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200' : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20] shadow-sm active:scale-[0.98]'
+                    }`}>
+                    {isRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Agents Acting...</> : <><Play className="w-4 h-4 mr-2 fill-current" />Run Full Pipeline</>}
+                  </button>
+                </div>
               </div>
-              <div className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">
-                {profile.companyName || 'Anonymous'}
-              </div>
-              <div className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">
-                {profile.focusArea || 'General Tech'}
-              </div>
-              <div className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">
-                {profile.location || 'Anywhere'}
-              </div>
-              
-              <div className="ml-auto flex items-center space-x-3">
-                <button 
-                  onClick={() => setStep('onboarding')}
-                  className="text-xs font-bold text-stone-500 hover:text-stone-800 uppercase tracking-wider px-2"
-                >
-                  Edit Profile
-                </button>
-                <button 
-                  onClick={handleExecute}
-                  disabled={isRunning}
-                  className={`inline-flex items-center px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                    isRunning 
-                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200'
-                      : 'bg-[#2E7D32] text-white hover:bg-[#1B5E20] shadow-sm active:scale-[0.98]'
-                  }`}
-                >
-                  {isRunning ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Agents Acting...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2 fill-current" />
-                      Run Full Pipeline
-                    </>
-                  )}
-                </button>
+              {/* Profile Strength Bar */}
+              <div className="px-5 pb-3 border-t border-stone-100 pt-3 flex items-center gap-3">
+                <span className="text-xs font-bold text-stone-500 whitespace-nowrap">Profile Strength</span>
+                <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${profileBarColor}`} style={{width:`${profileScore}%`}} />
+                </div>
+                <span className={`text-xs font-black ${profileScoreColor}`}>{profileScore}%</span>
+                {profileScore < 80 && (
+                  <button onClick={() => setStep('onboarding')} className="text-[10px] text-[#2E7D32] font-bold hover:underline whitespace-nowrap">+ Complete profile →</button>
+                )}
               </div>
             </div>
 
@@ -1494,6 +1636,33 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       Cancel
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Viral Share Banner */}
+            {showShareBanner && (
+              <div className="mb-6 p-4 bg-[#1A1A1A] rounded-xl flex items-center justify-between gap-4 animate-in fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🎉</span>
+                  <div>
+                    <p className="text-white text-sm font-bold">Pipeline complete! Share your win.</p>
+                    <p className="text-stone-400 text-xs">Let the world know CivicPath found you grants in 60 seconds.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      const n = discoveredGrants.length || 3;
+                      const text = `Just found ${n} grant matches for ${profile.companyName || 'my org'} in under 60 seconds using @CivicPathAI 🤖\n\nFully agentic — AI drafted the proposal. I just approved. 🏆\n\ncivicpath.ai`;
+                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:bg-sky-600 transition-colors">
+                    <Share2 className="w-3.5 h-3.5" /> Share on X
+                  </button>
+                  <button onClick={() => setShowShareBanner(false)} className="p-2 text-stone-400 hover:text-stone-200">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )}

@@ -36,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/seeker" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
           <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
           <Route path="/demo" element={<DemoPage />} />
+          <Route path="/workspace" element={<DemoPage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
