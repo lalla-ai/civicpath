@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Loader2, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 export default function LoginPage() {
-  const { loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
+  const { user, loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [role, setRole] = useState<'seeker' | 'funder'>(searchParams.get('role') === 'funder' ? 'funder' : 'seeker');
@@ -16,18 +16,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const redirectAfterAuth = (r: string) => {
-    navigate(r === 'funder' ? '/funder' : '/seeker', { replace: true });
-  };
+  // When Firebase auth state updates, redirect to correct dashboard
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === 'funder' ? '/funder' : '/seeker', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleGoogle = async () => {
     setError('');
     setGoogleLoading(true);
     try {
       await loginWithGoogle(role);
-      redirectAfterAuth(role);
+      // navigation handled by useEffect above
     } catch {
-      setError('Google sign-in failed. Make sure popups are allowed and try again.');
+      setError('Google sign-in failed. Make sure popups are not blocked and try again.');
     } finally {
       setGoogleLoading(false);
     }
@@ -44,7 +47,7 @@ export default function LoginPage() {
       } else {
         await loginWithEmail(email.trim(), password, role);
       }
-      redirectAfterAuth(role);
+      // navigation handled by useEffect above
     } catch (err: any) {
       setError(err.message?.replace('Firebase: ', '').replace(/ \(auth\/.*\)/, '') || 'Something went wrong.');
     } finally {
