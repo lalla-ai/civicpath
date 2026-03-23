@@ -203,7 +203,7 @@ export default function LandingPage() {
         <div className="text-center mb-16">
           <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">HOW IT WORKS</p>
           <h2 className="text-4xl font-bold text-stone-900">Fully agentic. You just approve.</h2>
-          <p className="text-stone-500 mt-3 max-w-xl mx-auto">Like Notion × Motion × Warp — but for finding and winning grants. Your 6-agent team runs 24/7 while you focus on your mission.</p>
+          <p className="text-stone-500 mt-3 max-w-xl mx-auto">Your 6-agent AI team runs 24/7. You just review and approve.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* Step 1 */}
