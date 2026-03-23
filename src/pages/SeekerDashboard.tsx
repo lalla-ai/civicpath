@@ -2198,11 +2198,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#76B900]" /> App Integrations</h2>
               <p className="text-sm text-stone-500 mt-1">Connect CivicPath to your tools to enable autonomous proposal sending and meeting intelligence.</p>
             </div>
-            <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-              <span className="text-amber-500 text-sm shrink-0">\u26a0\ufe0f</span>
+            <div className="mb-5 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-[#76B900] shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-amber-800">OAuth setup required</p>
-                <p className="text-xs text-amber-700 mt-0.5">Gmail, Meet, and Zoom integrations require OAuth app credentials to be configured. These are available on the Pro plan and are currently being set up. <a href="mailto:hello@civicpath.ai?subject=Integration%20Setup" className="underline font-bold">Email us to request early access →</a></p>
+                <p className="text-sm font-bold text-stone-800">Meet & Zoom: Use AI Transcript Analysis</p>
+                <p className="text-xs text-stone-600 mt-0.5">Start your meeting → end it → download the auto-transcript → paste it in the <button onClick={() => { setActiveTab('meetings'); }} className="underline font-bold text-[#76B900] hover:text-[#689900]">Meetings tab</button> for instant AI analysis of decisions, risks, and action items. Gmail autonomous sending requires OAuth setup — <a href="mailto:hello@civicpath.ai?subject=Integration%20Setup" className="underline font-bold text-[#76B900]">request early access →</a></p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2235,14 +2235,26 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     </div>
                     <div>
                       <h3 className="font-bold text-stone-800 text-base">Google Meet</h3>
-                      <p className="text-xs text-stone-500">Meeting summary & actions</p>
+                      <p className="text-xs text-stone-500">Transcript → AI grant summary</p>
                     </div>
                   </div>
-                  <p className="text-sm text-stone-600 mb-6">Connect to automatically ingest meeting transcripts for grant planning, auto-booking milestones and assigning actions.</p>
+                  <p className="text-sm text-stone-600 mb-3">Start your grant prep meeting, end it, then download the auto-generated transcript. Paste it into CivicPath for instant AI analysis.</p>
+                  <ol className="text-xs text-stone-400 space-y-1 mb-4">
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">1</span> Start your meeting below</li>
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">2</span> End it → Meet auto-saves transcript</li>
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">3</span> Paste transcript → get AI summary</li>
+                  </ol>
                 </div>
-                <span className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center bg-stone-100 text-stone-400 border border-stone-200 cursor-default">
-                  Coming Soon
-                </span>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors">
+                    <Video className="w-4 h-4" /> Start Google Meet ↗
+                  </button>
+                  <button onClick={() => { setActiveTab('meetings'); setTimeout(() => setShowTranscriptModal(true), 100); }}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border border-[#76B900] text-[#76B900] hover:bg-[#76B900]/5 transition-colors">
+                    <FileText className="w-4 h-4" /> Paste Transcript for AI Analysis
+                  </button>
+                </div>
               </div>
 
               {/* Zoom Integration */}
@@ -2253,15 +2265,27 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       <Video className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-stone-800 text-base">Zoom API</h3>
-                      <p className="text-xs text-stone-500">Cloud recording transcripts</p>
+                      <h3 className="font-bold text-stone-800 text-base">Zoom</h3>
+                      <p className="text-xs text-stone-500">Transcript → AI grant summary</p>
                     </div>
                   </div>
-                  <p className="text-sm text-stone-600 mb-6">Automatically sync your cloud-recorded Zoom meetings to extract grant strategies, budgets, and next steps.</p>
+                  <p className="text-sm text-stone-600 mb-3">Start your Zoom grant meeting. After it ends, download the cloud transcript from your Zoom portal and paste it here for AI analysis.</p>
+                  <ol className="text-xs text-stone-400 space-y-1 mb-4">
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">1</span> Start Zoom meeting below</li>
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">2</span> End it → zoom.us → Recordings → Transcript</li>
+                    <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full bg-[#76B900]/10 text-[#76B900] font-black text-[10px] flex items-center justify-center shrink-0">3</span> Copy → paste transcript → AI summary</li>
+                  </ol>
                 </div>
-                <span className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center bg-stone-100 text-stone-400 border border-stone-200 cursor-default">
-                  Coming Soon
-                </span>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => window.open('https://zoom.us/start/videomeeting', '_blank')}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors">
+                    <Video className="w-4 h-4" /> Start Zoom Meeting ↗
+                  </button>
+                  <button onClick={() => { setActiveTab('meetings'); setTimeout(() => setShowTranscriptModal(true), 100); }}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border border-[#76B900] text-[#76B900] hover:bg-[#76B900]/5 transition-colors">
+                    <FileText className="w-4 h-4" /> Paste Transcript for AI Analysis
+                  </button>
+                </div>
               </div>
             </div>
           </div>
