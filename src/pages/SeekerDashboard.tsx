@@ -1349,8 +1349,16 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               )}
             </div>
 
+            {/* Quick demo access */}
+            <div className="pt-2 text-center">
+              <button onClick={() => setStepPersisted('dashboard')}
+                className="text-xs text-stone-400 hover:text-[#76B900] font-medium underline transition-colors">
+                Skip setup — explore the demo dashboard →
+              </button>
+            </div>
+
             {/* Step nav */}
-            <div className="pt-4 flex gap-3">
+            <div className="pt-3 flex gap-3">
               {onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(s => s - 1)}
                   className="px-5 py-3.5 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 transition-colors">
