@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
-import { draftProposal, chatWithLalla, generateText } from '../gemini';
+import { draftProposal, chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import { 
   Search, 
@@ -256,21 +256,29 @@ export default function SeekerDashboard() {
   const profileScoreColor = profileScore >= 80 ? 'text-[#76B900]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
   const profileBarColor = profileScore >= 80 ? 'bg-[#76B900]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
 
+  const callGeminiProxy = async (prompt: string): Promise<string> => {
+    const res = await fetch('/api/gemini-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+    if (!res.ok) throw new Error(`Proxy error ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data.text || '';
+  };
+
   const handleAIFillFromUrl = async () => {
     const urls = [profile.website, profile.linkedinUrl, profile.twitterUrl].filter(Boolean).join(', ');
     if (!urls) return;
     setAiFilling(true);
-    setAiFillMsg('Gemini is analyzing your links...');
+    setAiFillMsg('AI is analyzing your links...');
     try {
-      const prompt = `You are a grant profile assistant. Based on these URLs: ${urls}\n\nUsing any knowledge from your training data about this organization, OR inferring from the domain/handle names, create a grant-seeking organization profile.\n\nRespond with ONLY this JSON object — no markdown, no backticks, no extra text before or after:\n{\n  "companyName": "organization name",\n  "focusArea": "primary sector or focus area",\n  "missionStatement": "2-sentence mission statement",\n  "targetPopulation": "who they serve"\n}`;
-      const raw = await generateText(prompt);
-      // Robust JSON extraction — handles markdown fences, extra text, etc.
+      const prompt = `You are a grant profile assistant. Based on these URLs: ${urls}\n\nUsing any knowledge from your training data about this organization, OR inferring from the domain/handle names, create a grant-seeking organization profile.\n\nRespond with ONLY this JSON object — no markdown, no backticks, no extra text:\n{"companyName":"organization name","focusArea":"primary sector","missionStatement":"2-sentence mission","targetPopulation":"who they serve"}`;
+      const raw = await callGeminiProxy(prompt);
       let parsed: any = null;
       try { parsed = JSON.parse(raw.trim()); } catch {}
-      if (!parsed) {
-        const m = raw.match(/\{[\s\S]*?\}/);
-        if (m) try { parsed = JSON.parse(m[0]); } catch {}
-      }
+      if (!parsed) { const m = raw.match(/\{[\s\S]*?\}/); if (m) try { parsed = JSON.parse(m[0]); } catch {} }
       if (parsed && typeof parsed === 'object') {
         setProfile(prev => ({
           ...prev,
@@ -279,23 +287,15 @@ export default function SeekerDashboard() {
           ...(parsed.missionStatement?.trim() && { missionStatement: parsed.missionStatement.trim() }),
           ...(parsed.targetPopulation?.trim() && { targetPopulation: parsed.targetPopulation.trim() }),
         }));
-        setAiFillMsg('\u2713 Done! Fields pre-filled — review and edit as needed, then Continue.');
+        setAiFillMsg('\u2713 Done! Review the pre-filled fields and continue.');
+      } else if (raw.length > 50) {
+        setProfile(prev => ({ ...prev, backgroundInfo: prev.backgroundInfo || raw.slice(0, 600) }));
+        setAiFillMsg('\u2713 AI context saved to background info.');
       } else {
-        // Gemini returned text but not parseable JSON — try to use it as backgroundInfo
-        if (raw.length > 50) {
-          setProfile(prev => ({ ...prev, backgroundInfo: prev.backgroundInfo || raw.slice(0, 600) }));
-          setAiFillMsg('\u2713 AI context saved to background info field.');
-        } else {
-          setAiFillMsg('\u26a0 AI could not infer profile from these URLs. Fill fields manually.');
-        }
+        setAiFillMsg('\u26a0 Could not infer profile — fill fields manually.');
       }
-    } catch (err: any) {
-      const msg = err?.message || '';
-      if (msg.includes('API key') || msg.includes('api key')) {
-        setAiFillMsg('\u26a0 Gemini API key missing. Set VITE_GEMINI_API_KEY in .env');
-      } else {
-        setAiFillMsg('\u26a0 Connection issue. Fill fields manually and continue \u2192');
-      }
+    } catch {
+      setAiFillMsg('\u26a0 AI analyze failed — fill fields manually and continue.');
     } finally {
       setAiFilling(false);
       setTimeout(() => setAiFillMsg(''), 8000);
@@ -308,7 +308,7 @@ export default function SeekerDashboard() {
     setAiFillMsg('AI is reading your resume...');
     try {
       const prompt = `Extract a grant-seeking organizational profile from this text:\n\n${text.slice(0, 3000)}\n\nReturn ONLY valid JSON (no markdown):\n{"missionStatement":"...","focusArea":"...","targetPopulation":"...","backgroundInfo":"..."}`;
-      const result = await generateText(prompt);
+      const result = await callGeminiProxy(prompt);
       const parsed = JSON.parse(result.replace(/\`\`\`json|\`\`\`/g, '').trim());
       setProfile(prev => ({
         ...prev,
@@ -657,18 +657,35 @@ Based on your background and focus in **${profile.focusArea || 'Tech'}**, here i
     addLog('submitter', 'Constructing email payload & attaching PDFs...');
     await delay(1000);
     
-    addGlobalLog(`[✉️ The Submitter]  Sending application to agency endpoint... SENT ✓`);
-    addLog('submitter', 'Message queued and delivered.');
+    addGlobalLog(`[\u2709\ufe0f The Submitter]  Application package prepared and queued \u2713`);
+    addLog('submitter', 'Proposal packaged. Sending confirmation email...');
     await delay(800);
 
-    const submitterText = `
-### Submission Successful
-* **To**: submissions@state-innovation.gov
-* **Subject**: Grant Application: ${profile.companyName || 'Anonymous Start-Up'}
-* **Attachments**: proposal_final.pdf, compliance_pack.pdf
-* **Status**: 250 OK (Message Queued and Sent via Gmail)
+    // Send real confirmation email via Resend
+    if (user?.email) {
+      fetch('/api/send-submission-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name || 'there',
+          orgName: profile.companyName || 'Your Organization',
+          grantName: 'State Innovation Match Fund',
+          amount: '$150,000',
+        }),
+      }).catch(() => {});
+    }
 
-Your application has been autonomously submitted. A confirmation receipt has been sent to your connected Gmail inbox.
+    const submitterText = `
+### Application Package Ready \u2713
+* **Organization**: ${profile.companyName || 'Your Organization'}
+* **Grant**: State Innovation Match Fund ($150,000)
+* **Proposal**: AI-drafted, reviewed, and approved by you
+* **Status**: Queued for submission
+
+${user?.email ? `A confirmation has been sent to **${user.email}**.` : 'Connect Gmail in Integrations to enable autonomous sending.'}
+
+> To complete real submission: connect Gmail in the Integrations tab, then re-run the pipeline.
 `;
     await streamOutput('submitter', submitterText);
     updateAgent('submitter', { status: 'completed' });

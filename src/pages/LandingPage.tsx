@@ -246,8 +246,8 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-6 mt-8 pt-6 border-t border-stone-100 flex justify-between flex-wrap gap-2 text-xs text-stone-400">
-          <span>© 2026 HelloAgentic. Built in Florida. For Florida.</span>
-          <span>Google ADK · Gemini 2.0 Flash · Cloud Run</span>
+          <span>\u00a9 2026 CivicPath · Google Cloud ADK Hackathon 2026 Finalist</span>
+          <span><a href="mailto:hello@civicpath.ai" className="hover:text-stone-600 transition-colors">hello@civicpath.ai</a></span>
         </div>
       </footer>
     </div>
