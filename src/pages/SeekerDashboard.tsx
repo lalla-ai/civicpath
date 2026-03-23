@@ -60,6 +60,9 @@ interface Profile {
   website: string;
   linkedinUrl: string;
   twitterUrl: string;
+  tagline: string;           // e.g. "AI grant pipeline for Florida communities"
+  yearFounded: string;       // e.g. "2019"
+  logoDataUrl: string;       // base64 for logo/photo upload
   // Step 2 — Mission & Impact
   focusArea: string;
   missionStatement: string;
@@ -68,12 +71,17 @@ interface Profile {
   annualBudget: string;
   teamSize: string;
   yearsOperating: string;
-  // Step 3 — Funding Goal
+  impactMetrics: string;     // e.g. "500 students served · $2M secured"
+  teamMembersText: string;   // e.g. "John Smith (CEO), Jane Doe (COO)"
+  // Step 3 — Funding Goal + Credentials
   projectDescription: string;
   fundingAmount: string;
   previousGrants: string;
   backgroundInfo: string;
   resumeText: string;
+  ein: string;               // EIN / Tax ID — required for federal grants
+  dunsNumber: string;        // DUNS / SAM number — required for Grants.gov
+  grantHistoryText: string;  // "NSF SBIR $150K — Won 2024; FL STEM — Applied 2025"
 }
 
 interface AgentState {
@@ -107,20 +115,22 @@ export default function SeekerDashboard() {
       const saved = localStorage.getItem('civicpath_profile');
       const defaults = {
         companyName: '', orgType: '', location: '', website: '',
-        linkedinUrl: '', twitterUrl: '',
+        linkedinUrl: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
         focusArea: '', missionStatement: '', targetPopulation: '',
         geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
+        impactMetrics: '', teamMembersText: '',
         projectDescription: '', fundingAmount: '', previousGrants: '',
-        backgroundInfo: '', resumeText: ''
+        backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: ''
       };
       return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
     } catch { return {
       companyName: '', orgType: '', location: '', website: '',
-      linkedinUrl: '', twitterUrl: '',
+      linkedinUrl: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
       focusArea: '', missionStatement: '', targetPopulation: '',
       geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
+      impactMetrics: '', teamMembersText: '',
       projectDescription: '', fundingAmount: '', previousGrants: '',
-      backgroundInfo: '', resumeText: ''
+      backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: ''
     }; }
   });
 
@@ -146,15 +156,26 @@ export default function SeekerDashboard() {
   // Viral share
   const [showShareBanner, setShowShareBanner] = useState(false);
 
-  // Profile completeness score
+  // Profile completeness — with content quality validation (min chars required)
+  const q = (s: string, min = 3) => s.trim().length >= min;
   const profileScore = Math.round([
-    profile.companyName, profile.orgType, profile.location,
-    profile.focusArea, profile.missionStatement, profile.targetPopulation,
-    profile.annualBudget, profile.teamSize, profile.projectDescription,
-    profile.fundingAmount, profile.previousGrants,
-    profile.backgroundInfo || profile.resumeText,
-    profile.linkedinUrl || profile.website || profile.twitterUrl,
-  ].filter(Boolean).length / 13 * 100);
+    q(profile.companyName, 2),
+    Boolean(profile.orgType),
+    q(profile.location, 3),
+    q(profile.focusArea, 5),              // "ai" = ❌, needs real focus area
+    q(profile.missionStatement, 30),      // gibberish = ❌, needs 30+ chars
+    q(profile.targetPopulation, 5),
+    Boolean(profile.annualBudget),
+    Boolean(profile.teamSize),
+    q(profile.projectDescription, 20),
+    Boolean(profile.fundingAmount),
+    Boolean(profile.previousGrants),
+    q(profile.backgroundInfo, 50) || q(profile.resumeText, 50),
+    Boolean(profile.linkedinUrl || profile.website || profile.twitterUrl),
+    q(profile.ein, 4),                    // NEW — required for federal grants
+    q(profile.yearFounded, 4),            // NEW
+    q(profile.impactMetrics, 10),         // NEW
+  ].filter(Boolean).length / 16 * 100);
 
   const profileScoreColor = profileScore >= 80 ? 'text-[#2E7D32]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
   const profileBarColor = profileScore >= 80 ? 'bg-[#2E7D32]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
@@ -867,6 +888,20 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Tagline / Pitch <span className="text-stone-400 font-normal text-xs">(optional)</span></label>
+                    <input type="text" placeholder="e.g. AI grant pipeline for Florida communities"
+                      value={profile.tagline} onChange={e => setProfile({...profile, tagline: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-stone-700">Year Founded <span className="text-stone-400 font-normal text-xs">(required for many grants)</span></label>
+                    <input type="text" placeholder="e.g. 2019"
+                      value={profile.yearFounded} onChange={e => setProfile({...profile, yearFounded: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  </div>
+                </div>
                 {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
                   <button onClick={handleAIFillFromUrl} disabled={aiFilling}
                     className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#2E7D32]/40 text-[#2E7D32] text-sm font-semibold rounded-xl hover:bg-[#2E7D32]/5 transition-colors disabled:opacity-50">
@@ -987,6 +1022,52 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     placeholder="Paste your LinkedIn About section, resume text, team bios, prior grant wins, or any background that strengthens your application..."
                     value={profile.backgroundInfo} onChange={e => setProfile({...profile, backgroundInfo: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+                {/* Federal Grant Credentials */}
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-4">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-600 text-sm">⚠️</span>
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">Federal Grant Requirements</p>
+                      <p className="text-xs text-amber-700">EIN and DUNS/SAM are required to apply for Grants.gov and most federal funding.</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-semibold text-stone-700">EIN / Tax ID</label>
+                      <input type="text" placeholder="XX-XXXXXXX"
+                        value={profile.ein} onChange={e => setProfile({...profile, ein: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl bg-white border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-stone-900 placeholder:text-stone-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-semibold text-stone-700">DUNS / SAM Number</label>
+                      <input type="text" placeholder="XXXXXXXXX"
+                        value={profile.dunsNumber} onChange={e => setProfile({...profile, dunsNumber: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl bg-white border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-stone-900 placeholder:text-stone-400" />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700">Impact Metrics <span className="text-[10px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-2 py-0.5 rounded-full border border-[#2E7D32]/20 uppercase tracking-wider ml-1">Boosts Matching</span></label>
+                  <input type="text" placeholder="e.g. 500 students served · $2M secured · 12 grants won · 3 counties impacted"
+                    value={profile.impactMetrics} onChange={e => setProfile({...profile, impactMetrics: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
+                  <p className="text-xs text-stone-400">Numbers beat adjectives. Funders see 200+ applications — specific metrics make you stand out.</p>
+                </div>
+                {/* Grant History */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700">Grant History</label>
+                  <textarea rows={3}
+                    placeholder="e.g. NSF SBIR Phase I ($150K) — Won 2024 · FL STEM Initiative — Applied 2025 · Miami-Dade Cultural Affairs — In Review"
+                    value={profile.grantHistoryText} onChange={e => setProfile({...profile, grantHistoryText: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
+                </div>
+                {/* Team Members */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-stone-700">Team Members</label>
+                  <input type="text" placeholder="e.g. Jane Smith (Executive Director), John Doe (Grant Writer), Maria Lopez (CFO)"
+                    value={profile.teamMembersText} onChange={e => setProfile({...profile, teamMembersText: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] outline-none text-stone-900 placeholder:text-stone-400" />
                 </div>
                 {/* Resume Upload */}
                 <div className="space-y-2">
@@ -1183,29 +1264,48 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         
         {activeTab === 'profile' && (
           <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in">
-            {/* Cover + Avatar */}
+
+            {/* Cover + Avatar + Logo Upload */}
             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
               <div className="h-28 bg-gradient-to-r from-[#2E7D32] to-[#1B5E20] relative">
                 <div className="absolute inset-0 opacity-10" style={{backgroundImage:'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)',backgroundSize:'20px 20px'}} />
               </div>
               <div className="px-6 pb-6">
                 <div className="-mt-10 mb-4 flex items-end justify-between">
-                  <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#2E7D32] flex items-center justify-center shadow-lg overflow-hidden">
-                    {user?.photo
-                      ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
-                      : <span className="text-2xl font-black text-white">{(profile.companyName?.[0] || user?.name?.[0] || 'O').toUpperCase()}</span>
-                    }
+                  {/* Avatar with upload */}
+                  <div className="relative group">
+                    <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#2E7D32] flex items-center justify-center shadow-lg overflow-hidden">
+                      {profile.logoDataUrl
+                        ? <img src={profile.logoDataUrl} alt="logo" className="w-full h-full object-cover" />
+                        : user?.photo
+                          ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+                          : <span className="text-2xl font-black text-white">{(profile.companyName?.[0] || user?.name?.[0] || 'O').toUpperCase()}</span>
+                      }
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                      <Upload className="w-5 h-5 text-white" />
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = ev => setProfile(prev => ({...prev, logoDataUrl: ev.target?.result as string}));
+                          reader.readAsDataURL(file);
+                        }} />
+                    </label>
                   </div>
                   <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-sm font-bold text-stone-600 hover:border-[#2E7D32] hover:text-[#2E7D32] transition-colors">
                     Edit Profile
                   </button>
                 </div>
                 <h2 className="text-2xl font-black text-stone-900">{profile.companyName || user?.name || 'Your Organization'}</h2>
-                <p className="text-stone-500 text-sm mt-0.5">{user?.email}</p>
+                {profile.tagline && <p className="text-stone-500 text-sm mt-1 italic">{profile.tagline}</p>}
+                <p className="text-stone-400 text-xs mt-0.5">{user?.email}</p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {profile.orgType && <span className="text-xs font-bold bg-[#2E7D32]/10 text-[#2E7D32] px-2.5 py-1 rounded-full">{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType === 'small-business' ? 'Small Business' : profile.orgType}</span>}
                   {profile.location && <span className="text-xs text-stone-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{profile.location}</span>}
-                  {profile.yearsOperating && <span className="text-xs text-stone-500">{profile.yearsOperating} yrs operating</span>}
+                  {profile.yearFounded && <span className="text-xs text-stone-500">Est. {profile.yearFounded}</span>}
+                  {profile.teamSize && <span className="text-xs text-stone-500">{profile.teamSize} team</span>}
                 </div>
                 {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
                   <div className="flex flex-wrap gap-3 mt-3">
@@ -1223,8 +1323,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <h3 className="font-bold text-stone-800">Profile Strength</h3>
                 <span className={`text-sm font-black ${profileScoreColor}`}>{profileScore}%</span>
               </div>
-              <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
                 <div className={`h-full rounded-full transition-all duration-700 ${profileBarColor}`} style={{width:`${profileScore}%`}} />
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {[
+                  {label:'Logo', ok: !!profile.logoDataUrl},
+                  {label:'Tagline', ok: profile.tagline.length > 3},
+                  {label:'Year Founded', ok: profile.yearFounded.length === 4},
+                  {label:'EIN', ok: profile.ein.length >= 4},
+                  {label:'DUNS/SAM', ok: profile.dunsNumber.length >= 4},
+                  {label:'Mission', ok: profile.missionStatement.length >= 30},
+                  {label:'Impact Metrics', ok: profile.impactMetrics.length >= 10},
+                ].map(item => (
+                  <span key={item.label} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    item.ok ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : 'bg-stone-100 text-stone-400'
+                  }`}>{item.ok ? '✓' : '✕'} {item.label}</span>
+                ))}
               </div>
               {profileScore < 80 && <p className="text-xs text-stone-400 mt-2">Complete your profile to improve AI grant matching accuracy. <button onClick={() => setStep('onboarding')} className="text-[#2E7D32] font-bold hover:underline">Complete now →</button></p>}
             </div>
@@ -1235,7 +1350,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 {l:'Annual Budget', v: profile.annualBudget || '—'},
                 {l:'Team Size', v: profile.teamSize || '—'},
                 {l:'Funding Goal', v: profile.fundingAmount || '—'},
-                {l:'Prior Grants', v: profile.previousGrants === 'none' ? 'First' : profile.previousGrants === 'yes-small' ? 'Under $50K' : profile.previousGrants === 'yes-large' ? 'Over $50K' : '—'},
+                {l:'Year Founded', v: profile.yearFounded || '—'},
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm text-center">
                   <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-1">{s.l}</div>
@@ -1243,6 +1358,54 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
               ))}
             </div>
+
+            {/* Federal Credentials */}
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+              <h3 className="font-bold text-stone-800 mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-500" /> Federal Grant Credentials
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border ${
+                  profile.ein ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-amber-50 border-amber-200'
+                }">
+                  <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
+                    profile.ein ? 'text-[#2E7D32]' : 'text-amber-600'
+                  }">{profile.ein ? '✓ EIN / Tax ID' : '⚠️ EIN / Tax ID — Required'}</div>
+                  <div className="text-sm font-mono text-stone-800">{profile.ein || <span className="text-stone-400 italic">Not added yet — needed for federal grants</span>}
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl border ${
+                  profile.dunsNumber ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-amber-50 border-amber-200'
+                }">
+                  <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
+                    profile.dunsNumber ? 'text-[#2E7D32]' : 'text-amber-600'
+                  }">{profile.dunsNumber ? '✓ DUNS / SAM Number' : '⚠️ DUNS / SAM — Required for Grants.gov'}</div>
+                  <div className="text-sm font-mono text-stone-800">{profile.dunsNumber || <span className="text-stone-400 italic">Not added yet — register at sam.gov</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Impact Metrics */}
+            {profile.impactMetrics ? (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#2E7D32]" /> Impact Metrics</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.impactMetrics.split(/[·,;]+/).map((m, i) => m.trim() && (
+                    <span key={i} className="bg-[#2E7D32]/10 text-[#2E7D32] text-sm font-semibold px-3 py-1.5 rounded-full">{m.trim()}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
+                <span className="text-amber-500 mt-0.5">⚠️</span>
+                <div>
+                  <p className="text-sm font-bold text-amber-800">No impact metrics yet</p>
+                  <p className="text-xs text-amber-700 mt-0.5">Numbers beat adjectives. Add metrics like "500 students served · $2M secured" to stand out to funders.</p>
+                  <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-amber-800 underline mt-1">Add impact metrics →</button>
+                </div>
+              </div>
+            )}
 
             {/* Mission */}
             {(profile.focusArea || profile.missionStatement) && (
@@ -1254,10 +1417,48 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </div>
             )}
 
+            {/* Team Members */}
+            {profile.teamMembersText && (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-[#2E7D32]" /> Team</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.teamMembersText.split(',').map((m, i) => m.trim() && (
+                    <div key={i} className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2">
+                      <div className="w-7 h-7 bg-[#2E7D32]/10 rounded-full flex items-center justify-center text-xs font-black text-[#2E7D32]">{m.trim()[0]?.toUpperCase()}</div>
+                      <span className="text-sm text-stone-700">{m.trim()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Grant History */}
+            {profile.grantHistoryText && (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#2E7D32]" /> Grant History</h3>
+                <div className="space-y-2">
+                  {profile.grantHistoryText.split(/[·;\n]+/).map((entry, i) => {
+                    const text = entry.trim();
+                    if (!text) return null;
+                    const isWon = /won|awarded|received/i.test(text);
+                    const isReview = /review|pending|submitted/i.test(text);
+                    return (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${
+                          isWon ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : isReview ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'
+                        }`}>{isWon ? 'Won' : isReview ? 'In Review' : 'Applied'}</span>
+                        <span className="text-sm text-stone-700">{text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Funding Goal */}
             {profile.projectDescription && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Funding Goal</h3>
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Current Funding Goal</h3>
                 <p className="text-stone-600 text-sm leading-relaxed">{profile.projectDescription}</p>
               </div>
             )}
@@ -1270,8 +1471,17 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </div>
             )}
 
+            {/* Documents note */}
+            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 flex items-start gap-3">
+              <Upload className="w-4 h-4 text-stone-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-stone-700">Documents (501c3 cert, financials, W-9)</p>
+                <p className="text-xs text-stone-500 mt-0.5">Document upload with cloud storage coming in the next release. For now, paste key details in your background section above.</p>
+              </div>
+            </div>
+
             {/* Empty state */}
-            {profileScore < 30 && (
+            {profileScore < 20 && (
               <div className="bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-2xl p-8 text-center">
                 <p className="text-stone-700 font-semibold mb-3">Your profile is mostly empty.</p>
                 <p className="text-stone-500 text-sm mb-4">A complete profile gets 3x better grant matches from our AI agents.</p>
