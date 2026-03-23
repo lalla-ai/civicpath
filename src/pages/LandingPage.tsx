@@ -1,6 +1,30 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { generateText } from '../gemini';
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+  const [heroQuery, setHeroQuery] = useState('');
+  const [heroAnswer, setHeroAnswer] = useState('');
+  const [heroLoading, setHeroLoading] = useState(false);
+
+  const handleHeroAsk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = heroQuery.trim();
+    if (!q || heroLoading) return;
+    setHeroLoading(true);
+    setHeroAnswer('');
+    try {
+      const answer = await generateText(
+        `You are MyLalla, a grant advisor for CivicPath. A visitor asked: "${q}"\n\nGive a warm, helpful 2-3 sentence answer about grants that might be relevant. Be specific and encouraging. End with a call to action to sign up on CivicPath.`
+      );
+      setHeroAnswer(answer);
+    } catch {
+      setHeroAnswer('I\'d love to help! Sign up for free to get your personalized grant match list — we\'ll find the best funding for your organization in under 60 seconds.');
+    } finally {
+      setHeroLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-[#1A1A1A]" style={{fontFamily:'Inter,sans-serif'}}>
@@ -43,6 +67,43 @@ export default function LandingPage() {
           <Link to="/login?role=funder" className="border-2 border-stone-700 text-stone-800 font-semibold px-5 py-2.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors bg-white">I'm a Grant Funder</Link>
           <Link to="/demo" className="border border-stone-300 text-stone-600 px-5 py-2.5 rounded-lg hover:border-stone-500 hover:text-stone-800 transition-colors flex items-center gap-2 bg-white">▶ Try Live Demo</Link>
         </div>
+        {/* MyLalla Hero Chat Bar */}
+        <div className="mt-10 max-w-2xl mx-auto">
+          <form onSubmit={handleHeroAsk} className="flex gap-2">
+            <div className="flex-1 relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 text-sm">✨</span>
+              <input
+                type="text"
+                value={heroQuery}
+                onChange={e => setHeroQuery(e.target.value)}
+                placeholder="Ask MyLalla: What grants does my nonprofit qualify for?"
+                className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-white border-2 border-stone-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none text-stone-900 text-sm shadow-sm transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!heroQuery.trim() || heroLoading}
+              className="px-5 py-3.5 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-40 text-sm shadow-sm whitespace-nowrap"
+            >
+              {heroLoading ? '...' : 'Ask →'}
+            </button>
+          </form>
+          {heroAnswer && (
+            <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl text-left text-sm text-stone-700 leading-relaxed">
+              <div className="flex items-start gap-2">
+                <span className="text-purple-400 text-base shrink-0 mt-0.5">✨</span>
+                <div>
+                  <span className="font-bold text-purple-700">MyLalla: </span>
+                  {heroAnswer}
+                  <div className="mt-3">
+                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-purple-600 hover:text-purple-800 underline">Get your full personalized match →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <p className="mt-4 text-xs text-stone-400">Free to start · No credit card · Sovereign data</p>
 
         {/* Product Mockup */}

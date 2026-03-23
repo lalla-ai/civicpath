@@ -4,6 +4,11 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export async function generateText(prompt: string): Promise<string> {
   if (!apiKey) throw new Error('VITE_GEMINI_API_KEY is not set.');
   const result = await model.generateContent(prompt);
@@ -117,6 +122,29 @@ Return ONLY valid JSON in this exact format (no markdown):
       nextMeetingAgenda: ['Review final submission'],
     };
   }
+}
+
+// Multi-turn chat with MyLalla advisor
+export async function chatWithLalla(
+  messages: ChatMessage[],
+  systemContext: string
+): Promise<string> {
+  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY is not set.');
+  if (messages.length === 0) return '';
+
+  const history = messages.slice(0, -1).map(m => ({
+    role: m.role === 'user' ? ('user' as const) : ('model' as const),
+    parts: [{ text: m.content }],
+  }));
+
+  const chat = model.startChat({
+    history,
+    systemInstruction: systemContext,
+  });
+
+  const last = messages[messages.length - 1];
+  const result = await chat.sendMessage(last.content);
+  return result.response.text();
 }
 
 // Alternative grant suggestions when rejected

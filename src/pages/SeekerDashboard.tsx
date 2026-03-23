@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
-import { draftProposal } from '../gemini';
+import { draftProposal, chatWithLalla } from '../gemini';
+import type { ChatMessage } from '../gemini';
 import { 
   Search, 
   BrainCircuit, 
@@ -37,12 +38,13 @@ import {
   Video,
   Link,
   Mail,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations';
+type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations' | 'lalla';
 
 interface AgentState {
   id: string;
@@ -155,6 +157,35 @@ export default function SeekerDashboard() {
     setIsDemoPlaying(true);
   };
   const [nextAction, setNextAction] = useState<{ message: string, type: 'success' | 'warning' | 'error' } | null>(null);
+
+  // --- Ask MyLalla chat ---
+  const [lallaMessages, setLallaMessages] = useState<ChatMessage[]>([]);
+  const [lallaInput, setLallaInput] = useState('');
+  const [lallaLoading, setLallaLoading] = useState(false);
+  const lallaEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (lallaEndRef.current) lallaEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [lallaMessages, lallaLoading]);
+
+  const handleLallaChat = async (overrideInput?: string) => {
+    const text = (overrideInput ?? lallaInput).trim();
+    if (!text || lallaLoading) return;
+    const userMsg: ChatMessage = { role: 'user', content: text };
+    const next = [...lallaMessages, userMsg];
+    setLallaMessages(next);
+    setLallaInput('');
+    setLallaLoading(true);
+    const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise — like a trusted expert who knows the user personally. Use markdown for lists and bold text. Keep answers under 200 words unless more detail is asked for.\n\nUser's organization context:\n- Name: ${profile.companyName || 'Not set'}\n- Location: ${profile.location || 'Florida'}\n- Focus area: ${profile.focusArea || 'General'}\n- Background: ${profile.backgroundInfo || 'Not provided'}${discoveredGrants.length > 0 ? `\n\nGrants currently in their pipeline: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
+    try {
+      const reply = await chatWithLalla(next, ctx);
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Check your Gemini API key and try again." }]);
+    } finally {
+      setLallaLoading(false);
+    }
+  };
   
   const [integrations, setIntegrations] = useState({
     gmail: false,
@@ -822,6 +853,16 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             >
               <Link className="w-4 h-4 mr-2" /> Integrations
             </button>
+            <button 
+              onClick={() => setActiveTab('lalla')}
+              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${
+                activeTab === 'lalla'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 mr-2" /> Ask MyLalla
+            </button>
           </div>
         </div>
       </header>
@@ -1059,6 +1100,120 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   <span className="text-[10px] font-black text-white bg-[#2E7D32] px-2 py-1 rounded uppercase tracking-wider shadow-sm">Auto-booked in G-Cal</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'lalla' && (
+          <div className="flex flex-col h-[calc(100vh-12rem)] bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden animate-in fade-in">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-stone-100 bg-gradient-to-r from-purple-50 to-white flex items-center gap-3 shrink-0">
+              <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <div className="font-bold text-stone-900 flex items-center gap-2">
+                  Ask MyLalla
+                  <span className="text-[10px] font-black text-white bg-purple-500 px-2 py-0.5 rounded uppercase tracking-wide">AI Advisor</span>
+                </div>
+                <div className="text-xs text-stone-500">Your senior grant strategist — powered by Gemini</div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              {lallaMessages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center gap-5">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-stone-800 text-lg">Hi, I'm MyLalla.</p>
+                    <p className="text-stone-500 text-sm mt-1 max-w-sm">Your AI grant advisor. Ask me anything about grants, strategy, deadlines, or your proposals.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                    {[
+                      'Which grants fit my organization best?',
+                      'How do I write a strong executive summary?',
+                      'What are the NSF SBIR deadlines?',
+                      'How can I improve my proposal score?',
+                      'What grants are available in Florida?',
+                      'Explain the human-in-the-loop pipeline',
+                    ].map(q => (
+                      <button
+                        key={q}
+                        onClick={() => handleLallaChat(q)}
+                        className="text-xs px-3 py-2 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-400 transition-colors font-medium"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {lallaMessages.map((msg, i) => (
+                <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                    </div>
+                  )}
+                  <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[#2E7D32] text-white rounded-br-sm'
+                      : 'bg-stone-50 border border-stone-200 text-stone-800 rounded-bl-sm'
+                  }`}>
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-sm max-w-none prose-stone prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-strong:text-stone-900">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : msg.content}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[#2E7D32]">{(user?.name?.[0] || 'U').toUpperCase()}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {lallaLoading && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="bg-stone-50 border border-stone-200 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}} />
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}} />
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}} />
+                  </div>
+                </div>
+              )}
+              <div ref={lallaEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-6 py-4 border-t border-stone-100 bg-white shrink-0">
+              <form
+                onSubmit={e => { e.preventDefault(); handleLallaChat(); }}
+                className="flex gap-3"
+              >
+                <input
+                  type="text"
+                  value={lallaInput}
+                  onChange={e => setLallaInput(e.target.value)}
+                  placeholder="Ask MyLalla anything about grants, strategy, or deadlines..."
+                  className="flex-1 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-400 outline-none text-stone-900 text-sm"
+                  disabled={lallaLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={!lallaInput.trim() || lallaLoading}
+                  className="px-4 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 font-bold text-sm"
+                >
+                  {lallaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </form>
+              <p className="text-[10px] text-stone-400 mt-2 text-center">MyLalla knows your profile and pipeline context. Responses powered by Gemini 2.0 Flash.</p>
             </div>
           </div>
         )}

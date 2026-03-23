@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight, Sparkles, Send, Loader2 } from 'lucide-react';
+import { chatWithLalla } from '../gemini';
+import type { ChatMessage } from '../gemini';
+import ReactMarkdown from 'react-markdown';
 
 const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#2E7D32]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
-type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics';
+type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
 interface Grant { id: string; name: string; amount: string; focus: string[]; location: string; deadline: string; status: 'active'|'draft'; applications: number; }
 interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; }
 const GRANTS: Grant[] = [
@@ -40,6 +43,35 @@ export default function FunderDashboard() {
   const avgScore = Math.round(applicants.reduce((s,a) => s + a.score, 0) / applicants.length);
   const funded = applicants.filter(a => a.status === 'approved').length;
 
+  // --- Ask MyLalla (Funder) ---
+  const [lallaMessages, setLallaMessages] = useState<ChatMessage[]>([]);
+  const [lallaInput, setLallaInput] = useState('');
+  const [lallaLoading, setLallaLoading] = useState(false);
+  const lallaEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (lallaEndRef.current) lallaEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [lallaMessages, lallaLoading]);
+
+  const handleLallaChat = async (overrideInput?: string) => {
+    const text = (overrideInput ?? lallaInput).trim();
+    if (!text || lallaLoading) return;
+    const userMsg: ChatMessage = { role: 'user', content: text };
+    const next = [...lallaMessages, userMsg];
+    setLallaMessages(next);
+    setLallaInput('');
+    setLallaLoading(true);
+    const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath for grant funders. Be warm, strategic, and concise. Use markdown for lists and bold. Keep answers under 200 words unless asked for more.\n\nFunder context:\n- Active grants: ${grants.map(g => g.name).join(', ')}\n- Total applicants: ${applicants.length}\n- Average match score: ${avgScore}%\n- Funded so far: ${funded} organizations\n\nHelp with applicant evaluation, grant design, portfolio strategy, and impact measurement.`;
+    try {
+      const reply = await chatWithLalla(next, ctx);
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Check your Gemini API key and try again." }]);
+    } finally {
+      setLallaLoading(false);
+    }
+  };
+
   const handleApprove = (id: string) => {
     const name = applicants.find(a => a.id === id)?.org || '';
     setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'approved'} : a));
@@ -55,7 +87,7 @@ export default function FunderDashboard() {
     setActiveTab('overview');
   };
   const filtered = filterGrant === 'all' ? applicants : applicants.filter(a => a.grant === filterGrant);
-  const tabs: {id:FunderTab;label:string}[] = [{id:'overview',label:'📊 Overview'},{id:'post',label:'➕ Post Grant'},{id:'applicants',label:'👥 Applicants'},{id:'analytics',label:'📈 Analytics'}];
+  const tabs: {id:FunderTab;label:string;purple?:boolean}[] = [{id:'overview',label:'📊 Overview'},{id:'post',label:'➕ Post Grant'},{id:'applicants',label:'👥 Applicants'},{id:'analytics',label:'📈 Analytics'},{id:'lalla',label:'✨ Ask MyLalla',purple:true}];
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] font-sans flex flex-col">
@@ -109,7 +141,11 @@ export default function FunderDashboard() {
           <div className="flex space-x-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setActiveTab(t.id)}
-                className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${activeTab === t.id ? 'border-[#2E7D32] text-[#2E7D32]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}>{t.label}</button>
+                className={`pb-3 px-4 text-sm font-bold transition-colors border-b-2 ${
+                  activeTab === t.id
+                    ? (t.purple ? 'border-purple-500 text-purple-600' : 'border-[#2E7D32] text-[#2E7D32]')
+                    : 'border-transparent text-stone-500 hover:text-stone-700'
+                }`}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -214,6 +250,100 @@ export default function FunderDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'lalla' && (
+          <div className="flex flex-col h-[calc(100vh-12rem)] bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden animate-in fade-in">
+            <div className="px-6 py-4 border-b border-stone-100 bg-gradient-to-r from-purple-50 to-white flex items-center gap-3 shrink-0">
+              <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <div className="font-bold text-stone-900 flex items-center gap-2">
+                  Ask MyLalla
+                  <span className="text-[10px] font-black text-white bg-purple-500 px-2 py-0.5 rounded uppercase tracking-wide">AI Advisor</span>
+                </div>
+                <div className="text-xs text-stone-500">Your grant portfolio advisor — powered by Gemini</div>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              {lallaMessages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center gap-5">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-stone-800 text-lg">Hi, I'm MyLalla.</p>
+                    <p className="text-stone-500 text-sm mt-1 max-w-sm">Your AI grant portfolio advisor. Ask about your applicants, grant strategy, or impact metrics.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                    {[
+                      'Which applicants should I prioritize?',
+                      'How do I evaluate a grant proposal?',
+                      'What makes a strong grant recipient?',
+                      'How can I improve my Digital Equity Fund?',
+                      'What impact metrics should I track?',
+                      'Summarize my current applicant pool',
+                    ].map(q => (
+                      <button key={q} onClick={() => handleLallaChat(q)}
+                        className="text-xs px-3 py-2 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-400 transition-colors font-medium">
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {lallaMessages.map((msg, i) => (
+                <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                    </div>
+                  )}
+                  <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === 'user' ? 'bg-[#2E7D32] text-white rounded-br-sm' : 'bg-stone-50 border border-stone-200 text-stone-800 rounded-bl-sm'
+                  }`}>
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-sm max-w-none prose-stone prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-strong:text-stone-900">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : msg.content}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[#2E7D32]">{(user?.name?.[0] || 'F').toUpperCase()}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {lallaLoading && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="bg-stone-50 border border-stone-200 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}} />
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}} />
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}} />
+                  </div>
+                </div>
+              )}
+              <div ref={lallaEndRef} />
+            </div>
+            <div className="px-6 py-4 border-t border-stone-100 bg-white shrink-0">
+              <form onSubmit={e => { e.preventDefault(); handleLallaChat(); }} className="flex gap-3">
+                <input type="text" value={lallaInput} onChange={e => setLallaInput(e.target.value)}
+                  placeholder="Ask MyLalla about your applicants, grants, or strategy..."
+                  className="flex-1 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-400 outline-none text-stone-900 text-sm"
+                  disabled={lallaLoading} />
+                <button type="submit" disabled={!lallaInput.trim() || lallaLoading}
+                  className="px-4 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 font-bold text-sm">
+                  {lallaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </form>
+              <p className="text-[10px] text-stone-400 mt-2 text-center">MyLalla knows your grant portfolio and applicant data. Powered by Gemini 2.0 Flash.</p>
             </div>
           </div>
         )}
