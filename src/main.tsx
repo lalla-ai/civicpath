@@ -7,6 +7,9 @@ import { AuthProvider, useAuth } from './AuthContext.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import SeekerDashboard from './pages/SeekerDashboard.tsx'
 import FunderDashboard from './pages/FunderDashboard.tsx'
+import Pricing from './pages/Pricing.tsx'
+import Privacy from './pages/Privacy.tsx'
+import Terms from './pages/Terms.tsx'
 
 const Spinner = () => (
   <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
@@ -30,6 +33,9 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
           <Route path="/seeker" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
           <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

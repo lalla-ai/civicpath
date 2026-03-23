@@ -748,6 +748,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-stone-500 hidden sm:block">Hi, {user?.name}</span>
+              <a href="/pricing" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Pricing</a>
+              <a href="/privacy" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Privacy</a>
+              <a href="/terms" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Terms</a>
               <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">
                 <LogOut className="w-3.5 h-3.5" /> Sign Out
               </button>

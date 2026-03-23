@@ -200,7 +200,10 @@ export default function LandingPage() {
             <div className="text-xs text-stone-400 mt-1">Your community. Funded.</div>
           </div>
           <div className="flex gap-6 text-sm text-stone-400">
-            {['About','Privacy','Terms','Contact'].map(l => <a key={l} href="#" className="hover:text-stone-900 transition-colors">{l}</a>)}
+            <a href="/pricing" className="hover:text-stone-900 transition-colors">Pricing</a>
+            <a href="/privacy" className="hover:text-stone-900 transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-stone-900 transition-colors">Terms</a>
+            <a href="mailto:hello@civicpath.ai" className="hover:text-stone-900 transition-colors">Contact</a>
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-6 mt-8 pt-6 border-t border-stone-100 flex justify-between flex-wrap gap-2 text-xs text-stone-400">
