@@ -1,58 +1,51 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider } from './firebase';
 
 interface User {
   email: string;
   name: string;
+  photo?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  loading: boolean;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const STORAGE_KEY = 'civicpath_user';
-const ACCOUNTS_KEY = 'civicpath_accounts';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [user]);
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || 'User',
+          photo: firebaseUser.photoURL || undefined,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
 
-  const signup = async (name: string, email: string, password: string) => {
-    const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
-    if (accounts[email]) throw new Error('An account with this email already exists.');
-    accounts[email] = { name, password };
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-    setUser({ email, name });
+  const loginWithGoogle = async () => {
+    await signInWithPopup(auth, googleProvider);
   };
 
-  const login = async (email: string, password: string) => {
-    const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
-    const account = accounts[email];
-    if (!account || account.password !== password) {
-      throw new Error('Invalid email or password.');
-    }
-    setUser({ email, name: account.name });
-  };
-
-  const logout = () => setUser(null);
+  const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

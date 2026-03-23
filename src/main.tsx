@@ -7,7 +7,8 @@ import LoginPage from './LoginPage.tsx'
 import { AuthProvider, useAuth } from './AuthContext.tsx'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin" /></div>;
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
