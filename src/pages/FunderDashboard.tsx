@@ -97,7 +97,7 @@ export default function FunderDashboard() {
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3"><Logo /><h1 className="text-2xl font-[800] tracking-tight text-stone-900">CivicPath</h1><span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-blue-600 text-white rounded">Funder</span></div>
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}><Logo /><h1 className="text-2xl font-[800] tracking-tight text-stone-900">CivicPath</h1><span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-blue-600 text-white rounded">Funder</span></div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-stone-500 hidden sm:block">Hi, {user?.name}</span>
               <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 px-3 py-1.5 rounded-lg hover:bg-stone-100"><LogOut className="w-3.5 h-3.5" /> Sign Out</button>

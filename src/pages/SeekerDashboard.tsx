@@ -737,7 +737,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setStep('onboarding')}>
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
               <Logo />
               <div className="flex items-center space-x-2">
                 <h1 className="text-2xl font-[800] tracking-tight text-stone-900">
