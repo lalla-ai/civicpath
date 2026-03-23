@@ -7,14 +7,16 @@ interface User {
   email: string;
   name: string;
   photo?: string;
+  role?: 'seeker' | 'funder';
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
-  signupWithEmail: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: (role?: string) => Promise<void>;
+  loginWithEmail: (email: string, password: string, role?: string) => Promise<void>;
+  signupWithEmail: (name: string, email: string, password: string, role?: string) => Promise<void>;
+  setRole: (role: 'seeker' | 'funder') => void;
   logout: () => void;
 }
 
@@ -27,10 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        const savedRole = localStorage.getItem('civicpath_role') as 'seeker' | 'funder' | null;
         setUser({
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || 'User',
           photo: firebaseUser.photoURL || undefined,
+          role: savedRole || undefined,
         });
       } else {
         setUser(null);
@@ -40,23 +44,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
-  const loginWithGoogle = async () => {
+  const saveRole = (role?: string) => {
+    if (role) localStorage.setItem('civicpath_role', role);
+  };
+
+  const setRole = (role: 'seeker' | 'funder') => {
+    localStorage.setItem('civicpath_role', role);
+    setUser(prev => prev ? { ...prev, role } : prev);
+  };
+
+  const loginWithGoogle = async (role?: string) => {
+    saveRole(role);
     await signInWithPopup(auth, googleProvider);
   };
 
-  const loginWithEmail = async (email: string, password: string) => {
+  const loginWithEmail = async (email: string, password: string, role?: string) => {
+    saveRole(role);
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signupWithEmail = async (name: string, email: string, password: string) => {
+  const signupWithEmail = async (name: string, email: string, password: string, role?: string) => {
+    saveRole(role);
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
   };
 
-  const logout = () => signOut(auth);
+  const logout = () => {
+    localStorage.removeItem('civicpath_role');
+    signOut(auth);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, setRole, logout }}>
       {children}
     </AuthContext.Provider>
   );
