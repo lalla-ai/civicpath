@@ -4,6 +4,8 @@ import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
+import { grantLeafHash, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
+import type { ZGReceipt } from '../lib/merkle';
 import AgentStatus from '../components/AgentStatus';
 import type { AgentItem } from '../components/AgentStatus';
 import SovereignHeader from '../components/SovereignHeader';
@@ -244,6 +246,38 @@ export default function SeekerDashboard() {
 
   // Tracker view toggle
   const [trackerView, setTrackerView] = useState<'table' | 'kanban'>('table');
+
+  // ── 0G Labs Merkle Integrity ──────────────────────────────────────────
+  const [grantHashes, setGrantHashes] = useState<Record<string, string>>({});
+  const [merkleRoot, setMerkleRoot] = useState<string>('');
+  const [zgSyncState, setZGSyncState] = useState<'idle' | 'syncing' | 'confirmed'>('idle');
+  const [zgReceipt, setZGReceipt] = useState<ZGReceipt | null>(null);
+
+  // Recompute SHA-256 leaf hashes + Merkle root whenever tracker changes
+  useEffect(() => {
+    if (trackerGrants.length === 0) { setGrantHashes({}); setMerkleRoot(''); return; }
+    (async () => {
+      const hashes: Record<string, string> = {};
+      for (const g of trackerGrants) {
+        hashes[g.id] = await grantLeafHash(g);
+      }
+      setGrantHashes(hashes);
+      setMerkleRoot(await buildMerkleRoot(Object.values(hashes)));
+    })();
+  }, [trackerGrants]);
+
+  const handleZGSync = async () => {
+    if (!merkleRoot || zgSyncState === 'syncing') return;
+    setZGSyncState('syncing');
+    setZGReceipt(null);
+    try {
+      const receipt = await simulateZGSync(merkleRoot);
+      setZGReceipt(receipt);
+      setZGSyncState('confirmed');
+    } catch {
+      setZGSyncState('idle');
+    }
+  };
 
   // Email digest
   const [digestLoading, setDigestLoading] = useState(false);
@@ -1927,6 +1961,25 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     ⧮ Board
                   </button>
                 </div>
+                {/* 0G Labs DA Sync */}
+                {trackerGrants.length > 0 && (
+                  <button
+                    onClick={handleZGSync}
+                    disabled={zgSyncState === 'syncing' || !merkleRoot}
+                    className={`flex items-center gap-1.5 px-3 py-2 border text-xs font-bold rounded-lg transition-colors disabled:opacity-40 ${
+                      zgSyncState === 'confirmed'
+                        ? 'border-[#76B900] text-[#76B900] bg-[#76B900]/5'
+                        : 'border-stone-200 text-stone-600 hover:border-[#76B900] hover:text-[#76B900]'
+                    }`}
+                    title={merkleRoot ? `Merkle Root: ${truncateHash(merkleRoot)}` : 'Computing...'}
+                  >
+                    {zgSyncState === 'syncing'
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Syncing...</>
+                      : zgSyncState === 'confirmed'
+                      ? <><CheckCircle2 className="w-3.5 h-3.5" /> Anchored</>  
+                      : <><ShieldCheck className="w-3.5 h-3.5" /> Sync to 0G Labs</>}
+                  </button>
+                )}
                 <button onClick={sendDigest} disabled={digestLoading || !user?.email}
                   className="flex items-center gap-1.5 px-3 py-2 border border-stone-200 text-stone-600 text-xs font-bold rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors disabled:opacity-40">
                   {digestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
@@ -1935,6 +1988,30 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 {digestMsg && <span className="text-xs font-medium text-[#76B900]">{digestMsg}</span>}
               </div>
             </div>
+
+            {/* 0G Labs TX confirmed banner */}
+            {zgReceipt && (
+              <div className="mb-4 bg-[#0D0D0D] border border-[#76B900]/30 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-in fade-in">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute w-4 h-4 rounded-full bg-[#76B900]/30 animate-ping" />
+                    <CheckCircle2 className="relative w-4 h-4 text-[#76B900]" />
+                  </div>
+                  <span className="text-[#76B900] font-black text-xs uppercase tracking-widest">Transaction Confirmed</span>
+                  <span className="text-[9px] font-black text-[#111] bg-[#76B900] px-1.5 py-0.5 rounded uppercase tracking-wider">0G Labs DA</span>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[10px]">
+                  <span className="text-stone-500">TX: <span className="text-stone-300">{truncateHash(zgReceipt.txHash, 6)}</span></span>
+                  <span className="text-stone-500">Block: <span className="text-stone-300">#{zgReceipt.blockHeight.toLocaleString()}</span></span>
+                  <span className="text-stone-500">Root: <span className="text-stone-300">{truncateHash(zgReceipt.merkleRoot, 6)}</span></span>
+                  <span className="text-stone-500">Gas: <span className="text-stone-300">{zgReceipt.gasUsed}</span></span>
+                  <span className="text-stone-500">Size: <span className="text-stone-300">{zgReceipt.dataSize}</span></span>
+                </div>
+                <button onClick={() => { setZGReceipt(null); setZGSyncState('idle'); }} className="ml-auto text-stone-600 hover:text-stone-400 text-xs transition-colors shrink-0">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Save from pipeline banner */}
             {discoveredGrants.length > 0 && (
@@ -1969,9 +2046,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {trackerGrants.length > 0 && trackerView === 'table' && (
               <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
                 {/* Column headers */}
-                <div className="hidden sm:grid border-b border-stone-100 bg-stone-50" style={{gridTemplateColumns:'2fr 110px 1fr 90px 90px 36px'}}>
-                  {['Grant Name','Status','Agency','Deadline','Source',''].map((h,i) => (
-                    <div key={i} className={`px-4 py-2.5 text-[11px] font-bold text-stone-400 uppercase tracking-wider ${i < 5 ? 'border-r border-stone-100' : ''}`}>{h}</div>
+                <div className="hidden sm:grid border-b border-stone-100 bg-stone-50" style={{gridTemplateColumns:'2fr 110px 1fr 90px 140px 80px 36px'}}>
+                  {['Grant Name','Status','Agency','Deadline','Integrity · SHA-256','Source',''].map((h,i) => (
+                    <div key={i} className={`px-4 py-2.5 text-[11px] font-bold text-stone-400 uppercase tracking-wider ${i < 6 ? 'border-r border-stone-100' : ''}`}>{h}</div>
                   ))}
                 </div>
 
@@ -1986,12 +2063,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   const sc = statusConfig[g.status];
                   const statusOrder: TrackerGrant['status'][] = ['saved','applied','in-review','won'];
                   const nextStatus = statusOrder[statusOrder.indexOf(g.status) + 1];
+                  const leafHash = grantHashes[g.id];
+                  const isAnchored = zgReceipt !== null;
                   return (
                     <div key={g.id}
                       className={`group flex flex-col sm:grid border-b border-stone-100 last:border-b-0 hover:bg-stone-50/60 transition-colors ${
                         i % 2 === 0 ? '' : 'bg-[#FAFAFA]'
                       }`}
-                      style={{gridTemplateColumns:'2fr 110px 1fr 90px 90px 36px'}}>
+                      style={{gridTemplateColumns:'2fr 110px 1fr 90px 140px 80px 36px'}}>
 
                       {/* Name */}
                       <div className="px-4 py-3 flex items-center gap-2.5 sm:border-r border-stone-100">
@@ -2032,6 +2111,27 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         <span className={`text-[12px] ${g.closeDate && g.closeDate !== 'Rolling' ? 'text-stone-600' : 'text-stone-300'}`}>
                           {g.closeDate && g.closeDate !== 'Rolling' ? g.closeDate : '—'}
                         </span>
+                      </div>
+
+                      {/* Integrity — SHA-256 leaf hash */}
+                      <div className="hidden sm:flex px-3 py-3 items-center border-r border-stone-100 gap-1.5">
+                        {leafHash ? (
+                          <>
+                            <span
+                              className={`font-mono text-[10px] truncate ${
+                                isAnchored ? 'text-[#76B900]' : 'text-stone-400'
+                              }`}
+                              title={`0x${leafHash}`}
+                            >
+                              {truncateHash(leafHash, 4)}
+                            </span>
+                            {isAnchored && (
+                              <CheckCircle2 className="w-3 h-3 text-[#76B900] shrink-0" />
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-stone-300 font-mono animate-pulse">computing...</span>
+                        )}
                       </div>
 
                       {/* Source */}
