@@ -45,7 +45,14 @@ export default function Terms() {
             <p>CivicPath is provided "as is" without warranty of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform or any funding decisions made by third parties.</p>
           </section>
           <section>
-            <h2 className="text-xl font-bold text-stone-900 mb-3">8. Contact</h2>
+            <h2 className="text-xl font-bold text-stone-900 mb-3">8. Cancellation &amp; Refund Policy</h2>
+            <p><strong>Free plan:</strong> No payment required. Cancel or close your account at any time at no cost.</p>
+            <p className="mt-2"><strong>Paid plans (Pro &amp; Funder):</strong> You may cancel your subscription at any time from the Pricing page or by emailing <a href="mailto:hello@civicpath.ai" className="text-[#76B900] hover:underline">hello@civicpath.ai</a>. Upon cancellation, you retain full access until the end of your current billing period. No partial refunds are issued for unused time within a billing period.</p>
+            <p className="mt-2"><strong>Free trial:</strong> All paid plans include a 14-day free trial. You will not be charged if you cancel before the trial ends. No questions asked.</p>
+            <p className="mt-2"><strong>Refunds:</strong> If you experience a billing error or are charged after canceling, contact us within 7 days and we will issue a full refund. We do not offer refunds for periods of active use.</p>
+          </section>
+          <section>
+            <h2 className="text-xl font-bold text-stone-900 mb-3">9. Contact</h2>
             <p>For questions about these terms: <a href="mailto:legal@civicpath.ai" className="text-[#76B900] hover:underline">legal@civicpath.ai</a><br />
             HelloAgentic · Built in Florida · © 2026</p>
           </section>

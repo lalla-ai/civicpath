@@ -34,6 +34,8 @@ export default function LoginPage() {
     setGoogleLoading(true);
     try {
       await loginWithGoogle(role);
+      // For Google we can't easily distinguish new vs returning — send welcome silently
+      if (user?.email) sendWelcomeEmail(user.name || '', user.email, role);
     } catch (err: any) {
       const msg = err?.code || err?.message || '';
       if (msg.includes('popup-closed') || msg.includes('cancelled')) {
@@ -50,6 +52,15 @@ export default function LoginPage() {
     }
   };
 
+  const sendWelcomeEmail = (userName: string, userEmail: string, userRole: string) => {
+    // Fire-and-forget — never blocks signup
+    fetch('/api/send-welcome-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: userName, email: userEmail, role: userRole }),
+    }).catch(() => {}); // silently ignore errors
+  };
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -59,6 +70,7 @@ export default function LoginPage() {
         if (!name.trim()) throw new Error('Please enter your full name.');
         if (password.length < 6) throw new Error('Password must be at least 6 characters.');
         await signupWithEmail(name.trim(), email.trim(), password, role);
+        sendWelcomeEmail(name.trim(), email.trim(), role);
       } else {
         await loginWithEmail(email.trim(), password, role);
       }

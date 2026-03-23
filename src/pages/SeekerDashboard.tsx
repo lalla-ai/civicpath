@@ -771,20 +771,65 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   )}
                 </div>
 
-                {/* CTA after demo */}
-                <div className="p-8 bg-stone-50 text-center">
-                  <p className="text-stone-500 text-sm mb-6">The only fully agentic grant pipeline. <span className="font-bold text-stone-700">Free to start.</span> No credit card.</p>
-                  <div className="flex gap-3 justify-center">
-                    <button
-                      onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
-                      className="px-6 py-3 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-colors shadow-md">
-                      Start Building My Profile →
-                    </button>
-                    <button
-                      onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
-                      className="px-6 py-3 border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-100 transition-colors">
-                      Close
-                    </button>
+                {/* CTA + Q&A after demo */}
+                <div className="p-8 bg-[#F9F7F2]">
+                  <div className="text-center mb-8">
+                    <p className="text-stone-500 text-sm mb-4">The only fully agentic grant pipeline. <span className="font-bold text-stone-700">Free to start.</span> No credit card.</p>
+                    <div className="flex gap-3 justify-center">
+                      <button
+                        onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
+                        className="px-6 py-3 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-colors shadow-md">
+                        Start Building My Profile →
+                      </button>
+                      <button
+                        onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
+                        className="px-6 py-3 border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-100 transition-colors">
+                        Close
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Q&A Section */}
+                  <div className="max-w-2xl mx-auto">
+                    <h4 className="text-sm font-bold text-stone-700 uppercase tracking-widest mb-4 text-center">Common Questions</h4>
+                    <div className="space-y-3">
+                      {[
+                        {
+                          q: 'Is CivicPath really free?',
+                          a: 'Yes. The Free plan is free forever — no credit card needed. Pro ($49/mo) and Funder ($199/mo) plans include a 14-day free trial. Cancel anytime, no questions asked.'
+                        },
+                        {
+                          q: 'How fast is the first grant match?',
+                          a: 'Under 60 seconds. Fill your profile, click “Run Full Pipeline” — Hunter scans Grants.gov + SBA SBIR live and Matchmaker scores matches in real time.'
+                        },
+                        {
+                          q: 'Do the agents actually submit grants for me?',
+                          a: 'Almost autonomously. Hunter, Matchmaker, and Drafter run automatically. The Submitter queues your AI-written proposal for your approval — you review and click “Approve”, then it sends via Gmail.'
+                        },
+                        {
+                          q: 'Is my data private and secure?',
+                          a: 'Yes. Your profile, proposals, and EIN are never shared or sold. All data stays in our sovereign infrastructure. See our Privacy Policy for full details.'
+                        },
+                        {
+                          q: 'What kinds of organizations can use CivicPath?',
+                          a: 'Any — 501(c)(3) nonprofits, AI startups, small businesses, universities, local government, individual researchers. If you need funding, CivicPath is built for you.'
+                        },
+                        {
+                          q: 'What if I want to cancel my subscription?',
+                          a: 'Cancel anytime from your account — no cancellation fees, no questions asked. You keep access until the end of your billing period. Trial cancellations are free within 14 days.'
+                        },
+                      ].map((item, i) => (
+                        <details key={i} className="bg-white border border-stone-200 rounded-xl overflow-hidden group">
+                          <summary className="px-5 py-4 font-semibold text-stone-800 text-sm cursor-pointer list-none flex items-center justify-between hover:bg-stone-50 transition-colors">
+                            {item.q}
+                            <span className="text-[#2E7D32] text-lg shrink-0 ml-3 group-open:rotate-45 transition-transform inline-block">+</span>
+                          </summary>
+                          <div className="px-5 pb-4 text-sm text-stone-600 leading-relaxed border-t border-stone-100 pt-3">
+                            {item.a}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
