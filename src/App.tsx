@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { jsPDF } from 'jspdf';
+import { useAuth } from './AuthContext';
 import { 
   Search, 
   BrainCircuit, 
@@ -33,7 +36,8 @@ import {
   Video,
   DollarSign,
   Link,
-  Mail
+  Mail,
+  LogOut
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
@@ -60,15 +64,29 @@ const Logo = () => (
   </div>
 );
 
+const PROFILE_KEY = 'civicpath_profile';
+
 function App() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState<AppStep>('onboarding');
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [profile, setProfile] = useState({
-    companyName: 'Sunrise Tech Nonprofit',
-    focusArea: 'AI-driven agricultural optimization',
-    location: 'Orlando, FL',
-    backgroundInfo: 'Focused on sustainable, AI-driven solutions for local communities in Florida. Our team has successfully deployed 3 pilot projects reducing resource usage by 15%.'
+  const [profile, setProfile] = useState(() => {
+    const saved = localStorage.getItem(PROFILE_KEY);
+    return saved ? JSON.parse(saved) : {
+      companyName: '',
+      focusArea: '',
+      location: '',
+      backgroundInfo: ''
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  }, [profile]);
+
+  const [discoveredGrants, setDiscoveredGrants] = useState<Array<{name: string, amount: string, due: string, priority: string}>>([]);
+  const [drafterOutput, setDrafterOutput] = useState<string | null>(null);
 
   const [showAgentsMenu, setShowAgentsMenu] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -220,6 +238,13 @@ function App() {
     addLog('hunter', 'Extracting JSON metadata (Deadlines, Amounts)...');
     await delay(800);
     
+    const grants = [
+      { name: 'State Innovation Match Fund', amount: '$150k', due: 'Oct 15, 2026', priority: 'High' },
+      { name: 'National Tech Seed Grant', amount: '$250k', due: 'Rolling', priority: 'Medium' },
+      { name: 'Regional Sustainability Initiative', amount: '$50k', due: 'Dec 1, 2026', priority: 'Medium' },
+      { name: 'Dept of Energy SBIR Phase I', amount: '$200k', due: 'Jan 2027', priority: 'High' },
+    ];
+    setDiscoveredGrants(grants);
     const hunterText = `
 **Live Search Results Gathered:**
 * [State Innovation Match Fund](https://example.gov/match) - $150k (Due: Oct 15, 2026)
@@ -270,28 +295,69 @@ Based on your background and focus in **${profile.focusArea || 'Tech'}**, here i
   const runDrafter = async () => {
     updateAgent('drafter', { status: 'working', logs: [], output: null });
     addLog('drafter', 'Connecting to Gemini 2.0 Flash via API...');
-    await delay(800);
-    
+    await delay(400);
+
     addGlobalLog(`[✍️ The Drafter]    Generating executive summary for Grant #1...`);
     addLog('drafter', 'Loading grant rubric and agency specific guidelines...');
-    await delay(1000);
-    
-    addLog('drafter', 'Generating Section 2: Technical Merit...');
-    await delay(1000);
 
-    const drafterText = `
-### Draft Proposal: Executive Summary
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    let drafterText = '';
 
-**Problem & Solution**: Regional sectors face increasing volatility. Our platform addresses these challenges by providing real-time, sensor-based insights that maximize output while minimizing resource consumption.
+    if (apiKey) {
+      try {
+        addLog('drafter', 'Sending prompt to Gemini 2.0 Flash...');
+        const prompt = `You are a professional grant writer. Write a compelling grant proposal executive summary for the following organization:
 
-**Technical Merit**: Utilizing proprietary machine learning algorithms trained on specific regional data, our solution outperforms generic optimization tools. 
+Organization: ${profile.companyName || 'Our Organization'}
+Location: ${profile.location || 'United States'}
+Focus Area: ${profile.focusArea || 'Technology Innovation'}
+Background: ${profile.backgroundInfo || 'An innovative organization dedicated to community impact.'}
+Target Grant: State Innovation Match Fund ($150,000)
 
-**Economic Impact**: We anticipate a 15% reduction in resource usage and a significant boost to the local economy. Expansion plan includes creating 25 high-wage technical jobs within the next 18 months.
-`;
+Write 3 concise sections in markdown:
+1. ### Problem & Solution
+2. ### Technical Merit
+3. ### Economic Impact
+
+Be specific, compelling, and tailor the content to the organization details provided.`;
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          }
+        );
+        const data = await res.json();
+        drafterText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!drafterText) throw new Error('Empty response from Gemini');
+        addLog('drafter', 'Gemini response received. Streaming output...');
+      } catch (err) {
+        addLog('drafter', 'Gemini API error — falling back to template draft.');
+        drafterText = `### Draft Proposal: Executive Summary
+
+**Problem & Solution**: ${profile.location || 'Regional'} sectors face increasing volatility. ${profile.companyName || 'Our platform'} addresses these challenges through ${profile.focusArea || 'innovative technology'}.
+
+**Technical Merit**: Utilizing advanced algorithms tailored to regional data, our solution outperforms generic tools and delivers measurable results.
+
+**Economic Impact**: We project a 15% reduction in resource usage and creation of 25 high-wage technical jobs within 18 months.`;
+      }
+    } else {
+      addLog('drafter', 'No API key found — using template draft.');
+      drafterText = `### Draft Proposal: Executive Summary
+
+**Problem & Solution**: ${profile.location || 'Regional'} sectors face increasing volatility. ${profile.companyName || 'Our platform'} addresses these challenges through ${profile.focusArea || 'innovative technology'}.
+
+**Technical Merit**: Utilizing advanced algorithms tailored to regional data, our solution outperforms generic tools.
+
+**Economic Impact**: We project a 15% reduction in resource usage and creation of 25 high-wage technical jobs within 18 months.`;
+    }
+
+    setDrafterOutput(drafterText);
     await streamOutput('drafter', drafterText);
-    
     addGlobalLog(`[✍️ The Drafter]    Draft complete and formatted to PDF standards ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Drafter → Controller: "Draft complete (847 words). Requesting compliance check before presenting."`);
+    addGlobalLog(`[🤖 ACTIVITY]       Drafter → Controller: "Draft complete. Requesting compliance check before presenting."`);
     updateAgent('drafter', { status: 'completed' });
     return true;
   };
@@ -728,6 +794,15 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#2E7D32] text-white rounded">Hub</span>
               </div>
             </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-stone-500 font-medium hidden sm:block">Hi, {user?.name}</span>
+              <button
+                onClick={() => { logout(); navigate('/login'); }}
+                className="flex items-center px-3 py-1.5 text-xs font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign Out
+              </button>
+            </div>
           </div>
           
           {/* Tabs */}
@@ -853,59 +928,52 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-xl font-bold text-stone-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-[#2E7D32]" /> Auto-Scheduled Work Plan</h2>
-                <p className="text-sm text-stone-500 mt-1">AI has allocated 23 hours across 3 active grants based on deadlines and priority.</p>
+                <p className="text-sm text-stone-500 mt-1">
+                  {discoveredGrants.length > 0
+                    ? `AI has scheduled work blocks for ${discoveredGrants.length} discovered grants.`
+                    : 'Run the pipeline first to generate your personalized schedule.'}
+                </p>
               </div>
-              <button onClick={() => alert('Demo: Background Watcher is syncing these events to your Google Calendar.')} className="px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center w-full md:w-auto justify-center">
+              <button
+                onClick={() => alert('Demo: Background Watcher is syncing these events to your Google Calendar.')}
+                className="px-4 py-2 bg-[#2E7D32] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#1B5E20] transition-colors flex items-center w-full md:w-auto justify-center"
+              >
                 <Calendar className="w-4 h-4 mr-2" /> Sync to Google Calendar
               </button>
             </div>
-            
-            <div className="space-y-6">
-              {/* Day 1 */}
-              <div>
-                <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100">Monday, March 23</h3>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-[#2E7D32] flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 9:00 AM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Research + Executive Summary</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k) • <span className="text-amber-600 font-bold">High Priority</span></div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">4 hrs block</div>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-stone-50 border border-stone-200 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-stone-500 flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 2:00 PM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Budget Narrative Prep</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k)</div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">3 hrs block</div>
-                  </div>
-                </div>
+
+            {discoveredGrants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <CalendarDays className="w-12 h-12 text-stone-300 mb-4" />
+                <p className="text-stone-500 font-medium">No schedule yet.</p>
+                <p className="text-sm text-stone-400 mt-1">Run the AI pipeline on the Dashboard tab to discover grants and auto-generate your work plan.</p>
               </div>
-              {/* Day 2 */}
-              <div>
-                <h3 className="text-xs font-bold text-stone-500 mb-3 uppercase tracking-wider pb-2 border-b border-stone-100">Tuesday, March 24</h3>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-[#2E7D32] flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 9:00 AM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant A: Review AI Draft + Submit <span className="ml-2">✅</span></div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">State Innovation Match Fund ($150k) • <span className="text-[#2E7D32] font-bold">Final Review</span></div>
+            ) : (
+              <div className="space-y-4">
+                {discoveredGrants.map((grant, i) => {
+                  const times = ['9:00 AM', '11:30 AM', '2:00 PM', '4:00 PM'];
+                  const hours = grant.priority === 'High' ? '4 hrs block' : '2 hrs block';
+                  const isHigh = grant.priority === 'High';
+                  return (
+                    <div key={i} className={`flex flex-col md:flex-row md:items-center p-4 rounded-xl gap-4 border ${
+                      isHigh ? 'bg-[#2E7D32]/5 border-[#2E7D32]/20' : 'bg-stone-50 border-stone-200'
+                    }`}>
+                      <div className={`w-28 shrink-0 text-sm font-bold flex items-center ${isHigh ? 'text-[#2E7D32]' : 'text-stone-500'}`}>
+                        <Clock className="w-4 h-4 mr-1.5" /> {times[i % times.length]}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-bold text-stone-800">{grant.name}: Research + Draft</div>
+                        <div className="text-xs font-medium text-stone-500 mt-0.5">
+                          {grant.amount} • Due: {grant.due} •{' '}
+                          <span className={isHigh ? 'text-amber-600 font-bold' : 'text-stone-400'}>{grant.priority} Priority</span>
+                        </div>
+                      </div>
+                      <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">{hours}</div>
                     </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">3 hrs block</div>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-center p-4 bg-stone-50 border border-stone-200 rounded-xl gap-4">
-                    <div className="w-24 shrink-0 text-sm font-bold text-stone-500 flex items-center"><Clock className="w-4 h-4 mr-1.5" /> 1:00 PM</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-stone-800">Grant C: Profile Alignment Analysis</div>
-                      <div className="text-xs font-medium text-stone-500 mt-0.5">Regional Sustainability Initiative ($50k)</div>
-                    </div>
-                    <div className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm">2 hrs block</div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1092,7 +1160,27 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 </div>
                 <div className="flex space-x-3">
-                  <button onClick={() => alert('Demo: Downloading proposal_final.pdf...')} className="flex items-center px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 font-bold text-sm shadow-sm transition-colors">
+                  <button
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      doc.setFontSize(18);
+                      doc.setFont('helvetica', 'bold');
+                      doc.text('Grant Proposal', 20, 20);
+                      doc.setFontSize(11);
+                      doc.setFont('helvetica', 'normal');
+                      doc.text(`Organization: ${profile.companyName || 'N/A'}`, 20, 35);
+                      doc.text(`Location: ${profile.location || 'N/A'}`, 20, 43);
+                      doc.text(`Focus Area: ${profile.focusArea || 'N/A'}`, 20, 51);
+                      doc.text(`Target Grant: State Innovation Match Fund ($150,000)`, 20, 59);
+                      doc.setDrawColor(46, 125, 50);
+                      doc.line(20, 65, 190, 65);
+                      doc.setFontSize(10);
+                      const lines = doc.splitTextToSize(drafterOutput?.replace(/#{1,3} /g, '').replace(/\*\*/g, '') || 'No proposal content yet.', 170);
+                      doc.text(lines, 20, 75);
+                      doc.save(`${profile.companyName || 'proposal'}_civicpath.pdf`);
+                    }}
+                    className="flex items-center px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 font-bold text-sm shadow-sm transition-colors"
+                  >
                     <Download className="w-4 h-4 mr-2 text-[#2E7D32]" /> Download PDF Proposal
                   </button>
                   <button onClick={() => alert('Demo: Booking 3 milestone events to Google Calendar...')} className="flex items-center px-4 py-2 bg-[#2E7D32] text-white rounded-lg hover:bg-[#1B5E20] font-bold text-sm shadow-sm transition-colors">
