@@ -162,24 +162,45 @@ export default function SeekerDashboard() {
     const urls = [profile.website, profile.linkedinUrl, profile.twitterUrl].filter(Boolean).join(', ');
     if (!urls) return;
     setAiFilling(true);
-    setAiFillMsg('Analyzing your online presence...');
+    setAiFillMsg('Gemini is analyzing your links...');
     try {
-      const prompt = `Based on these URLs: ${urls}\n\nUsing any knowledge you have about this organization or person, or inferring from the domain/handle names, generate a grant-seeking profile. Return ONLY valid JSON (no markdown):\n{"companyName":"...","focusArea":"...","missionStatement":"...","targetPopulation":"..."}`;
-      const result = await generateText(prompt);
-      const parsed = JSON.parse(result.replace(/\`\`\`json|\`\`\`/g, '').trim());
-      setProfile(prev => ({
-        ...prev,
-        companyName: prev.companyName || parsed.companyName || prev.companyName,
-        focusArea: prev.focusArea || parsed.focusArea || prev.focusArea,
-        missionStatement: prev.missionStatement || parsed.missionStatement || prev.missionStatement,
-        targetPopulation: prev.targetPopulation || parsed.targetPopulation || prev.targetPopulation,
-      }));
-      setAiFillMsg('\u2713 Profile fields updated from your online presence');
-    } catch {
-      setAiFillMsg('Could not auto-fill — please fill fields manually');
+      const prompt = `You are a grant profile assistant. Based on these URLs: ${urls}\n\nUsing any knowledge from your training data about this organization, OR inferring from the domain/handle names, create a grant-seeking organization profile.\n\nRespond with ONLY this JSON object — no markdown, no backticks, no extra text before or after:\n{\n  "companyName": "organization name",\n  "focusArea": "primary sector or focus area",\n  "missionStatement": "2-sentence mission statement",\n  "targetPopulation": "who they serve"\n}`;
+      const raw = await generateText(prompt);
+      // Robust JSON extraction — handles markdown fences, extra text, etc.
+      let parsed: any = null;
+      try { parsed = JSON.parse(raw.trim()); } catch {}
+      if (!parsed) {
+        const m = raw.match(/\{[\s\S]*?\}/);
+        if (m) try { parsed = JSON.parse(m[0]); } catch {}
+      }
+      if (parsed && typeof parsed === 'object') {
+        setProfile(prev => ({
+          ...prev,
+          ...(parsed.companyName?.trim() && { companyName: parsed.companyName.trim() }),
+          ...(parsed.focusArea?.trim() && { focusArea: parsed.focusArea.trim() }),
+          ...(parsed.missionStatement?.trim() && { missionStatement: parsed.missionStatement.trim() }),
+          ...(parsed.targetPopulation?.trim() && { targetPopulation: parsed.targetPopulation.trim() }),
+        }));
+        setAiFillMsg('\u2713 Done! Fields pre-filled — review and edit as needed, then Continue.');
+      } else {
+        // Gemini returned text but not parseable JSON — try to use it as backgroundInfo
+        if (raw.length > 50) {
+          setProfile(prev => ({ ...prev, backgroundInfo: prev.backgroundInfo || raw.slice(0, 600) }));
+          setAiFillMsg('\u2713 AI context saved to background info field.');
+        } else {
+          setAiFillMsg('\u26a0 AI could not infer profile from these URLs. Fill fields manually.');
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (msg.includes('API key') || msg.includes('api key')) {
+        setAiFillMsg('\u26a0 Gemini API key missing. Set VITE_GEMINI_API_KEY in .env');
+      } else {
+        setAiFillMsg('\u26a0 Connection issue. Fill fields manually and continue \u2192');
+      }
     } finally {
       setAiFilling(false);
-      setTimeout(() => setAiFillMsg(''), 4000);
+      setTimeout(() => setAiFillMsg(''), 8000);
     }
   };
 
