@@ -39,7 +39,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) {
       const urlRole = searchParams.get('role') as 'seeker' | 'funder' | null;
-      const targetRole = urlRole || role || user.role || 'seeker';
+      const savedRole = localStorage.getItem('civicpath_role') as 'seeker' | 'funder' | null;
+      // Priority: URL param > saved localStorage role > user.role from Firebase > 'seeker' default
+      // NOTE: do NOT use `role` component state — it defaults to 'seeker' and overrides saved funder role
+      const targetRole = urlRole || savedRole || user.role || 'seeker';
       if (targetRole !== user.role) {
         localStorage.setItem('civicpath_role', targetRole);
       }

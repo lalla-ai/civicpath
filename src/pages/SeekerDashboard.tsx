@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
-import { chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import AgentStatus from '../components/AgentStatus';
 import type { AgentItem } from '../components/AgentStatus';
 import SovereignHeader from '../components/SovereignHeader';
+import { PurgeController } from '../lib/sovereign/PurgeController';
+import type { PurgePhase } from '../lib/sovereign/PurgeController';
 import { 
   Search, 
   BrainCircuit, 
@@ -57,6 +58,7 @@ import {
   Bell,
   CreditCard,
   Zap,
+  ShieldOff,
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
@@ -418,6 +420,39 @@ Respond in clean markdown with EXACTLY these 4 sections:
   const [isRunning, setIsRunning] = useState(false);
   const [showAgentSidebar, setShowAgentSidebar] = useState(false);
 
+  // ── Purge Controller (Circuit Breaker) ────────────────────────────────────
+  const [purgePhase, setPurgePhase] = useState<PurgePhase>('idle');
+  const [purgeVisible, setPurgeVisible] = useState(false);
+  const purgeControllerRef = useRef<PurgeController | null>(null);
+
+  useEffect(() => {
+    purgeControllerRef.current = new PurgeController((event) => {
+      setPurgePhase(event.phase);
+      addGlobalLog(event.log);
+    });
+    return () => purgeControllerRef.current?.destroy();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSecureWipe = () => {
+    purgeControllerRef.current?.trigger(() => {
+      // Wipe all grant enclave state
+      setAgents(prev => prev.map(a => ({ ...a, status: 'idle', logs: [], output: null })));
+      setDiscoveredGrants([]);
+      setAllDiscoveredGrants([]);
+      setTotalGrantsFound(0);
+      setLiveGrantsCount(0);
+      setGlobalLogs([]);
+      setDrafterOutput(null);
+      setEditedProposal('');
+      setAwaitingApproval(false);
+      setNextAction(null);
+      setIsRunning(false);
+      localStorage.removeItem('civicpath_pipeline_run');
+      setTimeout(() => setPurgeVisible(false), 2000);
+    });
+  };
+
   // Auto-open sidebar when pipeline starts
   useEffect(() => {
     if (isRunning) setShowAgentSidebar(true);
@@ -517,10 +552,13 @@ Respond in clean markdown with EXACTLY these 4 sections:
     setLallaLoading(true);
     const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise — like a trusted expert who knows the user personally. Use markdown for lists and bold text. Keep answers under 200 words unless more detail is asked for.\n\nUser's organization context:\n- Name: ${profile.companyName || 'Not set'}\n- Type: ${profile.orgType || 'Not set'}\n- Location: ${profile.location || 'Florida'}\n- Focus area: ${profile.focusArea || 'General'}\n- Mission: ${profile.missionStatement || 'Not provided'}\n- Target population: ${profile.targetPopulation || 'General'}\n- Annual budget: ${profile.annualBudget || 'Unknown'}\n- Team size: ${profile.teamSize || 'Unknown'}\n- Funding goal: ${profile.fundingAmount || 'Unknown'} for ${profile.projectDescription || 'their project'}\n- Previous grants: ${profile.previousGrants || 'Unknown'}\n- Background: ${profile.backgroundInfo || 'Not provided'}${discoveredGrants.length > 0 ? `\n\nGrants currently in their pipeline: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
     try {
-      const reply = await chatWithLalla(next, ctx);
+      // Route through server proxy — never expose API key client-side
+      const history = next.slice(0, -1).map(m => `${m.role === 'user' ? 'User' : 'MyLalla'}: ${m.content}`).join('\n');
+      const fullPrompt = `${ctx}\n\n${history ? `Conversation so far:\n${history}\n\n` : ''}User: ${text}\nMyLalla:`;
+      const reply = await callGeminiProxy(fullPrompt);
       setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
-      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Check your Gemini API key and try again." }]);
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again in a moment." }]);
     } finally {
       setLallaLoading(false);
     }
@@ -1116,10 +1154,24 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-stone-700 flex items-center"><MapPin className="w-4 h-4 mr-2 text-stone-400" />City, State *</label>
-                    <input type="text" placeholder="e.g. Miami, FL"
+                  <label className="text-sm font-semibold text-stone-700 flex items-center"><MapPin className="w-4 h-4 mr-2 text-stone-400" />City, State *</label>
+                    <input type="text" list="location-suggestions" placeholder="e.g. Miami, FL"
                       value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})}
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
+                    <datalist id="location-suggestions">
+                      <option value="Miami, FL" /><option value="Orlando, FL" /><option value="Tampa, FL" /><option value="Jacksonville, FL" />
+                      <option value="Fort Lauderdale, FL" /><option value="West Palm Beach, FL" /><option value="Tallahassee, FL" />
+                      <option value="Gainesville, FL" /><option value="Pensacola, FL" /><option value="Cape Coral, FL" />
+                      <option value="South Florida" /><option value="Central Florida" /><option value="North Florida" /><option value="Statewide Florida" />
+                      <option value="New York, NY" /><option value="Los Angeles, CA" /><option value="Chicago, IL" />
+                      <option value="Houston, TX" /><option value="Phoenix, AZ" /><option value="Philadelphia, PA" />
+                      <option value="San Antonio, TX" /><option value="San Diego, CA" /><option value="Dallas, TX" />
+                      <option value="San Jose, CA" /><option value="Austin, TX" /><option value="Nashville, TN" />
+                      <option value="Denver, CO" /><option value="Seattle, WA" /><option value="Atlanta, GA" />
+                      <option value="Boston, MA" /><option value="Detroit, MI" /><option value="Las Vegas, NV" />
+                      <option value="Portland, OR" /><option value="Memphis, TN" /><option value="Baltimore, MD" />
+                      <option value="Washington, DC" /><option value="New Orleans, LA" /><option value="Nationwide" />
+                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Globe className="w-4 h-4 mr-2 text-stone-400" />Website</label>
@@ -1174,9 +1226,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700 flex items-center"><Cpu className="w-4 h-4 mr-2 text-stone-400" />Primary Focus Area *</label>
-                  <input type="text" placeholder="e.g. AI-driven civic technology, STEM education, community health"
+                  <input type="text" list="focus-area-suggestions" placeholder="e.g. AI-driven civic technology, STEM education, community health"
                     value={profile.focusArea} onChange={e => setProfile({...profile, focusArea: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
+                  <datalist id="focus-area-suggestions">
+                    <option value="AI / Machine Learning" /><option value="Civic Technology" /><option value="STEM Education" />
+                    <option value="Community Health" /><option value="Mental Health Services" /><option value="Workforce Development" />
+                    <option value="Affordable Housing" /><option value="Food Security" /><option value="Environmental Justice" />
+                    <option value="Climate & Clean Energy" /><option value="Economic Development" /><option value="Small Business Support" />
+                    <option value="Youth Development" /><option value="Senior Services" /><option value="Disability Services" />
+                    <option value="Arts & Culture" /><option value="Early Childhood Education" /><option value="K-12 Education" />
+                    <option value="Higher Education" /><option value="Veteran Services" /><option value="Immigrant & Refugee Services" />
+                    <option value="Criminal Justice Reform" /><option value="Public Safety" /><option value="Infrastructure" />
+                    <option value="Digital Equity & Broadband" /><option value="Biotechnology" /><option value="Agricultural Innovation" />
+                    <option value="Water & Sanitation" /><option value="Disaster Relief" /><option value="Social Services" />
+                    <option value="Research & Development" /><option value="Entrepreneurship" /><option value="Journalism & Media" />
+                    <option value="Legal Aid" /><option value="International Development" />
+                  </datalist>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700">Mission Statement *</label>
@@ -2689,6 +2755,76 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           </div>
         )}
 
+        {/* ⚡ SECURE WIPE — Circuit Breaker overlay */}
+        {purgeVisible && (
+          <div className="fixed inset-0 z-[60] bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+            <div className="bg-[#0D0D0D] border border-red-900/60 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#1f1f1f] flex items-center gap-3">
+                <ShieldOff className="w-5 h-5 text-red-400 shrink-0" />
+                <div>
+                  <h3 className="text-white font-black text-sm">Circuit Breaker — Secure Wipe</h3>
+                  <p className="text-stone-500 text-[10px] font-mono">Claim 1d: 500ms enclave reset</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <p className="text-stone-400 text-sm">This will purge all grant data, agent outputs, logs, and pipeline state from the enclave. Your profile is preserved.</p>
+                <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-3 font-mono text-[10px] text-stone-500 space-y-1">
+                  <div>{'>'} agents: {agents.filter(a => a.status !== 'idle').length} active → will reset to idle</div>
+                  <div>{'>'} grants: {allDiscoveredGrants.length} discovered → will purge</div>
+                  <div>{'>'} logs: {globalLogs.length} entries → will clear</div>
+                  <div className="text-red-400">{'>'} circuit breaker: 500ms countdown on confirm</div>
+                </div>
+                {(purgePhase === 'counting' || purgePhase === 'wiping') && (
+                  <div className="flex items-center gap-3 p-3 bg-red-950/40 border border-red-800 rounded-xl">
+                    <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+                      <span className="absolute w-8 h-8 rounded-full border-2 border-red-500/40 animate-ping" />
+                      <span className="relative w-5 h-5 rounded-full bg-red-500/20 border border-red-500 animate-pulse" />
+                    </div>
+                    <div>
+                      <p className="text-red-300 font-black text-xs uppercase tracking-wide">
+                        {purgePhase === 'wiping' ? 'Wiping enclave...' : 'Counting down...'}
+                      </p>
+                      <p className="text-red-500 text-[10px] font-mono">Circuit breaker active</p>
+                    </div>
+                  </div>
+                )}
+                {purgePhase === 'complete' && (
+                  <div className="p-3 bg-[#76B900]/10 border border-[#76B900]/30 rounded-xl font-mono text-[11px] text-[#76B900] font-bold">
+                    ✓ [1d] 500ms Circuit Breaker: Enclave Reset Successful.
+                  </div>
+                )}
+              </div>
+              <div className="px-5 pb-5 flex gap-3">
+                {purgePhase === 'idle' && (
+                  <>
+                    <button
+                      onClick={handleSecureWipe}
+                      className="flex-1 py-2.5 bg-red-900/60 border border-red-700 text-red-300 font-bold text-sm rounded-xl hover:bg-red-800/60 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ShieldOff className="w-4 h-4" /> Confirm Wipe
+                    </button>
+                    <button
+                      onClick={() => setPurgeVisible(false)}
+                      className="flex-1 py-2.5 border border-[#2a2a2a] text-stone-500 font-bold text-sm rounded-xl hover:border-stone-600 hover:text-stone-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+                {(purgePhase === 'counting' || purgePhase === 'wiping') && (
+                  <div className="flex-1 text-center text-stone-600 text-xs font-mono py-2.5">Processing...</div>
+                )}
+                {purgePhase === 'complete' && (
+                  <button onClick={() => { setPurgeVisible(false); setPurgePhase('idle'); }}
+                    className="flex-1 py-2.5 bg-[#76B900] text-[#111] font-bold text-sm rounded-xl hover:bg-[#689900] transition-colors">
+                    Close
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'dashboard' && (
           <>
             {/* Pipeline Status Banner */}
@@ -2709,6 +2845,13 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <span className="px-3 py-1 bg-stone-50 rounded-lg text-sm font-medium border border-stone-200 text-stone-700">{profile.location || 'Anywhere'}</span>
                 <div className="ml-auto flex items-center gap-3">
                   <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">Edit Profile</button>
+                  <button
+                    onClick={() => { setPurgeVisible(true); }}
+                    className="text-xs font-bold text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+                    title="Circuit Breaker: Secure Wipe all grant data"
+                  >
+                    <ShieldOff className="w-3 h-3" /> Wipe
+                  </button>
                   <button onClick={() => { setShowAgentSidebar(true); handleExecute(); }} disabled={isRunning}
                     className={`inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${
                       isRunning ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200' : 'bg-[#76B900] text-[#111111] hover:bg-[#689900] shadow-sm active:scale-[0.98]'

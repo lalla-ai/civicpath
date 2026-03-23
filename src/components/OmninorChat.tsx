@@ -1,6 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import { generateText } from '../gemini';
 import ReactMarkdown from 'react-markdown';
+
+async function askOmninor(prompt: string): Promise<string> {
+  const res = await fetch('/api/gemini-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!res.ok) throw new Error('proxy error');
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.text || '';
+}
 
 interface Message { role: 'user' | 'assistant'; content: string; }
 
@@ -41,7 +52,7 @@ export default function OmninorChat() {
         `${m.role === 'user' ? 'User' : 'Omninor'}: ${m.content}`
       ).join('\n');
       const prompt = `${SYSTEM}\n\n${history ? `Conversation:\n${history}\n\n` : ''}User: ${text}\nOmninor:`;
-      const reply = await generateText(prompt);
+      const reply = await askOmninor(prompt);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: "I'm having a connection issue. Try again in a moment!" }]);
