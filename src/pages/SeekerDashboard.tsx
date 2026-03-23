@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
-import { draftProposal, chatWithLalla } from '../gemini';
+import { chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import { 
   Search, 
@@ -51,12 +51,14 @@ import {
   BookmarkCheck,
   ChevronRight,
   Trash2,
-  Bell
+  Bell,
+  CreditCard,
+  Zap,
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
+type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile' | 'billing';
 
 interface TrackerGrant {
   id: string;
@@ -126,7 +128,24 @@ const Logo = () => (
 export default function SeekerDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<AppStep>('onboarding');
+  // Session persistence — restore dashboard state on return visit
+  const [step, setStep] = useState<AppStep>(() => {
+    try {
+      const saved = localStorage.getItem('civicpath_profile');
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p.companyName?.trim() && p.location?.trim() && p.orgType) return 'dashboard';
+      }
+    } catch {}
+    return 'onboarding';
+  });
+
+  // Persist step so returning users skip onboarding
+  const setStepPersisted = (s: AppStep) => {
+    setStep(s);
+    if (s === 'dashboard') localStorage.setItem('civicpath_onboarded', '1');
+  };
+
   const [onboardStep, setOnboardStep] = useState(1);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [profile, setProfile] = useState<Profile>(() => {
@@ -596,25 +615,75 @@ Based on your background and focus in **${profile.focusArea || 'Tech'}**, here i
   const runDrafter = async () => {
     updateAgent('drafter', { status: 'working', logs: [], output: null });
     addLog('drafter', 'Connecting to Gemini 2.0 Flash via API...');
-    addGlobalLog(`[✍️ The Drafter]    Generating proposal for Grant #1...`);
-    addLog('drafter', 'Sending profile + grant context to Gemini...');
+    addGlobalLog(`[\u270d\ufe0f The Drafter]    Generating personalized proposal for Grant #1...`);
+    addLog('drafter', 'Building proposal with full org profile...');
+
+    // Pick best matching grant from discovered grants, or use a default
+    const targetGrant = discoveredGrants[0] || { title: 'State Innovation Match Fund', agency: 'FL Dept of Commerce', closeDate: 'Oct 15, 2026' };
+    const grantAmount = allDiscoveredGrants[0]?.amount || '$150,000';
 
     let text = '';
     try {
-      text = await draftProposal(
-        { name: profile.companyName || 'Our Organization', mission: profile.backgroundInfo || 'Community impact', location: profile.location || 'Florida', focusArea: profile.focusArea || 'Technology', background: profile.backgroundInfo || '' },
-        { name: 'State Innovation Match Fund', amount: '$150,000', deadline: 'Oct 15, 2026' }
-      );
-      addLog('drafter', 'Gemini response received. Streaming...');
+      const fullPrompt = `You are an expert grant writer. Write a PERSONALIZED, COMPELLING grant proposal using ONLY the specific organization details below. Do NOT use generic placeholders or templates.
+
+## ORGANIZATION
+Name: ${profile.companyName || 'Our Organization'}
+Type: ${profile.orgType || 'Organization'}
+Location: ${profile.location || 'Florida, USA'}
+Year Founded: ${profile.yearFounded || 'Recently established'}
+Team: ${profile.teamMembersText || 'Dedicated professional team'}
+EIN: ${profile.ein || 'Available upon request'}
+
+## MISSION & FOCUS
+Focus Area: ${profile.focusArea || 'Community Innovation'}
+Mission: ${profile.missionStatement || profile.backgroundInfo || 'To create positive community impact through innovative solutions'}
+Who We Serve: ${profile.targetPopulation || 'Our local community'}
+
+## WHAT WE NEED FUNDING FOR
+${profile.projectDescription || 'Expanding our core programs and services to reach more people'}
+
+## FUNDING REQUESTED
+${profile.fundingAmount ? `We are seeking ${profile.fundingAmount}` : `We are requesting ${grantAmount}`}
+
+## OUR PROVEN IMPACT
+${profile.impactMetrics || 'We have demonstrated consistent results in our community'}
+
+## TRACK RECORD
+${profile.backgroundInfo || profile.resumeText || 'Our organization has a strong record of community service'}
+${profile.grantHistoryText ? `\nPast Grants: ${profile.grantHistoryText}` : ''}
+
+## TARGET GRANT
+Grant: ${(targetGrant as any).title || 'State Innovation Match Fund'}
+Agency: ${(targetGrant as any).agency || 'Government Agency'}
+Amount Available: ${grantAmount}
+Deadline: ${(targetGrant as any).closeDate || 'Oct 15, 2026'}
+
+Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org details above - never write "[Organization Name]" or generic filler:
+
+### Executive Summary
+### Problem Statement
+### Project Description & Implementation Plan
+### Organizational Capacity & Track Record
+### Budget Narrative
+### Evaluation & Success Metrics`;
+
+      text = await callGeminiProxy(fullPrompt);
+      addLog('drafter', 'Personalized proposal generated. Streaming...');
     } catch {
-      addLog('drafter', 'Gemini error — using template draft.');
-      text = `### Draft Proposal: Executive Summary
+      addLog('drafter', 'Gemini error — generating from profile data.');
+      text = `### Grant Proposal: ${profile.companyName || 'Our Organization'}
 
-**Problem & Solution**: ${profile.location || 'Regional'} organizations face funding gaps. ${profile.companyName || 'Our organization'} addresses this through ${profile.focusArea || 'innovative technology'}.
+**Executive Summary**: ${profile.companyName || 'Our organization'} in ${profile.location || 'Florida'} requests ${grantAmount} from ${(targetGrant as any).title || 'this grant program'} to ${profile.projectDescription || 'advance our mission'}. We are a ${profile.orgType || 'dedicated organization'} committed to ${profile.focusArea || 'community impact'}.
 
-**Technical Merit**: Our approach leverages cutting-edge methods tailored to regional needs, delivering measurable outcomes.
+**Problem Statement**: ${profile.targetPopulation || 'Our community'} faces significant challenges that our organization is uniquely positioned to address through ${profile.focusArea || 'innovative solutions'}.
 
-**Economic Impact**: We project 15% efficiency gains and 25 new jobs within 18 months.`;
+**Project Description**: ${profile.projectDescription || 'With this funding, we will expand our programs and increase our community impact significantly.'}
+
+**Organizational Capacity**: ${profile.impactMetrics ? `Our track record: ${profile.impactMetrics}.` : ''} ${profile.backgroundInfo || 'Our team brings extensive expertise and commitment to this work.'}
+
+**Budget**: Requested ${grantAmount} will be allocated toward program delivery, personnel, and operational costs to maximize impact.
+
+**Evaluation**: We will measure success through ${profile.impactMetrics ? 'our established impact metrics' : 'clearly defined KPIs'} and provide regular reporting to the funder.`;
     }
 
     setDrafterOutput(text);
@@ -1297,7 +1366,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </button>
               ) : (
                 <button
-                  onClick={() => setStep('dashboard')}
+                  onClick={() => setStepPersisted('dashboard')}
                   disabled={!isStep3Valid}
                   className="flex-1 flex items-center justify-center py-3.5 px-6 text-white font-bold text-base rounded-xl bg-[#76B900] hover:bg-[#689900] transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
                   Launch My Grant Dashboard
@@ -1398,11 +1467,139 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             >
               <UserCircle className="w-4 h-4 mr-1.5" /> Profile
             </button>
+            <button 
+              onClick={() => setActiveTab('billing')}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'billing' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 mr-1.5" /> Billing
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {activeTab === 'billing' && (() => {
+          const currentPlan = localStorage.getItem('civicpath_plan') || 'free';
+          const isPro = currentPlan === 'pro';
+          const isFunder = currentPlan === 'funder';
+          const isPaid = isPro || isFunder;
+
+          const handleUpgrade = async (plan: string) => {
+            try {
+              const res = await fetch('/api/create-checkout-session', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ plan, email: user?.email || '' }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+              else alert('Checkout error: ' + (data.error || 'Try again'));
+            } catch { alert('Network error. Please try again.'); }
+          };
+
+          return (
+            <div className="max-w-2xl mx-auto animate-in fade-in space-y-5">
+              {/* Current Plan */}
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#76B900]" /> Your Plan</h2>
+                  <span className={`text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider ${
+                    isPro ? 'bg-[#76B900] text-[#111]' : isFunder ? 'bg-blue-600 text-white' : 'bg-stone-100 text-stone-600'
+                  }`}>{isPro ? 'Pro' : isFunder ? 'Funder' : 'Free'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {[
+                    {l:'Grant Searches', v: isPaid ? 'Unlimited' : '5/month'},
+                    {l:'AI Proposals', v: isPaid ? 'Unlimited' : '1/month'},
+                    {l:'Tracker Grants', v: isPaid ? 'Unlimited' : `${trackerGrants.length} saved`},
+                  ].map((s,i) => (
+                    <div key={i} className="bg-stone-50 rounded-xl p-3 text-center border border-stone-200">
+                      <div className="text-sm font-black text-stone-900">{s.v}</div>
+                      <div className="text-[10px] text-stone-400 mt-0.5 font-medium">{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                {!isPaid && (
+                  <div className="bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-stone-900">Upgrade to Pro — $49/month</p>
+                      <p className="text-xs text-stone-500">Unlimited grants, proposals, AI advisor. 14-day free trial.</p>
+                    </div>
+                    <button onClick={() => handleUpgrade('pro')}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#76B900] text-[#111] font-bold rounded-xl hover:bg-[#689900] transition-colors shrink-0 text-sm">
+                      <Zap className="w-4 h-4" /> Upgrade
+                    </button>
+                  </div>
+                )}
+                {isPaid && (
+                  <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl">
+                    <p className="text-sm text-stone-600">To manage your subscription, update payment method, or cancel: <a href="mailto:hello@civicpath.ai?subject=Billing%20Management" className="text-[#76B900] font-bold hover:underline">email hello@civicpath.ai</a> or visit <a href="https://civicpath.ai/pricing" className="text-[#76B900] font-bold hover:underline">civicpath.ai/pricing</a>.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Plan comparison */}
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-4">All Plans</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    {name:'Free', price:'$0', features:['5 searches/month','1 proposal/month','Grant Tracker','MyLalla chat'], highlight: !isPaid},
+                    {name:'Pro', price:'$49/mo', features:['Unlimited searches','Unlimited proposals','Priority AI matching','Email digest','PDF downloads','Share results'], highlight: isPro, plan:'pro'},
+                    {name:'Funder', price:'$199/mo', features:['Post unlimited grants','AI applicant scoring','Applicant dashboard','Analytics','Approval workflow'], highlight: isFunder, plan:'funder'},
+                  ].map((p, i) => (
+                    <div key={i} className={`rounded-xl border p-4 ${
+                      p.highlight ? 'border-[#76B900] bg-[#76B900]/5' : 'border-stone-200'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-stone-900 text-sm">{p.name}</span>
+                        {p.highlight && <span className="text-[10px] bg-[#76B900] text-[#111] px-2 py-0.5 rounded-full font-black uppercase">Current</span>}
+                      </div>
+                      <div className="text-xl font-black text-stone-900 mb-3">{p.price}</div>
+                      <ul className="space-y-1.5">
+                        {p.features.map((f,j) => (
+                          <li key={j} className="text-xs text-stone-600 flex items-center gap-1.5">
+                            <span className="text-[#76B900]">\u2713</span> {f}
+                          </li>
+                        ))}
+                      </ul>
+                      {!p.highlight && p.plan && (
+                        <button onClick={() => handleUpgrade(p.plan!)}
+                          className="mt-4 w-full py-2 bg-[#76B900] text-[#111] text-xs font-bold rounded-lg hover:bg-[#689900] transition-colors">
+                          Start Free Trial
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Account info */}
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><UserCircle className="w-4 h-4 text-[#76B900]" /> Account</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-stone-100">
+                    <span className="text-stone-500">Email</span>
+                    <span className="font-medium text-stone-900">{user?.email}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-stone-100">
+                    <span className="text-stone-500">Name</span>
+                    <span className="font-medium text-stone-900">{user?.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-stone-500">Plan</span>
+                    <span className="font-bold text-[#76B900]">{isPro ? 'Pro' : isFunder ? 'Funder' : 'Free'}</span>
+                  </div>
+                </div>
+                <button onClick={() => { logout(); navigate('/'); }}
+                  className="mt-4 flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+                  <LogOut className="w-3.5 h-3.5" /> Sign out of this account
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
         {activeTab === 'grants' && (
           <div className="animate-in fade-in space-y-5">
             {/* Header */}
