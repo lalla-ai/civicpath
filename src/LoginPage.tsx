@@ -1,18 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Hexagon, ArrowUpRight, AlertCircle, Loader2, Mail, Lock, User } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertCircle, Loader2, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from './AuthContext';
-
-const Logo = () => (
-  <div className="relative inline-flex items-center justify-center w-8 h-8 text-[#2E7D32]">
-    <Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} />
-    <ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} />
-  </div>
-);
 
 export default function LoginPage() {
   const { loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [role, setRole] = useState<'seeker' | 'funder'>(searchParams.get('role') === 'funder' ? 'funder' : 'seeker');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,14 +16,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const redirectAfterAuth = (r: string) => {
+    navigate(r === 'funder' ? '/funder' : '/seeker', { replace: true });
+  };
+
   const handleGoogle = async () => {
     setError('');
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/');
+      await loginWithGoogle(role);
+      redirectAfterAuth(role);
     } catch {
-      setError('Google sign-in failed. Make sure popups are allowed.');
+      setError('Google sign-in failed. Make sure popups are allowed and try again.');
     } finally {
       setGoogleLoading(false);
     }
@@ -41,11 +40,11 @@ export default function LoginPage() {
     try {
       if (mode === 'signup') {
         if (!name.trim()) throw new Error('Please enter your name.');
-        await signupWithEmail(name.trim(), email.trim(), password);
+        await signupWithEmail(name.trim(), email.trim(), password, role);
       } else {
-        await loginWithEmail(email.trim(), password);
+        await loginWithEmail(email.trim(), password, role);
       }
-      navigate('/');
+      redirectAfterAuth(role);
     } catch (err: any) {
       setError(err.message?.replace('Firebase: ', '').replace(/ \(auth\/.*\)/, '') || 'Something went wrong.');
     } finally {
@@ -54,15 +53,38 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center p-4" style={{fontFamily:'Inter,sans-serif'}}>
+      <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-[#2E7D32]/5 border-b border-stone-100 p-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="scale-150 transform mb-2"><Logo /></div>
+        <div className="border-b border-stone-100 p-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="w-2 h-2 bg-[#76B900] rounded-full" />
+            <span className="font-bold text-stone-900 text-xl">CivicPath</span>
           </div>
-          <h1 className="text-4xl font-[800] text-stone-900 mb-1 tracking-tight">CivicPath</h1>
-          <p className="text-stone-500 font-medium">Your community. Funded.</p>
+          <p className="text-stone-500 text-sm">Your community. Funded.</p>
+        </div>
+
+        {/* Role selector */}
+        <div className="px-8 pt-6">
+          <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">I am a</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => setRole('seeker')}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                role === 'seeker' ? 'border-[#76B900] bg-[#76B900]/5' : 'border-stone-200 hover:border-stone-300'
+              }`}>
+              <div className="text-2xl mb-1">🏢</div>
+              <div className="text-sm font-bold text-stone-900">Grant Seeker</div>
+              <div className="text-xs text-stone-500">I need funding</div>
+            </button>
+            <button onClick={() => setRole('funder')}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                role === 'funder' ? 'border-[#76B900] bg-[#76B900]/5' : 'border-stone-200 hover:border-stone-300'
+              }`}>
+              <div className="text-2xl mb-1">🏛️</div>
+              <div className="text-sm font-bold text-stone-900">Grant Funder</div>
+              <div className="text-xs text-stone-500">I offer grants</div>
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
