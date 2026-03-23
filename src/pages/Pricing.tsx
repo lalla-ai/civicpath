@@ -41,7 +41,8 @@ const plans = [
 export default function Pricing() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [topError, setTopError] = useState('');
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
   const successPlan = searchParams.get('plan');
@@ -54,9 +55,10 @@ export default function Pricing() {
   }, [success, successPlan]);
 
   const handleCheckout = async (plan: string, _role: string) => {
-    if (!plan) return; // Free plan — just navigate to login
+    if (!plan) return;
     setLoading(plan);
-    setError('');
+    setErrors(prev => ({...prev, [plan]: ''}));
+    setTopError('');
     try {
       const savedUser = localStorage.getItem('civicpath_profile');
       const profile = savedUser ? JSON.parse(savedUser) : {};
@@ -65,14 +67,27 @@ export default function Pricing() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, email: profile.email || '' }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      // If response is HTML instead of JSON, the API route isn't reached
+      if (!contentType.includes('application/json')) {
+        setErrors(prev => ({...prev, [plan]: 'Stripe not connected. See setup instructions below.'}));
+        setTopError('setup');
+        return;
+      }
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.error?.includes('STRIPE_SECRET_KEY') || data.error?.includes('not configured')) {
+        setErrors(prev => ({...prev, [plan]: 'Stripe key not set. See setup instructions below.'}));
+        setTopError('setup');
+      } else if (data.error?.includes('STRIPE_PRICE')) {
+        setErrors(prev => ({...prev, [plan]: 'Stripe price ID not set. See setup instructions below.'}));
+        setTopError('setup');
       } else {
-        setError(data.error || 'Failed to create checkout session. Make sure STRIPE_SECRET_KEY and price IDs are set in Vercel env vars.');
+        setErrors(prev => ({...prev, [plan]: data.error || 'Checkout failed. Please try again.'}));
       }
     } catch {
-      setError('Network error. Please try again.');
+      setErrors(prev => ({...prev, [plan]: 'Could not reach checkout. Please try again.'}));
     } finally {
       setLoading(null);
     }
@@ -114,9 +129,27 @@ export default function Pricing() {
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+        {/* Stripe setup instructions */}
+        {topError === 'setup' && (
+          <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
+            <h3 className="font-bold text-amber-900 mb-3 text-base">⚠️ Stripe Setup Required</h3>
+            <p className="text-amber-800 text-sm mb-4">Add these 3 environment variables in your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="underline font-bold">Vercel dashboard</a> → Project → Settings → Environment Variables:</p>
+            <div className="space-y-2 font-mono text-xs">
+              <div className="bg-white border border-amber-200 rounded-lg p-3">
+                <span className="font-bold text-amber-900">STRIPE_SECRET_KEY</span>
+                <span className="text-amber-700 ml-2">→ From <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="underline">stripe.com/dashboard → Developers → API Keys</a></span>
+              </div>
+              <div className="bg-white border border-amber-200 rounded-lg p-3">
+                <span className="font-bold text-amber-900">STRIPE_PRICE_PRO</span>
+                <span className="text-amber-700 ml-2">→ Create product "CivicPath Pro" $49/mo in <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener noreferrer" className="underline">Stripe Products</a> → copy Price ID (starts with <code>price_</code>)</span>
+              </div>
+              <div className="bg-white border border-amber-200 rounded-lg p-3">
+                <span className="font-bold text-amber-900">STRIPE_PRICE_FUNDER</span>
+                <span className="text-amber-700 ml-2">→ Create product "CivicPath Funder" $199/mo → copy Price ID</span>
+              </div>
+            </div>
+            <p className="text-amber-700 text-xs mt-3">🔄 After adding all 3 vars, click <strong>Redeploy</strong> in Vercel. Then come back and try again.</p>
+          </div>
         )}
 
         <div className="text-center mb-16">
@@ -150,17 +183,22 @@ export default function Pricing() {
                 ))}
               </ul>
               {p.stripe ? (
-                <button
-                  onClick={() => handleCheckout(p.stripe!, p.role)}
-                  disabled={loading === p.stripe}
-                  className={`w-full py-3 text-center font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 ${
-                    p.highlight
-                      ? 'bg-[#76B900] text-[#111] hover:bg-[#689900] disabled:opacity-60'
-                      : 'border border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900] disabled:opacity-60'
-                  }`}
-                >
-                  {loading === p.stripe ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</> : p.cta}
-                </button>
+                <div>
+                  <button
+                    onClick={() => handleCheckout(p.stripe!, p.role)}
+                    disabled={loading === p.stripe}
+                    className={`w-full py-3 text-center font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 ${
+                      p.highlight
+                        ? 'bg-[#76B900] text-[#111] hover:bg-[#689900] disabled:opacity-60'
+                        : 'border border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900] disabled:opacity-60'
+                    }`}
+                  >
+                    {loading === p.stripe ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting to Stripe...</> : p.cta}
+                  </button>
+                  {errors[p.stripe!] && (
+                    <p className="mt-2 text-xs text-red-600 font-medium text-center">{errors[p.stripe!]}</p>
+                  )}
+                </div>
               ) : (
                 <Link to={`/login?role=${p.role}`} className="w-full py-3 text-center font-bold rounded-xl transition-colors text-sm border border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900]">
                   {p.cta}
