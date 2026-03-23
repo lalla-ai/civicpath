@@ -15,11 +15,13 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
             <a href="#how" className="hover:text-stone-900 transition-colors">How It Works</a>
             <a href="#funders" className="hover:text-stone-900 transition-colors">For Funders</a>
-            <a href="#sovereign" className="hover:text-stone-900 transition-colors">Pricing</a>
+            <a href="#sources" className="hover:text-stone-900 transition-colors">Grant Sources</a>
+            <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">Log in</Link>
-            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#8FD400] transition-colors text-sm">Get Started</Link>
+            <Link to="/login?role=funder" className="text-sm border border-stone-300 text-stone-700 px-3 py-1.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors hidden sm:block">Post a Grant</Link>
+            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#8FD400] transition-colors text-sm">Find Grants →</Link>
           </div>
         </div>
       </nav>
@@ -72,26 +74,48 @@ export default function LandingPage() {
 
       {/* TRUST BAR */}
       <section className="bg-stone-100 border-y border-stone-200 py-10 text-center">
-        <p className="text-xs text-stone-400 uppercase tracking-widest mb-8">Trusted by organizations across Florida</p>
-        <div className="flex justify-center items-center gap-10 flex-wrap max-w-4xl mx-auto px-6">
-          {[
-            { name: 'HelloAgentic', domain: 'helloagentic.ai', url: 'https://helloagentic.ai' },
-            { name: 'Google Cloud', domain: 'cloud.google.com', url: 'https://cloud.google.com' },
-            { name: 'DeepStation', domain: 'deepstation.ai', url: 'https://deepstation.ai' },
-            { name: 'Miami Dade College', domain: 'mdc.edu', url: 'https://www.mdc.edu' },
-            { name: 'Grants.gov', domain: 'grants.gov', url: 'https://www.grants.gov' },
-          ].map((org, i) => (
-            <a key={i} href={org.url} target="_blank" rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
-              <img
-                src={`https://logo.clearbit.com/${org.domain}`}
-                alt={org.name}
-                className="h-8 w-auto object-contain grayscale group-hover:grayscale-0 transition-all"
-                onError={e => { (e.target as HTMLImageElement).style.display='none'; }}
-              />
-              <span className="text-xs text-stone-400 font-medium">{org.name}</span>
-            </a>
-          ))}
+        <p className="text-xs text-stone-400 uppercase tracking-widest mb-8">Built with &amp; trusted by</p>
+        <div className="flex justify-center items-center gap-10 flex-wrap max-w-5xl mx-auto px-6">
+          {/* Google Cloud */}
+          <a href="https://cloud.google.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg" alt="Google" className="h-6 w-auto grayscale group-hover:grayscale-0 transition-all" />
+            <span className="text-xs text-stone-400 font-medium">Google Cloud ADK</span>
+          </a>
+          {/* Gemini */}
+          <a href="https://deepmind.google/technologies/gemini/" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).src='https://logo.clearbit.com/gemini.google.com'}} />
+            <span className="text-xs text-stone-400 font-medium">Gemini 2.0 Flash</span>
+          </a>
+          {/* Grants.gov */}
+          <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/grants.gov" alt="Grants.gov" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">Grants.gov</span>
+          </a>
+          {/* HelloAgentic */}
+          <a href="https://helloagentic.ai" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/helloagentic.ai" alt="HelloAgentic" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">HelloAgentic</span>
+          </a>
+          {/* DeepStation */}
+          <a href="https://deepstation.ai" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/deepstation.ai" alt="DeepStation" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">DeepStation</span>
+          </a>
+          {/* MDC */}
+          <a href="https://www.mdc.edu" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/mdc.edu" alt="Miami Dade College" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">Miami Dade College</span>
+          </a>
+          {/* Firebase */}
+          <a href="https://firebase.google.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/firebase.google.com" alt="Firebase" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">Firebase</span>
+          </a>
+          {/* Vercel */}
+          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
+            <img src="https://logo.clearbit.com/vercel.com" alt="Vercel" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            <span className="text-xs text-stone-400 font-medium">Vercel</span>
+          </a>
         </div>
       </section>
 
@@ -132,6 +156,44 @@ export default function LandingPage() {
               <div className="text-stone-500 text-sm leading-relaxed">{a.d}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* GRANT SOURCES */}
+      <section id="sources" className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-3">DATA SOURCES</p>
+            <h2 className="text-3xl font-bold text-stone-900">Connected to every major grant database</h2>
+            <p className="text-stone-500 mt-3">We pipe from federal, state, and private sources so you never miss an opportunity.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { emoji: '🏛️', name: 'Grants.gov', desc: 'Official U.S. federal grants database. 1,000s of active opportunities across all agencies.', tag: 'Live API', url: 'https://www.grants.gov' },
+              { emoji: '🚀', name: 'SBA SBIR / STTR', desc: 'Small Business Innovation Research. AI, deep tech, and R&D grants for startups.', tag: 'Live API', url: 'https://www.sbir.gov' },
+              { emoji: '🔬', name: 'NSF Grants', desc: 'National Science Foundation funding for research, AI, and STEM organizations.', tag: 'Live API', url: 'https://www.nsf.gov/funding' },
+              { emoji: '🧠', name: 'NVIDIA Inception', desc: 'AI startup program offering cloud credits, co-marketing, and VC access.', tag: 'Program', url: 'https://www.nvidia.com/inception' },
+              { emoji: '☁️', name: 'Google for Startups', desc: 'Google Cloud credits up to $200K + mentorship for eligible AI startups.', tag: 'Program', url: 'https://cloud.google.com/startup' },
+              { emoji: '🏷️', name: 'Florida MGRP', desc: 'Florida Matching Grant Research Program for state-based tech companies.', tag: 'State', url: 'https://www.floridajobs.org' },
+              { emoji: '🏦', name: 'SBA FAST Program', desc: 'Federal and State Technology Partnership grants for small businesses.', tag: 'Federal', url: 'https://www.sbir.gov/about/about-fast' },
+              { emoji: '🏡', name: 'Miami-Dade Grants', desc: 'County-level funding: Mom & Pop, MDEAT, Cultural Affairs, and more.', tag: 'County', url: 'https://www.miamidade.gov' },
+              { emoji: '🌎', name: 'USASpending.gov', desc: 'Full federal spending data — find agencies actively funding your sector.', tag: 'Coming Soon', url: 'https://www.usaspending.gov' },
+            ].map((s, i) => (
+              <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                className="bg-white border border-stone-200 rounded-xl p-5 hover:border-[#76B900] transition-colors shadow-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl">{s.emoji}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    s.tag === 'Live API' ? 'bg-[#76B900]/10 text-[#76B900]' :
+                    s.tag === 'Coming Soon' ? 'bg-stone-100 text-stone-400' :
+                    'bg-blue-50 text-blue-600'
+                  }`}>{s.tag}</span>
+                </div>
+                <div className="font-bold text-stone-900 text-sm">{s.name}</div>
+                <div className="text-xs text-stone-500 leading-relaxed">{s.desc}</div>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -238,12 +238,12 @@ export default function SeekerDashboard() {
       addGlobalLog(`[🔍 The Hunter]     Found ${total} matching opportunities ✓`);
       addGlobalLog(`[🤖 ACTIVITY]       Hunter → Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
 
-      hunterText = `**Live Results from Grants.gov (${total} total matches):**
+      hunterText = `**Live Results from ${total} total matches across Grants.gov + SBA SBIR:**
 
-${grants.map((g: any) => `* **${g.title}** — ${g.agency}
-  Posted: ${g.openDate} · Deadline: ${g.closeDate} · [View on Grants.gov](https://www.grants.gov/search-results-detail/${g.id})`).join('\n\n')}
+${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
+  ${g.agency} · Posted: ${g.openDate || 'N/A'} · Deadline: ${g.closeDate} · [View Grant](${g.url})`).join('\n\n')}
 
-*Queried live from Grants.gov API for "${targetTech}" + "${targetLoc}".*`;
+*Live search: "${targetTech}" + "${targetLoc}" — Sources: Grants.gov, SBA SBIR*`;
     } catch (err) {
       addLog('hunter', 'Live API unavailable — using cached results.');
       hunterText = `**Cached Results (Grants.gov temporarily unavailable):**
