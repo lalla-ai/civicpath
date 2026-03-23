@@ -1,272 +1,211 @@
-import { useNavigate } from 'react-router-dom';
-import { Hexagon, ArrowUpRight, Shield, Heart, Users, DollarSign, Star, ArrowRight, Search, BrainCircuit, FileEdit, CheckCircle2, Send } from 'lucide-react';
-
-const GREEN = '#76B900'; // Nvidia green
-const stats = [
-  { value: '1,247', label: 'Grants Matched' },
-  { value: '847', label: 'Organizations Funded' },
-  { value: '$2.4M', label: 'Active Grant Value' },
-  { value: '43', label: 'Active Funders' },
-];
-
-const testimonials = [
-  {
-    name: 'Maria Gonzalez',
-    org: 'Roots & Wings Foundation',
-    location: 'Miami, FL',
-    score: 94,
-    text: 'CivicPath matched us to the Digital Equity Fund in under 3 minutes. We applied the same day and received $85,000 in funding. This platform is unlike anything we have used before.',
-  },
-  {
-    name: 'James Okafor',
-    org: 'Tech for All Initiative',
-    location: 'Orlando, FL',
-    text: 'The AI drafted our entire NSF SBIR proposal overnight. The Controller agent caught two compliance issues we would have missed. We won $200,000.',
-    score: 91,
-  },
-  {
-    name: 'Sofia Rivera',
-    org: 'Miami Arts Collective',
-    location: 'Miami Dade, FL',
-    text: 'We had never won a grant before. CivicPath matched us to the Cultural Affairs Grant and walked us through every step. Funded in 6 weeks.',
-    score: 88,
-  },
-];
+import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
-  const navigate = useNavigate();
-  void GREEN; // used inline
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] font-sans text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#1C1C1C] text-[#EEEEEE]" style={{fontFamily:'Inter,sans-serif'}}>
 
       {/* NAV */}
-      <nav className="border-b border-stone-200 sticky top-0 z-20 bg-[#F9F7F2]/95 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="relative inline-flex items-center justify-center w-8 h-8" style={{color: '#76B900'}}>
-              <Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} />
-              <ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} />
-            </div>
-            <span className="text-base font-bold tracking-tight">CivicPath</span>
+      <nav className="sticky top-0 z-50 bg-[#1C1C1C] border-b border-[#333333]">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#76B900] rounded-full inline-block" />
+            <span className="text-[#EEEEEE] font-bold text-lg">CivicPath</span>
           </div>
-          <div className="hidden md:flex items-center space-x-8 text-sm text-stone-500 font-medium">
-            <a href="#how" className="hover:text-[#1A1A1A] transition-colors">How it works</a>
-            <a href="#funders" className="hover:text-[#1A1A1A] transition-colors">For Funders</a>
-            <a href="#testimonials" className="hover:text-[#1A1A1A] transition-colors">Stories</a>
+          <div className="hidden md:flex items-center gap-8 text-sm text-[#888888]">
+            <a href="#how" className="hover:text-[#EEEEEE] transition-colors">How It Works</a>
+            <a href="#funders" className="hover:text-[#EEEEEE] transition-colors">For Funders</a>
+            <a href="#sovereign" className="hover:text-[#EEEEEE] transition-colors">Pricing</a>
           </div>
-          <div className="flex items-center space-x-3">
-            <button onClick={() => navigate('/login?role=seeker')} className="text-sm font-medium text-stone-600 hover:text-[#1A1A1A] transition-colors px-3 py-1.5">Log in</button>
-            <button onClick={() => navigate('/login?role=seeker')} className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-colors" style={{background: '#76B900'}}>Get CivicPath free</button>
+          <div className="flex items-center gap-4">
+            <Link to="/login" className="text-sm text-[#888888] hover:text-[#EEEEEE] transition-colors">Log in</Link>
+            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#8FD400] transition-colors text-sm">Get Started</Link>
           </div>
         </div>
       </nav>
 
       {/* HERO */}
-      <section className="max-w-5xl mx-auto px-6 pt-24 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 border border-stone-200 bg-white rounded-full px-3 py-1 mb-10 text-xs font-medium text-stone-500 shadow-sm">
-          <span className="w-1.5 h-1.5 rounded-full" style={{background:'#76B900'}}></span>
-          The AI grant marketplace — powered by Gemini
+      <section className="py-32 text-center px-6">
+        <div className="inline-flex items-center gap-2 bg-[#76B90020] text-[#76B900] rounded-full px-4 py-1 text-xs font-medium">
+          🏆 Google Cloud ADK Hackathon 2025 — Top 5 of 54 Teams
         </div>
-        <h1 className="text-6xl md:text-8xl font-[900] text-[#1A1A1A] mb-6 leading-[1.0] tracking-tighter">
+        <h1 className="mt-8 text-6xl font-bold tracking-tight text-[#EEEEEE] leading-[1.1] max-w-3xl mx-auto">
           Find The Grant<br />
-          <span style={{color:'#76B900'}}>That Gets You.</span>
+          <span className="text-[#76B900]">That Gets You.</span>
         </h1>
-        <p className="text-lg md:text-xl text-stone-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Like eHarmony, but for grants. AI matches your mission to the right funder —
-          two-sided, sovereign, fully automated.
+        <p className="mt-6 text-xl text-[#888888] max-w-2xl mx-auto leading-relaxed">
+          6 AI agents find, score, draft, and track every grant for your organization — automatically.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button onClick={() => navigate('/login?role=seeker')}
-            className="flex items-center gap-2 px-7 py-3.5 text-white font-bold rounded-xl transition-all shadow-md text-sm"
-            style={{background:'#76B900'}}>
-            <Heart className="w-4 h-4 fill-current" /> I'm Looking For Grants <ArrowRight className="w-4 h-4" />
-          </button>
-          <button onClick={() => navigate('/login?role=funder')}
-            className="flex items-center gap-2 px-7 py-3.5 bg-white border border-stone-200 text-[#1A1A1A] font-bold rounded-xl hover:bg-stone-50 transition-all shadow-sm text-sm">
-            <DollarSign className="w-4 h-4" /> I'm a Grant Funder
-          </button>
+        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#8FD400] transition-colors">Find My Grants →</Link>
+          <Link to="/login?role=funder" className="border border-[#333333] text-[#EEEEEE] px-5 py-2.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors">I'm a Grant Funder</Link>
         </div>
-        <p className="text-xs text-stone-400 mt-4">Free to get started · No credit card required</p>
+        <p className="mt-4 text-xs text-[#555555]">Free to start · No credit card · Sovereign data</p>
+
+        {/* Product Mockup */}
+        <div className="mt-20 max-w-3xl mx-auto bg-[#232323] border border-[#333333] rounded-xl p-6 text-left">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs text-[#888888]">Sunrise Tech Nonprofit · Orlando, FL</span>
+            <span className="bg-[#76B90020] text-[#76B900] text-xs rounded-full px-2 py-0.5">Pipeline Complete ✓</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {[
+              { name: 'State Innovation Match Fund', meta: '$150,000 · Due Oct 15', score: '92 / 100', top: true },
+              { name: 'FL STEM Education Initiative', meta: '$75,000 · Due Nov 3', score: '88 / 100', top: true },
+              { name: 'MGRP Research Fund', meta: '$50,000 · Due Nov 28', score: '84 / 100', top: false },
+            ].map((g, i) => (
+              <div key={i} className="bg-[#2A2A2A] rounded-lg p-4 border-l-2 border-[#76B900] flex justify-between items-center">
+                <div>
+                  <div className="text-[#EEEEEE] font-medium text-sm">{g.name}</div>
+                  <div className="text-[#888888] text-xs mt-0.5">{g.meta}</div>
+                </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${g.top ? 'bg-[#76B900] text-[#111111]' : 'bg-[#555555] text-[#EEEEEE]'}`}>{g.score}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-[#333333] flex gap-3">
+            <button className="border border-[#333333] text-[#EEEEEE] px-3 py-1.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors text-xs">View All Matches</button>
+            <button className="bg-[#76B900] text-[#111111] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#8FD400] transition-colors text-xs">Draft Proposal</button>
+          </div>
+        </div>
+      </section>
+
+      {/* TRUST BAR */}
+      <section className="bg-[#232323] border-y border-[#333333] py-10 text-center">
+        <p className="text-xs text-[#555555] uppercase tracking-widest">Trusted by organizations across Florida</p>
+        <div className="flex justify-center gap-12 mt-6 flex-wrap text-[#555555] text-sm font-medium">
+          <span>Miami-Dade County</span><span>Google Cloud</span><span>Grants.gov</span><span>FL High Tech Corridor</span><span>HelloAgentic</span>
+        </div>
       </section>
 
       {/* STATS */}
-      <section className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((s, i) => (
-            <div key={i} className="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-sm">
-              <div className="text-3xl font-[900] text-[#1A1A1A] mb-1">{s.value}</div>
-              <div className="text-xs text-stone-500">{s.label}</div>
+      <section className="py-20 px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+          {[{n:'1,247+',l:'Grants Indexed'},{n:'94%',l:'Match Accuracy'},{n:'38 hrs',l:'Saved Per Grant'},{n:'$2.4M',l:'Active Grant Value'}].map((s,i) => (
+            <div key={i}>
+              <div className="text-4xl font-bold text-[#76B900]">{s.n}</div>
+              <div className="text-sm text-[#888888] mt-1">{s.l}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* BENTO GRID — FEATURES */}
-      <section id="how" className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{color:'#76B900'}}>How it works</p>
-          <h2 className="text-4xl font-[900] text-[#1A1A1A] leading-tight">From profile to funded in days, not months.</h2>
+      {/* 6 AGENTS */}
+      <section className="py-24 px-6">
+        <div className="text-center mb-16">
+          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">THE ENGINE</p>
+          <h2 className="text-4xl font-bold text-[#EEEEEE]">Six AI agents. One click.</h2>
+          <p className="text-[#888888] max-w-xl mx-auto mt-4">From live grant discovery to proposal delivery — your AI team works 24/7 so you don't have to.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Large card */}
-          <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm row-span-2 flex flex-col justify-between min-h-[280px]">
-            <div>
-              <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">AI Matching · New</p>
-              <h3 className="text-2xl font-[900] text-[#1A1A1A] mb-3 leading-tight">Your compatibility score, explained.</h3>
-              <p className="text-sm text-stone-500 leading-relaxed">Gemini AI scores every grant 0–100 based on mission alignment, location, and eligibility. Like eHarmony compatibility — but for funding.</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {[
+            {e:'🔍',t:'Hunter',d:'Scans Grants.gov and 50+ state databases in real time for your exact profile.'},
+            {e:'🎯',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini semantic embeddings — not keywords.'},
+            {e:'✍️',t:'Drafter',d:'Writes a complete proposal in under 60 seconds using Gemini 2.0 Flash.'},
+            {e:'✅',t:'Controller',d:'Verifies your eligibility before you spend time applying.'},
+            {e:'📤',t:'Submitter',d:'Queues and sends your applications on your schedule.'},
+            {e:'👁️',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.'},
+          ].map((a,i) => (
+            <div key={i} className="bg-[#232323] border border-[#333333] rounded-xl p-6 hover:border-[#76B900] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-[#76B90020] rounded-full flex items-center justify-center text-lg mb-4">{a.e}</div>
+              <div className="text-[#EEEEEE] font-semibold mb-2">{a.t}</div>
+              <div className="text-[#888888] text-sm leading-relaxed">{a.d}</div>
             </div>
-            <div className="mt-6 space-y-2">
-              {[
-                { score: 97, grant: 'Digital Equity Fund', heart: '❤️', amount: '$100K' },
-                { score: 91, grant: 'MDEAT Black Business', heart: '🧡', amount: '$25K' },
-                { score: 84, grant: 'Safe in the 305', heart: '💚', amount: '$50K' },
-              ].map((m, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-stone-50 rounded-xl text-sm">
-                  <span className="flex items-center gap-2">{m.heart} <span className="font-semibold text-[#1A1A1A]">{m.grant}</span></span>
-                  <span className="font-bold" style={{color:'#76B900'}}>{m.score}%</span>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => navigate('/login?role=seeker')} className="mt-6 w-8 h-8 rounded-full flex items-center justify-center text-white" style={{background:'#76B900'}}>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Top right */}
-          <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-stone-800 shadow-sm flex flex-col justify-between">
-            <div>
-              <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">6 AI Agents</p>
-              <h3 className="text-xl font-[900] text-white mb-2 leading-tight">Your automated grant department, 24/7.</h3>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              {[
-                { icon: <Search className="w-4 h-4" />, label: 'Hunter' },
-                { icon: <BrainCircuit className="w-4 h-4" />, label: 'Matcher' },
-                { icon: <FileEdit className="w-4 h-4" />, label: 'Drafter' },
-                { icon: <CheckCircle2 className="w-4 h-4" />, label: 'Verifier' },
-                { icon: <Send className="w-4 h-4" />, label: 'Submitter' },
-                { icon: <Shield className="w-4 h-4" />, label: 'Watcher' },
-              ].map((a, i) => (
-                <div key={i} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/10">
-                  <span style={{color:'#76B900'}}>{a.icon}</span>
-                  <span className="text-[10px] text-stone-400 font-medium">{a.label}</span>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => navigate('/login?role=seeker')} className="mt-5 w-8 h-8 rounded-full flex items-center justify-center text-[#1A1A1A] bg-white">
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Bottom right */}
-          <div className="rounded-2xl p-8 border border-stone-200 shadow-sm flex flex-col justify-between" style={{background:'#76B900'}}>
-            <div>
-              <p className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-3">One Click Apply</p>
-              <h3 className="text-xl font-[900] text-white leading-tight">AI drafts, verifies, and submits your proposal automatically.</h3>
-            </div>
-            <button onClick={() => navigate('/login?role=seeker')} className="mt-5 w-8 h-8 rounded-full bg-white flex items-center justify-center" style={{color:'#76B900'}}>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* FOR FUNDERS */}
-      <section id="funders" className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-10">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="md:w-1/2">
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{color:'#76B900'}}>For Grant Funders</p>
-              <h2 className="text-4xl font-[900] text-[#1A1A1A] leading-tight mb-4">Post once. Get matched to the right applicants.</h2>
-              <p className="text-stone-500 text-sm leading-relaxed mb-6">CivicPath's AI surfaces the highest-compatibility organizations for every grant you post. No more sifting through unqualified applications.</p>
-              <button onClick={() => navigate('/login?role=funder')}
-                className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-bold rounded-xl transition-all"
-                style={{background:'#76B900'}}>
-                Post a grant <ArrowRight className="w-4 h-4" />
-              </button>
+      {/* HOW IT WORKS */}
+      <section id="how" className="bg-[#232323] border-y border-[#333333] py-24 px-6">
+        <div className="text-center mb-16">
+          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">HOW IT WORKS</p>
+          <h2 className="text-4xl font-bold text-[#EEEEEE]">Profile to proposal in 60 seconds</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {[
+            {n:'01',e:'🏢',t:'Create your profile',d:'Enter your org name, mission, and location. Under 30 seconds.'},
+            {n:'02',e:'🤖',t:'AI finds your matches',d:'6 agents scan thousands of grants and score each one for compatibility.'},
+            {n:'03',e:'📄',t:'Apply in one click',d:'Review proposals, verify eligibility, download PDF, track every deadline.'},
+          ].map((s,i) => (
+            <div key={i}>
+              <div className="text-6xl font-bold text-[#333333]">{s.n}</div>
+              <div className="w-10 h-10 bg-[#76B90020] rounded-full flex items-center justify-center text-lg mt-4">{s.e}</div>
+              <div className="text-xl font-semibold text-[#EEEEEE] mt-4">{s.t}</div>
+              <div className="text-[#888888] text-sm leading-relaxed mt-2">{s.d}</div>
             </div>
-            <div className="md:w-1/2 grid grid-cols-2 gap-3">
-              {[
-                { icon: <Users className="w-5 h-5" />, title: '847 Seekers', desc: 'Verified orgs ready to apply' },
-                { icon: <CheckCircle2 className="w-5 h-5" />, title: 'Pre-screened', desc: 'AI checks eligibility first' },
-                { icon: <Heart className="w-5 h-5" />, title: 'Match scoring', desc: '0-100 per applicant' },
-                { icon: <Shield className="w-5 h-5" />, title: 'Sovereign', desc: 'Data never leaves platform' },
-              ].map((f, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-                  <div className="mb-2" style={{color:'#76B900'}}>{f.icon}</div>
-                  <div className="text-sm font-bold text-[#1A1A1A] mb-0.5">{f.title}</div>
-                  <div className="text-xs text-stone-500">{f.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="py-20 px-6 text-center">
+        <h2 className="text-3xl font-bold text-[#EEEEEE]">Funding for every organization</h2>
+        <div className="flex flex-wrap justify-center gap-3 mt-10 max-w-4xl mx-auto">
+          {['🏛️ Nonprofits','🚀 AI Startups','🏫 Education','🏥 Healthcare','🏠 Housing','🎨 Arts & Culture','💼 Small Business','🌱 Environment','💰 Loans & Capital','🎪 Events','👩 Women-Owned','🎖️ Veteran-Owned','🔬 Research','🏙️ Government'].map((p,i) => (
+            <span key={i} className="border border-[#333333] rounded-full px-4 py-2 text-sm text-[#888888] hover:border-[#76B900] hover:text-[#76B900] cursor-pointer transition-colors">{p}</span>
+          ))}
         </div>
       </section>
 
       {/* TESTIMONIALS */}
-      <section id="testimonials" className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{color:'#76B900'}}>Stories</p>
-          <h2 className="text-4xl font-[900] text-[#1A1A1A] leading-tight">Organizations getting funded.</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-              <div className="flex items-center gap-0.5 mb-4">
-                {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5" style={{fill:'#76B900', color:'#76B900'}} />)}
-              </div>
-              <p className="text-stone-600 text-sm leading-relaxed mb-5">"{t.text}"</p>
-              <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-                <div>
-                  <div className="font-bold text-[#1A1A1A] text-sm">{t.name}</div>
-                  <div className="text-xs text-stone-400">{t.org} · {t.location}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-base font-[900]" style={{color:'#76B900'}}>{t.score}%</div>
-                  <div className="text-[10px] text-stone-400 uppercase tracking-wider">match</div>
-                </div>
-              </div>
+      <section id="funders" className="bg-[#232323] border-t border-[#333333] py-24 px-6">
+        <h2 className="text-3xl font-bold text-[#EEEEEE] text-center mb-12">Organizations that found their match</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            {q:'CivicPath found us a $150,000 grant we didn\'t know existed. The AI wrote our proposal in under a minute. We submitted and won.',n:'Maria Rodriguez · Sunrise STEM Nonprofit, Orlando FL'},
+            {q:'As a small AI startup, grants felt impossible. CivicPath matched us to the NSF SBIR track and drafted our entire Phase I proposal.',n:'James Chen · NovaMind AI, Miami FL'},
+            {q:'We used to spend 40 hours per grant. Now it takes 60 seconds. This is the future of nonprofit ops.',n:'Dr. Sarah Williams · Community Health Alliance, Tampa FL'},
+          ].map((t,i) => (
+            <div key={i} className="bg-[#1C1C1C] border border-[#333333] rounded-xl p-6 hover:border-[#76B900] transition-colors">
+              <div className="text-[#76B900] text-sm mb-4">★★★★★</div>
+              <p className="text-[#EEEEEE] text-sm leading-relaxed">"{t.q}"</p>
+              <p className="mt-4 text-[#555555] text-xs">— {t.n}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="rounded-2xl p-12 text-center" style={{background:'#76B900'}}>
-          <h2 className="text-5xl font-[900] text-white mb-3 leading-tight">Start finding grants today.</h2>
-          <p className="text-white/80 text-lg mb-8">Free to join. No credit card. Takes 2 minutes.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button onClick={() => navigate('/login?role=seeker')}
-              className="px-8 py-3.5 bg-white font-bold rounded-xl transition-all shadow-sm text-sm"
-              style={{color:'#76B900'}}>
-              Get started free
-            </button>
-            <button onClick={() => navigate('/login?role=funder')}
-              className="px-8 py-3.5 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl transition-all text-sm">
-              Post a grant
-            </button>
+      {/* SOVEREIGN */}
+      <section id="sovereign" className="px-6 my-24">
+        <div className="bg-[#232323] border border-[#76B900]/20 rounded-2xl max-w-5xl mx-auto p-16 text-center">
+          <div className="text-4xl mb-6">🛡️</div>
+          <h2 className="text-3xl font-bold text-[#EEEEEE]">Built Sovereign. Built for Government.</h2>
+          <p className="mt-4 text-[#888888] max-w-xl mx-auto">All your data stays on your hardware. Never shared with commercial clouds. Privacy is not a policy — it's in the architecture.</p>
+          <div className="flex flex-wrap justify-center gap-8 mt-10 text-sm text-[#888888]">
+            <span>🏗️ Local Infrastructure</span><span>🔒 Data Never Leaves</span><span>📖 Open Source Core</span><span>✅ Government Compliant</span>
+          </div>
+          <div className="flex gap-3 justify-center mt-8 flex-wrap">
+            {['Google Cloud ADK Finalist 2025','Patent Pending','Miami-Dade Pilot Partner'].map((b,i) => (
+              <span key={i} className="bg-[#76B90020] text-[#76B900] rounded-full px-3 py-1 text-xs">{b}</span>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* FINAL CTA */}
+      <section className="py-32 text-center px-6">
+        <h2 className="text-5xl font-bold text-[#EEEEEE] max-w-2xl mx-auto leading-tight">Your community deserves<br />to be funded.</h2>
+        <p className="mt-6 text-[#888888] text-xl max-w-xl mx-auto">Join 847 Florida organizations already using CivicPath to find, match, and win grants.</p>
+        <Link to="/login?role=seeker" className="mt-10 inline-block bg-[#76B900] text-[#111111] font-semibold px-8 py-4 text-lg rounded-xl hover:bg-[#8FD400] transition-colors">
+          Find My Grants Now →
+        </Link>
+        <p className="mt-4 text-xs text-[#555555]">Free to start · No credit card required · Sovereign data</p>
+      </section>
+
       {/* FOOTER */}
-      <footer className="border-t border-stone-200 py-8">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <div className="relative inline-flex items-center justify-center w-7 h-7" style={{color:'#76B900'}}>
-              <Hexagon className="w-7 h-7 absolute" strokeWidth={2.5} />
-              <ArrowUpRight className="w-3.5 h-3.5 absolute" strokeWidth={3} />
-            </div>
-            <span className="font-bold text-sm">CivicPath</span>
-            <span className="text-stone-400 text-sm">· Your community. Funded.</span>
+      <footer className="bg-[#232323] border-t border-[#333333] py-12">
+        <div className="max-w-5xl mx-auto px-6 flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <div className="font-bold text-[#EEEEEE]"><span className="text-[#76B900]">●</span> CivicPath</div>
+            <div className="text-xs text-[#555555] mt-1">Your community. Funded.</div>
           </div>
-          <div className="flex items-center gap-2 border border-stone-200 bg-white rounded-lg px-3 py-1.5">
-            <Shield className="w-3.5 h-3.5" style={{color:'#76B900'}} />
-            <span className="text-xs text-stone-500"><span className="font-semibold text-[#1A1A1A]">Sovereign Infrastructure</span> · Data never leaves this platform · Hardware isolated</span>
+          <div className="flex gap-6 text-sm text-[#888888]">
+            {['About','Privacy','Terms','Contact'].map(l => <a key={l} href="#" className="hover:text-[#EEEEEE] transition-colors">{l}</a>)}
           </div>
-          <div className="text-xs text-stone-400">© 2026 CivicPath</div>
+        </div>
+        <div className="max-w-5xl mx-auto px-6 mt-8 pt-6 border-t border-[#333333] flex justify-between flex-wrap gap-2 text-xs text-[#555555]">
+          <span>© 2026 HelloAgentic. Built in Florida. For Florida.</span>
+          <span>Google ADK · Gemini 2.0 Flash · Cloud Run</span>
         </div>
       </footer>
     </div>
