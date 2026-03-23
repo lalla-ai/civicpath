@@ -19,9 +19,15 @@ export default function LoginPage() {
   // When Firebase auth state updates, redirect to correct dashboard
   useEffect(() => {
     if (user) {
-      navigate(user.role === 'funder' ? '/funder' : '/seeker', { replace: true });
+      // Use role from URL param first, then chosen role, then user's saved role
+      const urlRole = searchParams.get('role') as 'seeker' | 'funder' | null;
+      const targetRole = urlRole || role || user.role || 'seeker';
+      if (targetRole !== user.role) {
+        localStorage.setItem('civicpath_role', targetRole);
+      }
+      navigate(targetRole === 'funder' ? '/funder' : '/seeker', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams, role]);
 
   const handleGoogle = async () => {
     setError('');
