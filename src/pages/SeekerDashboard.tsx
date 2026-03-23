@@ -717,66 +717,54 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </div>
               
               <div className="flex-1 overflow-y-auto">
-                {/* Video Demo Section */}
-                <div className="relative flex flex-col items-center justify-center bg-stone-900 overflow-hidden aspect-video">
-                  {/* Background Animation */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-50"></div>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#2E7D32] rounded-full blur-[120px] animate-pulse"></div>
+                {/* Video Demo Section — warm Claude-style background */}
+                <div className="relative flex flex-col items-center justify-center bg-[#F5F0E8] overflow-hidden aspect-video">
+                  {/* Subtle warm gradient */}
+                  <div className="absolute inset-0">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#76B900]/8 rounded-full blur-[80px]" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#2E7D32]/6 rounded-full blur-[60px]" />
                   </div>
 
                   {!isDemoPlaying ? (
                     <div className="z-10 flex flex-col items-center text-center px-12">
-                      <div className="w-24 h-24 bg-[#2E7D32]/20 rounded-full flex items-center justify-center mb-6 border-2 border-[#2E7D32]/30 shadow-[0_0_30px_rgba(46,125,50,0.2)]">
+                      <div className="w-24 h-24 bg-[#2E7D32]/10 rounded-full flex items-center justify-center mb-6 border-2 border-[#2E7D32]/20 shadow-lg">
                         <Play className="w-10 h-10 text-[#2E7D32] fill-current ml-1" />
                       </div>
-                      <h4 className="text-3xl font-black text-white mb-4">See CivicPath in Action</h4>
-                      <p className="text-stone-400 max-w-md mb-8">Click below to start a scripted interactive tour of the platform's autonomous capabilities.</p>
+                      <h4 className="text-3xl font-black text-stone-900 mb-4">See CivicPath in Action</h4>
+                      <p className="text-stone-500 max-w-md mb-8">4 slides. 12 seconds. See exactly how the 6 agents work.</p>
                       <button 
                         onClick={startDemo}
-                        className="px-8 py-4 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-all shadow-xl hover:scale-105 active:scale-95"
+                        className="px-8 py-4 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-all shadow-lg hover:scale-105 active:scale-95"
                       >
-                        Start Auto-Demo
+                        Start Demo →
                       </button>
                     </div>
                   ) : (
                     <div className="z-10 w-full h-full flex flex-col items-center justify-between py-8 px-12 relative">
-                      
-                      {/* Simulated UI Screen Area */}
-                      <div className="w-full flex-1 flex items-center justify-center mb-28 relative">
-                        <div className="absolute inset-0 bg-stone-800/40 rounded-3xl border border-white/5 shadow-[0_0_60px_rgba(0,0,0,0.5)] flex items-center justify-center overflow-hidden transition-all duration-500">
+
+                      {/* Slide Area */}
+                      <div className="w-full flex-1 flex items-center justify-center mb-24 relative">
+                        <div className="w-full h-full flex items-center justify-center">
                           <div key={demoStep} className="animate-in zoom-in-95 fade-in duration-500 w-full h-full flex items-center justify-center">
                             {demoScript[demoStep]?.screen}
                           </div>
                         </div>
                       </div>
 
-                      {/* Bot Avatar (Picture in Picture style) */}
-                      <div className="absolute bottom-32 right-12 z-20">
-                        <div className="w-32 h-32 bg-stone-800 rounded-full border-4 border-[#2E7D32] overflow-hidden shadow-[0_0_40px_rgba(46,125,50,0.4)] animate-bounce">
-                          <img 
-                            src={`https://api.dicebear.com/7.x/bottts/svg?seed=CivicPath&backgroundColor=2E7D32`} 
-                            alt="AI Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#2E7D32] rounded-full border-4 border-stone-900 animate-ping"></div>
-                      </div>
-
-                      {/* Script Captions */}
-                      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-10 py-5 rounded-2xl border border-white/10 w-full max-w-3xl text-center shadow-2xl z-30">
-                        <p key={demoStep} className="text-xl font-bold text-white leading-tight animate-in slide-in-from-bottom-2 fade-in duration-300">
+                      {/* Caption bar — clean dark on warm bg */}
+                      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#1A1A1A]/90 backdrop-blur-sm px-10 py-4 rounded-2xl w-full max-w-3xl text-center shadow-xl z-30">
+                        <p key={demoStep} className="text-lg font-bold text-white leading-tight animate-in slide-in-from-bottom-2 fade-in duration-300">
                           {demoScript[demoStep]?.text}
                         </p>
                       </div>
 
-                      {/* Timeline */}
+                      {/* Progress bar */}
                       <div className="absolute bottom-3 left-12 right-12">
-                        <div className="h-1 bg-stone-800 rounded-full overflow-hidden border border-white/5">
+                        <div className="h-1 bg-stone-200 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-[#2E7D32] transition-all duration-300 ease-linear shadow-[0_0_10px_rgba(46,125,50,0.5)]"
+                            className="h-full bg-[#76B900] transition-all duration-300 ease-linear"
                             style={{ width: `${((demoStep + 1) / demoScript.length) * 100}%` }}
-                          ></div>
+                          />
                         </div>
                       </div>
                     </div>

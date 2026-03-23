@@ -1,6 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { generateText } from '../gemini';
+import { Hexagon, ArrowUpRight } from 'lucide-react';
+
+const Logo = () => (
+  <div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]">
+    <Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} />
+    <ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} />
+  </div>
+);
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -33,7 +41,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-[#F9F7F2] border-b border-stone-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="CivicPath" className="w-9 h-9" />
+            <Logo />
             <span className="text-stone-900 font-bold text-lg">CivicPath</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
