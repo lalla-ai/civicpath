@@ -20,7 +20,7 @@ export default function LandingPage() {
       );
       setHeroAnswer(answer);
     } catch {
-      setHeroAnswer('I\'d love to help! Sign up for free to get your personalized grant match list — we\'ll find the best funding for your organization in under 60 seconds.');
+      setHeroAnswer("I'd love to help! Sign up for free to get your personalized grant match list — we'll find the best funding for your organization in under 60 seconds.");
     } finally {
       setHeroLoading(false);
     }
@@ -38,14 +38,12 @@ export default function LandingPage() {
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
             <a href="#how" className="hover:text-stone-900 transition-colors">How It Works</a>
-            <a href="#funders" className="hover:text-stone-900 transition-colors">For Funders</a>
-            <a href="#sources" className="hover:text-stone-900 transition-colors">Grant Sources</a>
+            <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">Give Grants</Link>
             <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">Log in</Link>
-            <Link to="/login?role=funder" className="text-sm border border-stone-300 text-stone-700 px-3 py-1.5 rounded-lg hover:border-[#76B900] hover:text-[#76B900] transition-colors hidden sm:block">Post a Grant</Link>
-            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#8FD400] transition-colors text-sm">Find Grants →</Link>
+            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-sm">Find Grants →</Link>
           </div>
         </div>
       </nav>
@@ -158,11 +156,6 @@ export default function LandingPage() {
             <img src="https://logo.clearbit.com/helloagentic.ai" alt="HelloAgentic" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
             <span className="text-xs text-stone-400 font-medium">HelloAgentic</span>
           </a>
-          {/* DeepStation */}
-          <a href="https://deepstation.ai" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
-            <img src="https://logo.clearbit.com/deepstation.ai" alt="DeepStation" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
-            <span className="text-xs text-stone-400 font-medium">DeepStation</span>
-          </a>
           {/* MDC */}
           <a href="https://www.mdc.edu" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
             <img src="https://logo.clearbit.com/mdc.edu" alt="Miami Dade College" className="h-8 w-8 rounded-lg object-contain grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
@@ -173,26 +166,6 @@ export default function LandingPage() {
             <img src="https://logo.clearbit.com/firebase.google.com" alt="Firebase" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
             <span className="text-xs text-stone-400 font-medium">Firebase</span>
           </a>
-          {/* Vercel */}
-          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group">
-            <img src="https://logo.clearbit.com/vercel.com" alt="Vercel" className="h-8 w-auto grayscale group-hover:grayscale-0 transition-all" onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
-            <span className="text-xs text-stone-400 font-medium">Vercel</span>
-          </a>
-        </div>
-      </section>
-
-      {/* LIVE GRANT DATA BADGE */}
-      <section className="py-10 px-6">
-        <div className="bg-white border border-stone-200 rounded-2xl p-6 max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 bg-[#76B900] rounded-full animate-pulse"></span>
-            <span className="text-sm font-semibold text-stone-700">Powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#76B900] hover:underline font-bold">Grants.gov</a> — official U.S. federal grants database, updated daily</span>
-          </div>
-          <div className="flex items-center gap-6 text-center shrink-0">
-            <div><div className="text-xl font-black text-stone-900">1,000s</div><div className="text-xs text-stone-500">Live Federal Grants</div></div>
-            <div><div className="text-xl font-black text-[#76B900]">Gemini AI</div><div className="text-xs text-stone-500">Matching Engine</div></div>
-            <div><div className="text-xl font-black text-stone-900">$0</div><div className="text-xs text-stone-500">To Start</div></div>
-          </div>
         </div>
       </section>
 
@@ -221,52 +194,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* GRANT SOURCES */}
-      <section id="sources" className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-3">DATA SOURCES</p>
-            <h2 className="text-3xl font-bold text-stone-900">Connected to every major grant database</h2>
-            <p className="text-stone-500 mt-3">We pipe from federal, state, and private sources so you never miss an opportunity.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { emoji: '🏛️', name: 'Grants.gov', desc: 'Official U.S. federal grants database. 1,000s of active opportunities across all agencies.', tag: 'Live API', url: 'https://www.grants.gov' },
-              { emoji: '🚀', name: 'SBA SBIR / STTR', desc: 'Small Business Innovation Research. AI, deep tech, and R&D grants for startups.', tag: 'Live API', url: 'https://www.sbir.gov' },
-              { emoji: '🔬', name: 'NSF Grants', desc: 'National Science Foundation funding for research, AI, and STEM organizations.', tag: 'Phase 2', url: 'https://www.nsf.gov/funding' },
-              { emoji: '🧬', name: 'NIH Grants', desc: 'National Institutes of Health funding for health tech, biotech, and community health orgs.', tag: 'Phase 2', url: 'https://grants.nih.gov' },
-              { emoji: '🧠', name: 'NVIDIA Inception', desc: 'AI startup program offering cloud credits, co-marketing, and VC access.', tag: 'Program', url: 'https://www.nvidia.com/inception' },
-              { emoji: '☁️', name: 'Google for Startups', desc: 'Google Cloud credits up to $200K + mentorship for eligible AI startups.', tag: 'Program', url: 'https://cloud.google.com/startup' },
-              { emoji: '🏷️', name: 'Florida MGRP', desc: 'Florida Matching Grant Research Program for state-based tech companies.', tag: 'State', url: 'https://www.floridajobs.org' },
-              { emoji: '🏦', name: 'SBA FAST Program', desc: 'Federal and State Technology Partnership grants for small businesses.', tag: 'Federal', url: 'https://www.sbir.gov/about/about-fast' },
-              { emoji: '🏡', name: 'Miami-Dade Grants', desc: 'County-level funding: Mom & Pop, MDEAT, Cultural Affairs, and more.', tag: 'County', url: 'https://www.miamidade.gov' },
-              { emoji: '🌎', name: 'USASpending.gov', desc: 'Full federal spending data — find agencies actively funding your sector.', tag: 'Coming Soon', url: 'https://www.usaspending.gov' },
-            ].map((s, i) => (
-              <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-                className="bg-white border border-stone-200 rounded-xl p-5 hover:border-[#76B900] transition-colors shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl">{s.emoji}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    s.tag === 'Live API' ? 'bg-[#76B900]/10 text-[#76B900]' :
-                    s.tag === 'Phase 2' ? 'bg-amber-50 text-amber-600' :
-                    s.tag === 'Coming Soon' ? 'bg-stone-100 text-stone-400' :
-                    'bg-blue-50 text-blue-600'
-                  }`}>{s.tag}</span>
-                </div>
-                <div className="font-bold text-stone-900 text-sm">{s.name}</div>
-                <div className="text-xs text-stone-500 leading-relaxed">{s.desc}</div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* HOW IT WORKS */}
       <section id="how" className="bg-stone-100 border-y border-stone-200 py-24 px-6">
         <div className="text-center mb-16">
-          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-4">HOW IT WORKS</p>
-          <h2 className="text-4xl font-bold text-stone-900">Fully agentic. You just approve.</h2>
-          <p className="text-stone-500 mt-3 max-w-xl mx-auto">Your 6-agent AI team runs 24/7. You just review and approve.</p>
+          <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium">HOW IT WORKS</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* Step 1 */}
@@ -301,80 +232,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="py-20 px-6 text-center">
-        <h2 className="text-3xl font-bold text-stone-900">Funding for every organization</h2>
-        <div className="flex flex-wrap justify-center gap-3 mt-10 max-w-4xl mx-auto">
-          {['🏛️ Nonprofits','🚀 AI Startups','🏫 Education','🏥 Healthcare','🏠 Housing','🎨 Arts & Culture','💼 Small Business','🌱 Environment','💰 Loans & Capital','🎪 Events','👩 Women-Owned','🎖️ Veteran-Owned','🔬 Research','🏙️ Government'].map((p,i) => (
-            <span key={i} className="border border-stone-200 rounded-full px-4 py-2 text-sm text-stone-500 hover:border-[#76B900] hover:text-[#76B900] cursor-pointer transition-colors bg-white">{p}</span>
-          ))}
-        </div>
-      </section>
-
-      {/* ALLMYAI ECOSYSTEM */}
-      <section className="py-20 px-6 bg-[#1A1A1A]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs text-[#76B900] uppercase tracking-widest font-medium mb-3">THE ECOSYSTEM</p>
-            <h2 className="text-4xl font-bold text-white">Part of AllMyAI</h2>
-            <p className="text-stone-400 mt-3 max-w-xl mx-auto">CivicPath is one product in a suite of AI tools built for professionals who move fast and think deep.</p>
-            <a href="https://allmyai.ai" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-4 text-sm text-[#76B900] hover:underline font-semibold">Visit AllMyAI.ai →</a>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* CivicPath */}
-            <div className="bg-[#232323] border-2 border-[#76B900] rounded-2xl p-7 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-2.5 h-2.5 bg-[#76B900] rounded-full"></span>
-                <span className="text-xs font-bold text-[#76B900] uppercase tracking-widest">Current Product</span>
-              </div>
-              <div className="text-2xl font-black text-white mb-2">CivicPath</div>
-              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">The 6-Agent Grant Engine</div>
-              <p className="text-stone-400 text-sm leading-relaxed flex-1">6 AI agents find, score, draft, and submit grants automatically. You just approve. The sovereign grant pipeline built for communities and organizations.</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {['Hunter','Matchmaker','Drafter','Controller','Submitter','Watcher'].map(a => (
-                  <span key={a} className="text-[10px] font-bold bg-[#76B900]/10 text-[#76B900] px-2 py-0.5 rounded-full">{a}</span>
-                ))}
-              </div>
-            </div>
-            {/* Ask MyLalla */}
-            <div className="bg-[#232323] border border-[#333333] rounded-2xl p-7 flex flex-col hover:border-[#76B900] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-2.5 h-2.5 bg-purple-400 rounded-full"></span>
-                <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">In App Now</span>
-              </div>
-              <div className="text-2xl font-black text-white mb-2">Ask MyLalla</div>
-              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">Your Deep AI Grant Advisor</div>
-              <p className="text-stone-400 text-sm leading-relaxed flex-1">Like talking to a senior grant advisor who knows you. Research grants in depth, explain strategy, plan your approach. Full conversation — not just commands.</p>
-              <div className="mt-5 p-3 bg-[#1A1A1A] rounded-xl border border-[#333333]">
-                <div className="text-[10px] text-stone-500 mb-2">Example conversation:</div>
-                <div className="text-xs text-stone-300">“Which NSF grants are best for an AI startup in Miami with 3 employees?”</div>
-                <div className="text-xs text-purple-400 mt-2">“Based on your profile, I’d focus on NSF SBIR Phase I — here’s why...”</div>
-              </div>
-            </div>
-            {/* Omninor */}
-            <div className="bg-[#232323] border border-[#333333] rounded-2xl p-7 flex flex-col hover:border-[#76B900] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-2.5 h-2.5 bg-blue-400 rounded-full"></span>
-                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">Coming Soon</span>
-              </div>
-              <div className="text-2xl font-black text-white mb-2">Omninor</div>
-              <div className="text-xs text-stone-400 font-semibold uppercase tracking-wider mb-3">The AI Command Bar</div>
-              <p className="text-stone-400 text-sm leading-relaxed flex-1">Superhuman for grant operations. Hit ⌘K anywhere. Type what you need. Done in 2 seconds. Omninor guides every action — like having an AI co-pilot watching your every move.</p>
-              <div className="mt-5 p-3 bg-[#1A1A1A] rounded-xl border border-[#333333]">
-                <div className="text-[10px] text-stone-500 mb-2">⌘K command bar:</div>
-                <div className="flex items-center gap-2 bg-[#2A2A2A] px-3 py-2 rounded-lg">
-                  <span className="text-stone-400 text-xs">⌘K</span>
-                  <span className="text-xs text-white">draft proposal for SBIR Phase I</span>
-                  <span className="ml-auto text-[10px] text-blue-400">Enter →</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* TESTIMONIALS */}
-      <section id="funders" className="bg-stone-100 border-t border-stone-200 py-24 px-6">
+      <section id="funders" className="py-24 px-6">
         <h2 className="text-3xl font-bold text-stone-900 text-center mb-12">Organizations that found their match</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {[
@@ -401,7 +260,7 @@ export default function LandingPage() {
             <span>🏗️ Local Infrastructure</span><span>🔒 Data Never Leaves</span><span>📖 Open Source Core</span><span>✅ Government Compliant</span>
           </div>
           <div className="flex gap-3 justify-center mt-8 flex-wrap">
-            {['Google Cloud ADK Finalist 2025','Patent Pending','Miami-Dade Pilot Partner'].map((b,i) => (
+            {['Google Cloud ADK Finalist 2026','Patent Pending','Miami-Dade Pilot Partner'].map((b,i) => (
               <span key={i} className="bg-[#76B90020] text-[#76B900] rounded-full px-3 py-1 text-xs">{b}</span>
             ))}
           </div>
@@ -409,7 +268,7 @@ export default function LandingPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-32 text-center px-6">
+      <section className="py-32 text-center px-6 bg-stone-100 border-t border-stone-200">
         <h2 className="text-5xl font-bold text-stone-900 max-w-2xl mx-auto leading-tight">Your community deserves<br />to be funded.</h2>
         <p className="mt-6 text-stone-500 text-xl max-w-xl mx-auto">Connect to thousands of real federal and state grants. Let AI find the ones that fit you.</p>
         <Link to="/login?role=seeker" className="mt-10 inline-block bg-[#76B900] text-[#111111] font-semibold px-8 py-4 text-lg rounded-xl hover:bg-[#8FD400] transition-colors">
