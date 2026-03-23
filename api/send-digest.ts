@@ -84,13 +84,13 @@ Return ONLY a JSON array (no markdown):
               ${grantRecommendations}
             </table>
             <div style="margin-top:24px;text-align:center;">
-              <a href="https://grant-scout-ui.vercel.app/seeker" style="display:inline-block;background:#76B900;color:#111111;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">Run Full Pipeline →</a>
+              <a href="https://civicpath.ai/seeker" style="display:inline-block;background:#76B900;color:#111111;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">Run Full Pipeline →</a>
             </div>
           </td>
         </tr>
         <tr>
           <td style="padding:16px 32px 24px;border-top:1px solid #E8E5DE;text-align:center;">
-            <p style="margin:0;font-size:11px;color:#9CA3AF;">© 2026 HelloAgentic · <a href="https://grant-scout-ui.vercel.app/pricing" style="color:#76B900;text-decoration:none;">Manage subscription</a> · <a href="https://grant-scout-ui.vercel.app/privacy" style="color:#76B900;text-decoration:none;">Privacy</a></p>
+            <p style="margin:0;font-size:11px;color:#9CA3AF;">© 2026 HelloAgentic · <a href="https://civicpath.ai/pricing" style="color:#76B900;text-decoration:none;">Manage subscription</a> · <a href="https://civicpath.ai/privacy" style="color:#76B900;text-decoration:none;">Privacy</a></p>
           </td>
         </tr>
       </table>

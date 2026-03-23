@@ -15,7 +15,7 @@ export default function SharePage() {
   const score = params.get('score') || '92';
   const location = params.get('loc') || 'Florida';
 
-  const tweetText = `Just found ${count} grants for ${org} in under 60 seconds using @CivicPathAI 🤖\n\nFully agentic — AI wrote the proposal. I just approved.\n\nTry it free → grant-scout-ui.vercel.app\n\n#Grants #AI #Nonprofit`;
+  const tweetText = `Just found ${count} grants for ${org} in under 60 seconds using @CivicPathAI 🤖\n\nFully agentic — AI wrote the proposal. I just approved.\n\nTry it free → civicpath.ai\n\n#Grants #AI #Nonprofit`;
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center p-6">

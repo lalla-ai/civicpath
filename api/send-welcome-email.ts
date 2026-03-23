@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <!-- CTA Button -->
         <tr>
           <td style="padding:0 40px 32px;text-align:center;">
-            <a href="https://grant-scout-ui.vercel.app/${isSeeker ? 'seeker' : 'funder'}"
+            <a href="https://civicpath.ai/${isSeeker ? 'seeker' : 'funder'}"
                style="display:inline-block;background:#76B900;color:#111111;font-size:15px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;">
               ${isSeeker ? 'Find My Grants →' : 'Go to Funder Dashboard →'}
             </a>
@@ -119,9 +119,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             </p>
             <p style="margin:0;font-size:12px;color:#9CA3AF;">
               © 2026 HelloAgentic · Built in Florida · 
-              <a href="https://grant-scout-ui.vercel.app/privacy" style="color:#76B900;text-decoration:none;">Privacy</a> · 
-              <a href="https://grant-scout-ui.vercel.app/terms" style="color:#76B900;text-decoration:none;">Terms</a> ·
-              <a href="https://grant-scout-ui.vercel.app/pricing" style="color:#76B900;text-decoration:none;">Manage Subscription</a>
+              <a href="https://civicpath.ai/privacy" style="color:#76B900;text-decoration:none;">Privacy</a> · 
+              <a href="https://civicpath.ai/terms" style="color:#76B900;text-decoration:none;">Terms</a> ·
+              <a href="https://civicpath.ai/pricing" style="color:#76B900;text-decoration:none;">Manage Subscription</a>
             </p>
             <p style="margin:8px 0 0;font-size:11px;color:#9CA3AF;">
               You're receiving this because you signed up for CivicPath.<br/>

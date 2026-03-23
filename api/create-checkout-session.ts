@@ -26,9 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://grant-scout-ui.vercel.app';
+  const baseUrl = process.env.SITE_URL || 'https://civicpath.ai';
 
   try {
     const session = await stripe.checkout.sessions.create({
