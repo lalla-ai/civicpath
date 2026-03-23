@@ -14,13 +14,10 @@ const Spinner = () => (
   </div>
 );
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to={user.role === 'funder' ? '/funder' : '/seeker'} replace />;
-  }
   return <>{children}</>;
 }
 
@@ -31,8 +28,8 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/seeker" element={<ProtectedRoute requiredRole="seeker"><SeekerDashboard /></ProtectedRoute>} />
-          <Route path="/funder" element={<ProtectedRoute requiredRole="funder"><FunderDashboard /></ProtectedRoute>} />
+          <Route path="/seeker" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
+          <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
