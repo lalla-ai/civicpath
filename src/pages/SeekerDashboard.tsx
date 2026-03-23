@@ -44,12 +44,13 @@ import {
   Twitter,
   Globe,
   Share2,
-  Linkedin
+  Linkedin,
+  UserCircle
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations' | 'lalla';
+type ActiveTab = 'dashboard' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile';
 
 interface Profile {
   // Step 1 — Your Organization
@@ -247,45 +248,57 @@ export default function SeekerDashboard() {
   const [isRunning, setIsRunning] = useState(false);
 
   const demoScript = [
-    { 
-      text: "Welcome to CivicPath. Your community, funded.", 
+    {
+      text: "$800B in grants go unclaimed every year. Your org deserves a cut.",
+      duration: 2500,
+      screen: <div className="flex flex-col items-center text-center px-8">
+        <div className="text-8xl font-black text-[#76B900] mb-2">$800B</div>
+        <div className="text-stone-400 uppercase tracking-widest text-sm">Unclaimed Grants Every Year</div>
+        <div className="mt-6 text-white text-3xl font-bold">CivicPath fixes that.</div>
+      </div>
+    },
+    {
+      text: "Tell us your mission — 30 seconds. Agents do the rest.",
+      duration: 2800,
+      screen: <div className="bg-white rounded-2xl p-5 w-3/4 max-w-sm shadow-2xl">
+        <div className="text-xs font-bold text-[#2E7D32] uppercase mb-3 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Your Profile</div>
+        <div className="space-y-2.5">
+          <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">🏢 Sunrise Tech Nonprofit</div>
+          <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">📍 Orlando, FL</div>
+          <div className="h-9 bg-stone-100 rounded-lg flex items-center px-3 text-stone-500 text-sm">🎯 AI Civic Technology</div>
+        </div>
+        <div className="mt-3 bg-[#2E7D32] text-white rounded-lg py-2 text-center text-sm font-bold">Launch My Dashboard →</div>
+      </div>
+    },
+    {
+      text: "6 AI agents scan every federal and state grant in real time.",
       duration: 3000,
-      screen: <div className="flex items-center justify-center h-full"><Logo /><span className="text-4xl font-black text-white ml-4 tracking-tight">CivicPath</span></div> 
+      screen: <div className="bg-stone-950 rounded-2xl p-5 w-3/4 max-w-md font-mono text-xs border border-stone-800 space-y-2">
+        {['🔍 Hunter scanning Grants.gov + SBA SBIR live...','🎯 Matchmaker scoring 47 grants 0–100...','✍️ Drafter writing proposal via Gemini...','✅ Controller verifying eligibility...','📤 Submitter queuing for your approval...','👁️ Watcher activating 24/7 monitor...'].map((l, i) => (
+          <div key={i} className={`flex items-center gap-2 ${i < 2 ? 'text-[#76B900]' : i < 4 ? 'text-stone-400' : 'text-stone-600'}`}>
+            <span className="text-[#76B900]">❯</span>{l}
+          </div>
+        ))}
+      </div>
     },
-    { 
-      text: "47 million Americans leave grant funding on the table every year. We fix that.", 
-      duration: 4000,
-      screen: <div className="flex flex-col items-center text-center"><BarChart3 className="w-16 h-16 text-red-400 mb-4" /><div className="text-3xl font-black text-white">$47 Billion</div><div className="text-stone-400 uppercase tracking-widest text-xs mt-2">Unclaimed Annually</div></div>
-    },
-    { 
-      text: "Our 6 specialized AI agents act as your personal grant department, 24/7.", 
-      duration: 4000,
-      screen: <div className="flex space-x-4"><div className="p-5 bg-[#2E7D32]/20 rounded-2xl border border-[#2E7D32]/30"><Search className="w-10 h-10 text-[#2E7D32]" /></div><div className="p-5 bg-[#2E7D32]/20 rounded-2xl border border-[#2E7D32]/30"><BrainCircuit className="w-10 h-10 text-[#2E7D32]" /></div><div className="p-5 bg-[#2E7D32]/20 rounded-2xl border border-[#2E7D32]/30"><FileEdit className="w-10 h-10 text-[#2E7D32]" /></div></div>
-    },
-    { 
-      text: "First, we build your End-to-End Encrypted Profile with your mission and background.", 
-      duration: 4000,
-      screen: <div className="bg-white p-6 rounded-2xl w-3/4 max-w-md shadow-2xl flex flex-col"><div className="flex items-center mb-4"><ShieldCheck className="w-5 h-5 text-[#2E7D32] mr-2" /><span className="text-xs font-bold text-stone-500 uppercase">E2E Encrypted</span></div><div className="h-4 w-1/3 bg-stone-200 rounded mb-4"></div><div className="h-12 w-full bg-stone-100 rounded-xl mb-4 border border-stone-200"></div><div className="h-24 w-full bg-stone-100 rounded-xl border border-stone-200"></div></div>
-    },
-    { 
-      text: "Next, we initialize the Agent Pipeline to find and match grants in real-time.", 
-      duration: 4000,
-      screen: <div className="bg-stone-950 p-6 rounded-2xl w-3/4 border border-stone-800 font-mono text-sm text-stone-400 flex flex-col space-y-3"><div className="text-[#2E7D32] flex items-center"><TerminalSquare className="w-4 h-4 mr-2"/> [🔍 The Hunter] Scanning API...</div><div className="text-[#2E7D32] flex items-center"><TerminalSquare className="w-4 h-4 mr-2"/> [🎯 Matchmaker] Embedding profile...</div></div>
-    },
-    { 
-      text: "The Drafter generates your PDF, while the Controller verifies every detail.", 
-      duration: 4000,
-      screen: <div className="bg-white p-6 rounded-2xl w-3/4 max-w-md shadow-2xl flex items-center space-x-6 border-l-8 border-[#2E7D32]"><FileText className="w-16 h-16 text-[#2E7D32]" /><div><div className="text-lg font-black text-stone-800">Proposal_Draft.pdf</div><div className="text-sm font-medium text-stone-500 mt-1 flex items-center"><CheckCircle2 className="w-4 h-4 text-[#2E7D32] mr-1" /> Verified by Controller</div></div></div>
-    },
-    { 
-      text: "Finally, the Submitter sends it via Gmail, and the Scheduler books your calendar.", 
-      duration: 4000,
-      screen: <div className="grid grid-cols-2 gap-6 w-3/4"><div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex flex-col items-center shadow-sm"><Mail className="w-12 h-12 text-red-500 mb-3"/><span className="text-sm font-bold text-stone-800">Sent via Gmail</span></div><div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl flex flex-col items-center shadow-sm"><CalendarDays className="w-12 h-12 text-blue-500 mb-3"/><span className="text-sm font-bold text-stone-800">Synced to G-Cal</span></div></div>
-    },
-    { 
-      text: "CivicPath: AI that takes action. Ready to start?", 
-      duration: 3000,
-      screen: <div className="flex flex-col items-center"><div className="scale-150 mb-8"><Logo /></div><button className="px-8 py-4 bg-[#2E7D32] text-white font-bold rounded-xl shadow-xl flex items-center text-lg"><Play className="w-6 h-6 mr-2 fill-current" /> Access Action Platform</button></div>
+    {
+      text: "Grants matched. Proposal drafted. You approve — they submit.",
+      duration: 3500,
+      screen: <div className="bg-[#1A1A1A] rounded-xl p-5 w-3/4 max-w-md border border-[#333]">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-[#888] text-xs">Sunrise Tech · Orlando, FL</span>
+          <span className="text-[#76B900] text-xs bg-[#76B90020] px-2 py-0.5 rounded-full">Pipeline Complete ✓</span>
+        </div>
+        <div className="space-y-2 mb-4">
+          {[{n:'State Innovation Match Fund',m:'$150K · Due Oct 15',s:'92'},{n:'FL STEM Education Initiative',m:'$75K · Due Nov 3',s:'88'}].map((g,i) => (
+            <div key={i} className="bg-[#2A2A2A] rounded-lg p-3 border-l-2 border-[#76B900] flex justify-between items-center">
+              <div><div className="text-[#EEE] text-xs font-medium">{g.n}</div><div className="text-[#888] text-[10px]">{g.m}</div></div>
+              <span className="text-[10px] font-bold bg-[#76B900] text-[#111] px-2 py-0.5 rounded-full">{g.s}</span>
+            </div>
+          ))}
+        </div>
+        <button className="w-full bg-[#76B900] text-[#111] font-black py-2 rounded-lg text-xs">✅ Approve & Submit — 1 click</button>
+      </div>
     }
   ];
 
@@ -659,7 +672,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   // ── Onboarding wizard ──────────────────────────────────────────────────────
   const isStep1Valid = profile.companyName.trim() && profile.orgType && profile.location.trim();
   const isStep2Valid = profile.focusArea.trim() && profile.missionStatement.trim();
-  const isStep3Valid = profile.projectDescription.trim();
+  const isStep3Valid = true; // Always allow launch — users can add project details from dashboard
 
   if (step === 'onboarding') {
     return (
@@ -749,61 +762,20 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   )}
                 </div>
 
-                {/* Q&A Section */}
-                <div className="p-8 bg-stone-50">
-                  <div className="max-w-3xl mx-auto">
-                    <h4 className="text-2xl font-black text-stone-900 mb-6 border-b border-stone-200 pb-4">Frequently Asked Questions</h4>
-                    
-                    <div className="space-y-6">
-                      <div>
-                        <h5 className="font-bold text-stone-800 text-lg mb-2 flex items-center">
-                          <span className="text-[#2E7D32] mr-2">Q:</span> How is the End-to-End Encrypted Profile built?
-                        </h5>
-                        <p className="text-stone-600 leading-relaxed">
-                          <span className="font-bold text-stone-700 mr-2">A:</span> 
-                          You start by pasting your organization's mission, background, or LinkedIn URL. This data is instantly encrypted and vectorized into our secure ChromaDB. The Matchmaker agent then uses these vectors to score your alignment with grant rubrics autonomously.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h5 className="font-bold text-stone-800 text-lg mb-2 flex items-center">
-                          <span className="text-[#2E7D32] mr-2">Q:</span> What exactly does the AI Grant Scheduler do?
-                        </h5>
-                        <p className="text-stone-600 leading-relaxed">
-                          <span className="font-bold text-stone-700 mr-2">A:</span> 
-                          Like a digital chief of staff, it analyzes the deadlines and complexity of your targeted grants. It then maps out specific work blocks (e.g., "Research + Exec Summary for 3 hours") and auto-syncs them into your Google Calendar, ensuring you never miss a deadline.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h5 className="font-bold text-stone-800 text-lg mb-2 flex items-center">
-                          <span className="text-[#2E7D32] mr-2">Q:</span> How does "The Watcher" agent work?
-                        </h5>
-                        <p className="text-stone-600 leading-relaxed">
-                          <span className="font-bold text-stone-700 mr-2">A:</span> 
-                          The Watcher is a persistent, 24/7 background agent. It continually polls federal and state APIs like Grants.gov. The moment a new opportunity drops that matches your profile with a score {'>'}80%, it drafts a starting proposal and emails you the alert.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h5 className="font-bold text-stone-800 text-lg mb-2 flex items-center">
-                          <span className="text-[#2E7D32] mr-2">Q:</span> Are my submissions actually sent via Gmail?
-                        </h5>
-                        <p className="text-stone-600 leading-relaxed">
-                          <span className="font-bold text-stone-700 mr-2">A:</span> 
-                          Yes. When you connect Gmail via OAuth in the Integrations tab, The Submitter agent takes the verified PDF from The Drafter and autonomously emails it to the agency endpoint.
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-10 text-center">
-                      <button 
-                        onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
-                        className="px-8 py-3 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-colors shadow-md"
-                      >
-                        Close & Try the Platform
-                      </button>
-                    </div>
+                {/* CTA after demo */}
+                <div className="p-8 bg-stone-50 text-center">
+                  <p className="text-stone-500 text-sm mb-6">The only fully agentic grant pipeline. <span className="font-bold text-stone-700">Free to start.</span> No credit card.</p>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
+                      className="px-6 py-3 bg-[#2E7D32] text-white rounded-xl font-bold hover:bg-[#1B5E20] transition-colors shadow-md">
+                      Start Building My Profile →
+                    </button>
+                    <button
+                      onClick={() => { setShowDemoModal(false); setIsDemoPlaying(false); }}
+                      className="px-6 py-3 border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-100 transition-colors">
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1193,12 +1165,124 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             >
               <Sparkles className="w-4 h-4 mr-2" /> Ask MyLalla
             </button>
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`pb-3 text-sm font-bold flex items-center transition-colors border-b-2 ${
+                activeTab === 'profile'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <UserCircle className="w-4 h-4 mr-2" /> My Profile
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         
+        {activeTab === 'profile' && (
+          <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in">
+            {/* Cover + Avatar */}
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+              <div className="h-28 bg-gradient-to-r from-[#2E7D32] to-[#1B5E20] relative">
+                <div className="absolute inset-0 opacity-10" style={{backgroundImage:'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)',backgroundSize:'20px 20px'}} />
+              </div>
+              <div className="px-6 pb-6">
+                <div className="-mt-10 mb-4 flex items-end justify-between">
+                  <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#2E7D32] flex items-center justify-center shadow-lg overflow-hidden">
+                    {user?.photo
+                      ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+                      : <span className="text-2xl font-black text-white">{(profile.companyName?.[0] || user?.name?.[0] || 'O').toUpperCase()}</span>
+                    }
+                  </div>
+                  <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-sm font-bold text-stone-600 hover:border-[#2E7D32] hover:text-[#2E7D32] transition-colors">
+                    Edit Profile
+                  </button>
+                </div>
+                <h2 className="text-2xl font-black text-stone-900">{profile.companyName || user?.name || 'Your Organization'}</h2>
+                <p className="text-stone-500 text-sm mt-0.5">{user?.email}</p>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {profile.orgType && <span className="text-xs font-bold bg-[#2E7D32]/10 text-[#2E7D32] px-2.5 py-1 rounded-full">{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType === 'small-business' ? 'Small Business' : profile.orgType}</span>}
+                  {profile.location && <span className="text-xs text-stone-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{profile.location}</span>}
+                  {profile.yearsOperating && <span className="text-xs text-stone-500">{profile.yearsOperating} yrs operating</span>}
+                </div>
+                {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {profile.website && <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#2E7D32] hover:underline flex items-center gap-1"><Globe className="w-3 h-3" />Website</a>}
+                    {profile.linkedinUrl && <a href={profile.linkedinUrl.startsWith('http') ? profile.linkedinUrl : `https://${profile.linkedinUrl}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1"><Linkedin className="w-3 h-3" />LinkedIn</a>}
+                    {profile.twitterUrl && <span className="text-xs text-sky-500 flex items-center gap-1"><Twitter className="w-3 h-3" />{profile.twitterUrl}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Profile Strength */}
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-stone-800">Profile Strength</h3>
+                <span className={`text-sm font-black ${profileScoreColor}`}>{profileScore}%</span>
+              </div>
+              <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-700 ${profileBarColor}`} style={{width:`${profileScore}%`}} />
+              </div>
+              {profileScore < 80 && <p className="text-xs text-stone-400 mt-2">Complete your profile to improve AI grant matching accuracy. <button onClick={() => setStep('onboarding')} className="text-[#2E7D32] font-bold hover:underline">Complete now →</button></p>}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                {l:'Annual Budget', v: profile.annualBudget || '—'},
+                {l:'Team Size', v: profile.teamSize || '—'},
+                {l:'Funding Goal', v: profile.fundingAmount || '—'},
+                {l:'Prior Grants', v: profile.previousGrants === 'none' ? 'First' : profile.previousGrants === 'yes-small' ? 'Under $50K' : profile.previousGrants === 'yes-large' ? 'Over $50K' : '—'},
+              ].map((s, i) => (
+                <div key={i} className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm text-center">
+                  <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-1">{s.l}</div>
+                  <div className="text-sm font-black text-stone-800">{s.v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mission */}
+            {(profile.focusArea || profile.missionStatement) && (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Cpu className="w-4 h-4 text-[#2E7D32]" /> Mission & Focus</h3>
+                {profile.focusArea && <span className="inline-block text-sm font-bold bg-stone-100 text-stone-700 px-3 py-1 rounded-full mb-3">{profile.focusArea}</span>}
+                {profile.missionStatement && <p className="text-stone-600 text-sm leading-relaxed">{profile.missionStatement}</p>}
+                {profile.targetPopulation && <p className="text-stone-500 text-xs mt-3 flex items-center gap-1"><Users className="w-3 h-3" /> Serving: {profile.targetPopulation}</p>}
+              </div>
+            )}
+
+            {/* Funding Goal */}
+            {profile.projectDescription && (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Funding Goal</h3>
+                <p className="text-stone-600 text-sm leading-relaxed">{profile.projectDescription}</p>
+              </div>
+            )}
+
+            {/* Background */}
+            {(profile.backgroundInfo || profile.resumeText) && (
+              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#2E7D32]" /> Background & Experience</h3>
+                <p className="text-stone-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.backgroundInfo || profile.resumeText}</p>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {profileScore < 30 && (
+              <div className="bg-[#2E7D32]/5 border border-[#2E7D32]/20 rounded-2xl p-8 text-center">
+                <p className="text-stone-700 font-semibold mb-3">Your profile is mostly empty.</p>
+                <p className="text-stone-500 text-sm mb-4">A complete profile gets 3x better grant matches from our AI agents.</p>
+                <button onClick={() => setStep('onboarding')} className="bg-[#2E7D32] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1B5E20] transition-colors">
+                  Complete My Profile →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'integrations' && (
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-in fade-in">
             <div className="mb-6">

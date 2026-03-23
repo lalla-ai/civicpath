@@ -33,11 +33,12 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-[#F9F7F2] border-b border-stone-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-[#76B900] rounded-full inline-block" />
+            <img src="/favicon.svg" alt="CivicPath" className="w-7 h-7" />
             <span className="text-stone-900 font-bold text-lg">CivicPath</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
             <a href="#how" className="hover:text-stone-900 transition-colors">How It Works</a>
+            <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">Get Funded</Link>
             <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">Give Grants</Link>
             <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
           </div>
@@ -50,15 +51,21 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="py-32 text-center px-6">
-        <div className="inline-flex items-center gap-2 bg-[#76B90020] text-[#76B900] rounded-full px-4 py-1 text-xs font-medium">
-          🏆 Google Cloud ADK Hackathon 2026
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-2">
+          <div className="inline-flex items-center gap-2 bg-[#76B90020] text-[#76B900] rounded-full px-4 py-1 text-xs font-medium">
+            🏆 Google Cloud ADK Hackathon 2026 · Finalist
+          </div>
+          <div className="inline-flex items-center gap-2 bg-stone-100 text-stone-600 rounded-full px-4 py-1 text-xs font-medium">
+            💸 vs Instrumentl ($299/mo) — CivicPath is free & fully agentic
+          </div>
         </div>
         <h1 className="mt-8 text-6xl font-bold tracking-tight text-stone-900 leading-[1.1] max-w-3xl mx-auto">
           Find The Grant<br />
           <span className="text-[#76B900]">That Gets You.</span>
         </h1>
         <p className="mt-6 text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed">
-          6 AI agents find, score, draft, and track every grant for your organization — automatically.
+          6 AI agents find, score, draft, and submit grants for your organization — automatically.<br />
+          <span className="text-sm text-stone-400">The only platform that goes from discovery to submission in one click. Free to start.</span>
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#8FD400] transition-colors">Find My Grants →</Link>
