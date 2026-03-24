@@ -1,5 +1,5 @@
 /**
- * _rateLimit.ts — Simple in-memory IP-based rate limiter for Vercel functions.
+ * rateLimiter.ts — Simple in-memory IP-based rate limiter for Vercel functions.
  * Works per-instance (sufficient for Vercel's serverless model).
  */
 
