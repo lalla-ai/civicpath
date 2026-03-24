@@ -21,7 +21,15 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ethers } from 'ethers';
 import { rateLimit, getClientIp } from './_rateLimit';
+
+// ── 0G Labs testnet constants ─────────────────────────────────────────────
+// Hardcoded testnet values — override via env vars for mainnet.
+const ZG_EVM_RPC      = process.env.ZG_RPC_URL        || 'https://evmrpc-testnet.0g.ai';
+const ZG_STORAGE_RPC  = process.env.ZG_STORAGE_URL    || 'https://rpc-storage-testnet.0g.ai';
+const ZG_FLOW_CONTRACT = process.env.ZG_FLOW_CONTRACT  || '0xbD2C3F0E65eDF5582141C35969d66e34629cC768';
+const ZG_EXPLORER     = process.env.ZG_BLOCK_EXPLORER  || 'https://chainscan-galileo.0g.ai';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,50 +57,80 @@ async function simulate0GAnchor(merkleRoot: string) {
   };
 }
 
-async function real0GAnchor(merkleRoot: string, zgRpcUrl: string, metadata?: Record<string, string>) {
+async function real0GAnchor(
+  merkleRoot: string,
+  privateKey: string,
+  metadata?: Record<string, string>
+) {
   try {
-    // 0G Labs DA layer — RPC submission
-    // Protocol follows 0G EVM-compatible JSON-RPC format
-    const payload = {
-      jsonrpc: '2.0',
-      method: 'das_submitRootHash',
-      params: [{
-        data: merkleRoot,
-        metadata: {
-          source: 'civicpath',
-          timestamp: new Date().toISOString(),
-          ...metadata,
-        },
-      }],
-      id: Date.now(),
-    };
+    const provider = new ethers.JsonRpcProvider(ZG_EVM_RPC);
+    const wallet = new ethers.Wallet(privateKey, provider);
 
-    const res = await fetch(zgRpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10_000), // 10s timeout
+    // Encode anchor payload — Merkle root + provenance metadata as UTF-8 calldata
+    const anchorPayload = JSON.stringify({
+      protocol: 'CIVICPATH-SOVEREIGN-ANCHOR-v1',
+      merkleRoot,
+      timestamp: new Date().toISOString(),
+      source: 'civicpath',
+      storageRpc: ZG_STORAGE_RPC,
+      ...metadata,
+    });
+    const calldata = ethers.hexlify(ethers.toUtf8Bytes(anchorPayload));
+
+    // Submit transaction to 0G Flow contract
+    // The TX hash + block number is the immutable on-chain proof of existence.
+    const tx = await wallet.sendTransaction({
+      to: ZG_FLOW_CONTRACT,
+      data: calldata,
+      value: 0n,
+      gasLimit: 150_000n,
     });
 
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    console.log(`[0G] TX submitted: ${tx.hash} — waiting for confirmation...`);
+
+    // Wait for 1 block confirmation
+    const receipt = await tx.wait(1);
+    const blockNumber = receipt?.blockNumber ?? 0;
+    const gasUsed = receipt?.gasUsed?.toString() ?? '0';
+
+    console.log(`[0G] Confirmed: block ${blockNumber}, gas ${gasUsed}`);
 
     return {
-      txHash: data.result?.txHash || derive0GTxHash(merkleRoot),
-      blockHeight: data.result?.blockHeight || 0,
+      txHash: tx.hash,
+      blockHeight: blockNumber,
       daLayer: '0G Labs',
       merkleRoot,
       timestamp: new Date().toISOString(),
       status: 'confirmed',
-      gasUsed: data.result?.gasUsed?.toString() || '21,000',
-      dataSize: data.result?.dataSize || `${merkleRoot.length} bytes`,
-      networkMode: zgRpcUrl.includes('testnet') ? 'testnet' : 'mainnet',
+      gasUsed: Number(gasUsed).toLocaleString(),
+      dataSize: `${Math.ceil(calldata.length / 2)} bytes`,
+      networkMode: ZG_EVM_RPC.includes('testnet') ? 'testnet' : 'mainnet',
+      blockExplorerUrl: `${ZG_EXPLORER}/tx/${tx.hash}`,
     };
+
   } catch (err: any) {
-    // Network or RPC error → transparent fallback to simulation
-    console.warn('[0G] RPC call failed, falling back to simulation:', err.message);
+    // Any error → transparent fallback to simulation, never crash
+    console.warn('[0G] EVM anchor failed, falling back to simulation:', err.message);
     const simulated = await simulate0GAnchor(merkleRoot);
     return { ...simulated, networkMode: 'simulation' };
+  }
+}
+
+// Verify a TX on-chain via ethers provider
+async function verify0GTransaction(txHash: string): Promise<{ verified: boolean; blockHeight: number; blockExplorerUrl: string }> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ZG_EVM_RPC);
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (receipt && receipt.status === 1) {
+      return {
+        verified: true,
+        blockHeight: receipt.blockNumber,
+        blockExplorerUrl: `${ZG_EXPLORER}/tx/${txHash}`,
+      };
+    }
+    return { verified: false, blockHeight: 0, blockExplorerUrl: `${ZG_EXPLORER}/tx/${txHash}` };
+  } catch {
+    return { verified: false, blockHeight: 0, blockExplorerUrl: `${ZG_EXPLORER}/tx/${txHash}` };
   }
 }
 
@@ -168,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, merkleRoot, contentHash, metadata, txHash, keyVersion } = req.body || {};
   if (!action) return res.status(400).json({ error: 'action required' });
 
-  const zgRpcUrl = process.env.ZG_RPC_URL;
+  const zgPrivateKey = process.env.ZG_PRIVATE_KEY; // testnet wallet private key
   const kmsKeyName = process.env.GOOGLE_KMS_KEY_NAME;
 
   try {
@@ -177,19 +215,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // ── 0G Labs DA Layer ─────────────────────────────────────────────────
       case 'anchor-0g': {
         if (!merkleRoot) return res.status(400).json({ error: 'merkleRoot required' });
-        const receipt = zgRpcUrl
-          ? await real0GAnchor(merkleRoot, zgRpcUrl, metadata)
+        // Real anchor when ZG_PRIVATE_KEY is set (testnet wallet with 0G gas tokens)
+        const receipt = zgPrivateKey
+          ? await real0GAnchor(merkleRoot, zgPrivateKey, metadata)
           : await simulate0GAnchor(merkleRoot);
         return res.status(200).json({ receipt });
       }
 
       case 'verify-0g': {
-        // With ZG_RPC_URL: query 0G node for confirmation status
-        // Without: simulation always returns verified (deterministic by tx hash)
+        if (txHash && zgPrivateKey) {
+          // Real on-chain verification via ethers.js
+          const result = await verify0GTransaction(txHash);
+          return res.status(200).json({
+            verified: result.verified,
+            blockHeight: result.blockHeight,
+            blockExplorerUrl: result.blockExplorerUrl,
+            networkMode: ZG_EVM_RPC.includes('testnet') ? 'testnet' : 'mainnet',
+          });
+        }
         return res.status(200).json({
           verified: true,
-          networkMode: zgRpcUrl ? (zgRpcUrl.includes('testnet') ? 'testnet' : 'mainnet') : 'simulation',
-          receipt: null,
+          networkMode: 'simulation',
+          blockExplorerUrl: null,
         });
       }
 

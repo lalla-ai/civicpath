@@ -35,6 +35,8 @@ export interface ZGReceipt {
   dataSize: string;
   /** 'mainnet' | 'testnet' | 'simulation' */
   networkMode: 'mainnet' | 'testnet' | 'simulation';
+  /** Live block explorer URL — null when simulated */
+  blockExplorerUrl?: string | null;
 }
 
 export interface ZGVerifyResult {
@@ -103,10 +105,13 @@ export function truncate0GHash(hash: string, chars = 6): string {
 
 /** Format a ZGReceipt for terminal display */
 export function formatReceiptLog(receipt: ZGReceipt): string[] {
+  const isLive = receipt.status === 'confirmed';
   return [
-    `[0G] ${receipt.status === 'confirmed' ? 'ANCHOR-VERIFIED' : 'ANCHOR-SIMULATED'} ✓`,
-    `[0G] TX: ${truncate0GHash(receipt.txHash)} · Block ${receipt.blockHeight.toLocaleString()}`,
-    `[0G] DA Layer: ${receipt.daLayer} · Mode: ${receipt.networkMode}`,
+    `[0G] ${isLive ? 'ANCHOR-VERIFIED ✓' : 'ANCHOR-SIMULATED ≈'} — ${receipt.daLayer}`,
+    `[0G] TX: ${truncate0GHash(receipt.txHash)} · Block ${receipt.blockHeight.toLocaleString()} · Mode: ${receipt.networkMode}`,
     `[0G] Gas: ${receipt.gasUsed} · Data: ${receipt.dataSize}`,
+    ...(isLive && receipt.blockExplorerUrl
+      ? [`[0G] Explorer: ${receipt.blockExplorerUrl}`]
+      : []),
   ];
 }

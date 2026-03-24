@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@vercel/og": "^0.11.1",
+    "ethers": "^6.16.0",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "jspdf": "^4.2.1",

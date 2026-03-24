@@ -3362,7 +3362,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <span className="text-[9px] font-black text-stone-600 uppercase tracking-widest shrink-0">Sovereign Layers</span>
               {[
                 { label: 'NIM', desc: 'Neural Inference · NVIDIA NIM', envKey: 'NVIDIA_API_KEY' },
-                { label: '0G', desc: 'DA Layer · 0G Labs', envKey: 'ZG_RPC_URL' },
+                { label: '0G', desc: 'DA Layer \u00b7 0G Labs Testnet', envKey: 'ZG_PRIVATE_KEY' },
                 { label: 'KMS', desc: 'HSM Vault · Google Cloud', envKey: 'GOOGLE_KMS_KEY_NAME' },
                 { label: 'GEMINI', desc: 'Fallback Inference · Active', envKey: null },
               ].map(layer => (
