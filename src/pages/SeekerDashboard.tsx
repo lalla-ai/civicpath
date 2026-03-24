@@ -663,6 +663,8 @@ Respond in clean markdown with EXACTLY these 4 sections:
     { id: 'controller', name: 'The Controller (Verify)', icon: <ShieldCheck className="w-5 h-5" />, status: 'idle', logs: [], output: null },
     { id: 'submitter', name: 'The Submitter (Send)', icon: <Send className="w-5 h-5" />, status: 'idle', logs: [], output: null },
     { id: 'watcher', name: 'The Watcher (Monitor)', icon: <Eye className="w-5 h-5" />, status: 'idle', logs: [], output: null },
+    { id: 'compliance_scanner', name: 'The Compliance Scanner', icon: <FileText className="w-5 h-5" />, status: 'idle', logs: [], output: null },
+    { id: 'closer', name: 'The Closer (Agent 8)', icon: <Trophy className="w-5 h-5" />, status: 'idle', logs: [], output: null },
   ]);
 
   const logsEndRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -1704,33 +1706,43 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               
               {!showAgentsMenu ? (
                 <div className="flex items-center space-x-3">
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[60] shadow-sm"><Search className="w-4 h-4 text-[#76B900]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[50] shadow-sm"><BrainCircuit className="w-4 h-4 text-[#76B900]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[40] shadow-sm"><FileEdit className="w-4 h-4 text-[#76B900]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[30] shadow-sm"><ShieldCheck className="w-4 h-4 text-[#76B900]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[20] shadow-sm"><Send className="w-4 h-4 text-[#76B900]" /></div>
-                    <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/30 flex items-center justify-center z-[10] shadow-sm"><Eye className="w-4 h-4 text-[#76B900] animate-pulse" /></div>
+                <div className="flex -space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[80] shadow-sm"><Search className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[70] shadow-sm"><BrainCircuit className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[60] shadow-sm"><FileEdit className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[50] shadow-sm"><ShieldCheck className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[40] shadow-sm"><Send className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/30 flex items-center justify-center z-[30] shadow-sm"><Eye className="w-4 h-4 text-[#76B900] animate-pulse" /></div>
+                    <div className="w-8 h-8 rounded-full bg-[#111]/80 border border-[#76B900]/40 flex items-center justify-center z-[20] shadow-sm" title="Agent 7: Compliance Scanner"><FileText className="w-4 h-4 text-[#76B900]" /></div>
+                    <div className="w-8 h-8 rounded-full bg-[#111]/80 border border-[#76B900]/40 flex items-center justify-center z-[10] shadow-sm" title="Agent 8: The Closer"><Trophy className="w-4 h-4 text-[#76B900]" /></div>
                   </div>
                   <span className="text-xs text-stone-500 font-medium">8 Agents Ready to Act</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { id: 'hunter', name: 'The Hunter', desc: 'Scours the web and databases for active, relevant grant opportunities.', icon: <Search className="w-5 h-5" /> },
-                    { id: 'matchmaker', name: 'The Matchmaker', desc: 'Cross-references your profile against complex grant rubrics.', icon: <BrainCircuit className="w-5 h-5" /> },
-                    { id: 'drafter', name: 'The Drafter', desc: 'Generates high-scoring executive summaries and PDFs.', icon: <FileEdit className="w-5 h-5" /> },
-                    { id: 'controller', name: 'The Controller', desc: 'Scans for compliance, residency, and required documents.', icon: <ShieldCheck className="w-5 h-5" /> },
-                    { id: 'submitter', name: 'The Submitter', desc: 'Integrates with Gmail to autonomously send the final proposal.', icon: <Send className="w-5 h-5" /> },
-                    { id: 'watcher', name: 'The Watcher (New)', desc: '24/7 background agent. Polls API & auto-books calendar deadlines.', icon: <Eye className="w-5 h-5" /> }
+                    { id: 'hunter', name: 'The Hunter', desc: 'Scours the web and databases for active, relevant grant opportunities.', icon: <Search className="w-5 h-5" />, dark: false },
+                    { id: 'matchmaker', name: 'The Matchmaker', desc: 'Cross-references your profile against complex grant rubrics.', icon: <BrainCircuit className="w-5 h-5" />, dark: false },
+                    { id: 'drafter', name: 'The Drafter', desc: 'Generates high-scoring executive summaries and PDFs.', icon: <FileEdit className="w-5 h-5" />, dark: false },
+                    { id: 'controller', name: 'The Controller', desc: 'Scans for compliance, residency, and required documents.', icon: <ShieldCheck className="w-5 h-5" />, dark: false },
+                    { id: 'submitter', name: 'The Submitter', desc: 'Integrates with Gmail to autonomously send the final proposal.', icon: <Send className="w-5 h-5" />, dark: false },
+                    { id: 'watcher', name: 'The Watcher', desc: '24/7 background agent. Polls Grants.gov & auto-books calendar deadlines.', icon: <Eye className="w-5 h-5" />, dark: false },
+                    { id: 'compliance_scanner', name: 'The Compliance Scanner — NEW', desc: 'Extracts reporting deadlines from Award Letters. Drafts compliance reports with Hard Block detection. Activate from Awarded tab.', icon: <FileText className="w-5 h-5" />, dark: true },
+                    { id: 'closer', name: 'The Closer — NEW', desc: 'Generates cryptographic Audit Pack (ZIP + Merkle root + 0G anchor). Executes 500ms Sovereign Purge. Activate from Awarded tab.', icon: <Trophy className="w-5 h-5" />, dark: true },
                   ].map(ag => (
-                    <div key={ag.id} className="flex items-start p-3 bg-stone-50 rounded-xl border border-stone-200">
-                      <div className={`p-2 bg-white rounded-lg border border-stone-200 mr-3 text-[#76B900] shadow-sm shrink-0 ${ag.id === 'watcher' ? 'bg-[#76B900]/10 border-[#76B900]/30' : ''}`}>
+                    <div key={ag.id} className={`flex items-start p-3 rounded-xl border ${
+                      ag.dark ? 'bg-[#111] border-[#76B900]/20' : 'bg-stone-50 border-stone-200'
+                    }`}>
+                      <div className={`p-2 rounded-lg border mr-3 shadow-sm shrink-0 ${
+                        ag.dark ? 'bg-[#76B900]/10 border-[#76B900]/30 text-[#76B900]' :
+                        ag.id === 'watcher' ? 'bg-[#76B900]/10 border-[#76B900]/30 text-[#76B900]' :
+                        'bg-white border-stone-200 text-[#76B900]'
+                      }`}>
                         {ag.icon}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-stone-800">{ag.name}</h4>
-                        <p className="text-xs text-stone-500 leading-snug mt-0.5">{ag.desc}</p>
+                        <h4 className={`text-sm font-bold ${ag.dark ? 'text-white' : 'text-stone-800'}`}>{ag.name}</h4>
+                        <p className={`text-xs leading-snug mt-0.5 ${ag.dark ? 'text-stone-500' : 'text-stone-500'}`}>{ag.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -1976,6 +1988,24 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               status: agents.find(a => a.id === 'watcher')?.status === 'working' ? 'active'
                     : agents.find(a => a.id === 'watcher')?.status === 'completed' ? 'active'
                     : agents.find(a => a.id === 'watcher')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'compliance_scanner',
+              name: 'Compliance Scanner',
+              description: 'Post-award deadline extraction + AI report drafting',
+              status: agents.find(a => a.id === 'compliance_scanner')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'compliance_scanner')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'compliance_scanner')?.status === 'error' ? 'error'
+                    : 'idle',
+            },
+            {
+              id: 'closer',
+              name: 'The Closer',
+              description: 'Audit Pack (ZIP + Merkle + 0G) + Sovereign Purge',
+              status: agents.find(a => a.id === 'closer')?.status === 'working' ? 'thinking'
+                    : agents.find(a => a.id === 'closer')?.status === 'completed' ? 'done'
+                    : agents.find(a => a.id === 'closer')?.status === 'error' ? 'error'
                     : 'idle',
             },
           ] satisfies AgentItem[]}
@@ -3161,6 +3191,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             profile={profile}
             user={user}
             onGoToProfile={() => setActiveTab('profile')}
+            onAgentUpdate={(id: string, updates: any) => updateAgent(id, updates)}
+            onAgentLog={(id: string, log: string) => addLog(id, log)}
             onCloseoutPurge={() => {
               // Agent 8: Direct 500ms purge — no modal, just fire
               purgeControllerRef.current?.trigger(() => {
@@ -3560,7 +3592,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     {/* Agent Logs (Terminal-like) */}
                     <div className="bg-stone-900 p-4 font-mono text-[10px] overflow-y-auto h-32 scrollbar-thin scrollbar-thumb-stone-700 scrollbar-track-transparent">
                       {agent.logs.length === 0 && agent.status === 'idle' && (
-                        <div className="text-stone-600 italic">Ready to act...</div>
+                        <div className="text-stone-600 italic">
+                          {(agent.id === 'compliance_scanner' || agent.id === 'closer')
+                            ? <span>Activate from the <button onClick={() => setActiveTab('awarded')} className="text-[#76B900] font-bold hover:underline">Awarded tab →</button></span>
+                            : 'Ready to act...'}
+                        </div>
                       )}
                       {agent.logs.map((log, i) => (
                         <div key={i} className="mb-1.5 text-stone-300">

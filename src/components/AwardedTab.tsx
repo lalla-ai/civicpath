@@ -28,6 +28,8 @@ interface Props {
   user: { email?: string; name?: string } | null;
   onGoToProfile?: () => void;
   onCloseoutPurge?: () => void;
+  onAgentUpdate?: (id: string, updates: Record<string, any>) => void;
+  onAgentLog?: (id: string, log: string) => void;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -151,7 +153,7 @@ function typeIcon(type: ReportDeadline['type']): string {
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: Props) {
+export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge, onAgentUpdate, onAgentLog }: Props) {
   const [grants, setGrants] = useState<AwardedGrantDoc[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -231,6 +233,9 @@ export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: 
   const handleExtract = async () => {
     const content = uploadFile?.base64 || (uploadText.trim() ? btoa(unescape(encodeURIComponent(uploadText))) : '');
     if (!content) return;
+    // Activate Agent 7 in main dashboard
+    onAgentUpdate?.('compliance_scanner', { status: 'working', logs: [], output: null });
+    onAgentLog?.('compliance_scanner', `Extracting deadlines from: ${uploadFile?.name || 'text paste'}`);
     setExtracting(true);
     setExtractError('');
     try {
@@ -284,6 +289,11 @@ export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: 
         saved = { ...newGrant, id: String(Date.now()) };
       }
 
+      // Agent 7 complete
+      onAgentUpdate?.('compliance_scanner', {
+        status: 'completed',
+        output: `Extracted **${(data.deadlines || []).length} compliance deadlines** from *${uploadFile?.name || 'award letter'}*\n\n**Grant:** ${data.grantTitle || 'Unknown'}\n**Agency:** ${data.agency || 'Unknown'}\n**Amount:** ${data.awardAmount || 'Unknown'}\n**Period:** ${data.fundingPeriod || 'Unknown'}`,
+      });
       setGrants(prev => [saved, ...prev]);
       setExpandedId(saved.id || null);
       setShowUpload(false);
@@ -428,6 +438,9 @@ export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: 
 
     log('[AGENT-8] Initializing Sovereign Closeout...');
     sovereignLog('[AGENT-8] Closeout initiated for: ' + grant.grantTitle);
+    // Activate Agent 8 in main dashboard
+    onAgentUpdate?.('closer', { status: 'working', logs: [], output: null });
+    onAgentLog?.('closer', `Sovereign Closeout: ${grant.grantTitle}`);
 
     try {
       // 1. Load all report drafts for this grant
@@ -600,7 +613,12 @@ export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: 
           onCloseoutPurge();
         }
         sovereignLog('[AGENT-8] 🟢 Enclave Reset Successful. GrantData ephemeral memory cleared.');
-        log('[AGENT-8] ✓ Sovereign exit complete.');
+      log('[AGENT-8] \u2713 Sovereign exit complete.');
+      // Agent 8 complete in main dashboard
+      onAgentUpdate?.('closer', {
+        status: 'completed',
+        output: `**Sovereign Closeout Complete**\n\nGrant: *${grant.grantTitle}*\nMerkle Root: \`${truncateHash(merkleRoot)}\`\n0G TX: \`${truncateHash(zgReceipt.txHash)}\`\nBlock: ${zgReceipt.blockHeight.toLocaleString()}\n\nAudit Pack downloaded. Enclave purged.`,
+      });
       }, 300);
 
     } catch (err: any) {
