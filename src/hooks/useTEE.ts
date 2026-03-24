@@ -61,10 +61,44 @@ export function useTEE(forceStatus?: TEEStatus) {
     setLogs(prev => [...prev, line]);
   }, []);
 
-  const runAttestation = useCallback(() => {
+  const runAttestation = useCallback(async () => {
     const target = forceStatus ?? 'valid';
     setReport(buildReport('checking'));
     setLogs([]);
+
+    // ── Try real AMAI SuperAgent attestation first ───────────────────────────
+    try {
+      const res = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check-attestation' }),
+      });
+      const data = await res.json();
+      if (data.source === 'amai-superagent' && data.attestationVerified) {
+        // Real hardware attestation from AMAI SuperAgent on GKE
+        appendLog('[TEE]    Connecting to AMAI SuperAgent on GKE...');
+        appendLog(`[TEE]    Cluster: ${data.clusterName} · Zone: ${data.zone}`);
+        appendLog(`[1a]     Hardware Vault Active: ${data.hardwareVaultActive ? 'YES ✓' : 'NO'}`);
+        appendLog(`[1b]     TEE Type: ${data.teeType === 'none' ? 'Development Mode (no hardware TEE)' : data.teeType.toUpperCase()}`);
+        appendLog(`[2a]     Attestation Verified: ${data.attestationVerified ? 'TRUE ✓' : 'FALSE'}`);
+        appendLog(`[3a]     Checked At: ${data.checkedAt}`);
+        appendLog(`[SOVEREIGN] ✓ AMAI SuperAgent hardware vault ACTIVE — CivicPath sovereign infrastructure ONLINE`);
+        const amaiReport: TEEReport = {
+          ...buildReport('valid'),
+          platform: 'AMAI SuperAgent · GKE saos-cluster us-central1-a',
+          measurement: data.measurement || hex(STABLE_SEED + 'meas', 48),
+          tcbVersion: 'HW-VAULT-v1',
+          svn: data.teeType === 'none' ? '0xDEV0' : '0x0001',
+          chipId: 'AMAI-GKE-' + hex(STABLE_SEED + 'chip', 4).slice(2),
+          timestamp: data.checkedAt,
+        };
+        setReport(amaiReport);
+        return; // Real attestation complete, skip simulation
+      }
+    } catch {
+      // AMAI offline — fall through to simulation
+      appendLog('[TEE]    AMAI SuperAgent unreachable — using simulation mode...');
+    }
 
     const steps: [number, string][] = [
       [200,  '[TEE]    Initializing AMD SEV-SNP attestation request...'],

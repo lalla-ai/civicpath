@@ -672,10 +672,16 @@ Respond in clean markdown with EXACTLY these 4 sections:
   };
   const [nextAction, setNextAction] = useState<{ message: string, type: 'success' | 'warning' | 'error' } | null>(null);
 
-  // --- Ask MyLalla chat ---
+  // --- Ask MyLalla chat (powered by AMAI SuperAgent when available) ---
   const [lallaMessages, setLallaMessages] = useState<ChatMessage[]>([]);
   const [lallaInput, setLallaInput] = useState('');
   const [lallaLoading, setLallaLoading] = useState(false);
+  const [lallaFollowUps, setLallaFollowUps] = useState<string[]>([]);
+  const [lallaModelTier, setLallaModelTier] = useState<string>('');
+  // AMAI SuperAgent session ID — persists conversation context across messages
+  const amaiSessionRef = useRef<string | null>(
+    typeof window !== 'undefined' ? localStorage.getItem('civicpath_amai_session') : null
+  );
   const lallaEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -690,13 +696,55 @@ Respond in clean markdown with EXACTLY these 4 sections:
     setLallaMessages(next);
     setLallaInput('');
     setLallaLoading(true);
-    const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise — like a trusted expert who knows the user personally. Use markdown for lists and bold text. Keep answers under 200 words unless more detail is asked for.\n\nUser's organization context:\n- Name: ${profile.companyName || 'Not set'}\n- Type: ${profile.orgType || 'Not set'}\n- Location: ${profile.location || 'Florida'}\n- Focus area: ${profile.focusArea || 'General'}\n- Mission: ${profile.missionStatement || 'Not provided'}\n- Target population: ${profile.targetPopulation || 'General'}\n- Annual budget: ${profile.annualBudget || 'Unknown'}\n- Team size: ${profile.teamSize || 'Unknown'}\n- Funding goal: ${profile.fundingAmount || 'Unknown'} for ${profile.projectDescription || 'their project'}\n- Previous grants: ${profile.previousGrants || 'Unknown'}\n- Background: ${profile.backgroundInfo || 'Not provided'}${discoveredGrants.length > 0 ? `\n\nGrants currently in their pipeline: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
+    setLallaFollowUps([]);
+
+    // Build rich context array for AMAI SuperAgent
+    const contextArray = [
+      `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise.`,
+      `Organization: ${profile.companyName || 'Not set'}`,
+      `Type: ${profile.orgType || 'Unknown'} | Location: ${profile.location || 'Florida'}`,
+      `Focus: ${profile.focusArea || 'General'} | Mission: ${(profile.missionStatement || '').slice(0, 200)}`,
+      `Budget: ${profile.annualBudget || 'Unknown'} | Team: ${profile.teamSize || 'Unknown'}`,
+      `Funding Goal: ${profile.fundingAmount || 'Unknown'} for: ${(profile.projectDescription || '').slice(0, 150)}`,
+      ...(discoveredGrants.length > 0
+        ? [`Active pipeline grants: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}`]
+        : []),
+    ].filter(Boolean);
+
     try {
-      // Route through server proxy — never expose API key client-side
+      // Try AMAI SuperAgent first (when AMAI_SESSION_TOKEN is configured)
+      const amaiRes = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'amai-query',
+          query: text,
+          mode: 'research',
+          sessionId: amaiSessionRef.current,
+          context: contextArray,
+        }),
+      });
+      const amaiData = await amaiRes.json();
+
+      if (!amaiData.offline && !amaiData.error && amaiData.text) {
+        // AMAI SuperAgent responded
+        if (amaiData.sessionId) {
+          amaiSessionRef.current = amaiData.sessionId;
+          localStorage.setItem('civicpath_amai_session', amaiData.sessionId);
+        }
+        setLallaMessages(prev => [...prev, { role: 'assistant', content: amaiData.text }]);
+        setLallaFollowUps(amaiData.followUpQuestions || []);
+        setLallaModelTier(amaiData.modelTier ? `AMAI · ${amaiData.modelTier}` : 'AMAI SuperAgent');
+        return;
+      }
+
+      // Fallback: Gemini 2.0 Flash with Google Search
+      const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath. Be warm, strategic, and concise. Use markdown.\n\nUser context:\n${contextArray.slice(1).join('\n')}${discoveredGrants.length > 0 ? `\n\nPipeline grants: ${discoveredGrants.map((g: any) => `"${g.title}" (${g.agency})`).join(', ')}` : ''}`;
       const history = next.slice(0, -1).map(m => `${m.role === 'user' ? 'User' : 'MyLalla'}: ${m.content}`).join('\n');
-      const fullPrompt = `${ctx}\n\n${history ? `Conversation so far:\n${history}\n\n` : ''}User: ${text}\nMyLalla:`;
+      const fullPrompt = `${ctx}\n\n${history ? `Conversation:\n${history}\n\n` : ''}User: ${text}\nMyLalla:`;
       const reply = await callGeminiProxy(fullPrompt, true);
       setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      setLallaModelTier('Gemini 2.0 Flash');
     } catch {
       setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again in a moment." }]);
     } finally {
@@ -3134,8 +3182,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <div className="font-bold text-stone-900 flex items-center gap-2">
                   Ask MyLalla
                   <span className="text-[10px] font-black text-white bg-purple-500 px-2 py-0.5 rounded uppercase tracking-wide">AI Advisor</span>
+                  {lallaModelTier && (
+                    <span className="text-[9px] font-bold text-purple-600 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full">{lallaModelTier}</span>
+                  )}
                 </div>
-                <div className="text-xs text-stone-500">Your senior grant strategist — powered by Gemini</div>
+                <div className="text-xs text-stone-500">Your senior grant strategist — {lallaModelTier.includes('AMAI') ? 'powered by AMAI SuperAgent' : 'powered by Gemini 2.0 Flash'}</div>
               </div>
             </div>
 
@@ -3210,6 +3261,19 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <div ref={lallaEndRef} />
             </div>
 
+            {/* AMAI follow-up questions */}
+            {lallaFollowUps.length > 0 && !lallaLoading && (
+              <div className="px-6 py-3 border-t border-stone-100 bg-stone-50 flex flex-wrap gap-2 shrink-0">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider self-center">Suggested:</span>
+                {lallaFollowUps.map((q, i) => (
+                  <button key={i} onClick={() => handleLallaChat(q)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors font-medium">
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Input */}
             <div className="px-6 py-4 border-t border-stone-100 bg-white shrink-0">
               <form
@@ -3232,7 +3296,10 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   {lallaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </form>
-              <p className="text-[10px] text-stone-400 mt-2 text-center">MyLalla knows your profile and pipeline context. Responses powered by Gemini 2.0 Flash.</p>
+              <p className="text-[10px] text-stone-400 mt-2 text-center">
+                MyLalla knows your profile and pipeline context.
+                {lallaModelTier.includes('AMAI') ? ` Powered by AMAI SuperAgent · ${lallaModelTier}` : ' Powered by Gemini 2.0 Flash.'}
+              </p>
             </div>
           </div>
         )}

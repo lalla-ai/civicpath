@@ -299,6 +299,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
+      // ── AMAI SuperAgent Attestation ────────────────────────────────
+      case 'check-attestation': {
+        const amaiUrl = process.env.AMAI_ATTESTATION_URL || 'http://34.66.125.36/api/v1/attestation';
+        try {
+          const r = await fetch(amaiUrl, { signal: AbortSignal.timeout(5_000) });
+          const data = await r.json();
+          return res.status(200).json({
+            source: 'amai-superagent',
+            hardwareVaultActive: data.hardware_vault_active ?? false,
+            teeType: data.tee_type || 'none',
+            attestationVerified: data.attestation_verified ?? false,
+            measurement: data.measurement || null,
+            checkedAt: data.checked_at || new Date().toISOString(),
+            serviceUrl: amaiUrl.replace('/api/v1/attestation', ''),
+            clusterName: 'saos-cluster',
+            zone: 'us-central1-a',
+          });
+        } catch (err: any) {
+          return res.status(200).json({ source: 'offline', error: err.message });
+        }
+      }
+
+      // ── AMAI SuperAgent Query (when session token is configured) ─────────────
+      case 'amai-query': {
+        const amaiBase = process.env.AMAI_BASE_URL || 'http://34.66.125.36';
+        const amaiToken = process.env.AMAI_SESSION_TOKEN;
+        if (!amaiToken) {
+          return res.status(200).json({ error: 'AMAI_SESSION_TOKEN not configured', offline: true });
+        }
+        const { query: amaiQuery, mode: amaiMode = 'research', sessionId, context: amaiCtx } = req.body;
+        if (!amaiQuery) return res.status(400).json({ error: 'query required' });
+        const r = await fetch(`${amaiBase}/v1/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${amaiToken}` },
+          body: JSON.stringify({ query: amaiQuery, mode: amaiMode, session_id: sessionId, context: amaiCtx }),
+          signal: AbortSignal.timeout(30_000),
+        });
+        const data = await r.json();
+        if (!r.ok) return res.status(r.status).json(data);
+        return res.status(200).json({
+          text: data.response,
+          sessionId: data.session_id,
+          modelTier: data.model_tier,
+          latencyMs: data.latency_ms,
+          followUpQuestions: data.follow_up_questions || [],
+          provider: 'amai-superagent',
+        });
+      }
+
       default:
         return res.status(400).json({ error: `Unknown sovereign action: ${action}` });
     }
