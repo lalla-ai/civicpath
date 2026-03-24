@@ -403,6 +403,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${nimKey}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: fuPrompt }], max_tokens: 200, temperature: 0.8 }),
+                signal: AbortSignal.timeout(15_000),
               })
             : null;
           if (fuRes) {
