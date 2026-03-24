@@ -91,12 +91,14 @@ export default function SovereignTerminal() {
         <span>Sovereign Terminal</span>
 
         {isValid && (
-          <span className="px-1.5 py-0.5 bg-[#76B900] text-[#111] rounded text-[8px] font-black">
+          <span className="px-1.5 py-0.5 bg-[#76B900] text-[#111] rounded text-[8px] font-black" title="TEE attestation verified — your data is encrypted and sovereign">
             VERIFIED
           </span>
         )}
         {isChecking && (
-          <span className="text-amber-500 text-[8px] animate-pulse">ATTESTING...</span>
+          <span className="text-amber-500 text-[8px] animate-pulse" title="Performing Trusted Execution Environment (TEE) attestation. Verifying PCR registers and measuring secure enclave state.">
+            ATTESTING...
+          </span>
         )}
 
         {minimized

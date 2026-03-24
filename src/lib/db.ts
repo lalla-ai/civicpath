@@ -184,6 +184,7 @@ export interface AwardedGrantDoc {
   fileName: string;
   status: 'active' | 'completed' | 'at-risk';
   auditTrail: AuditEntry[];
+  closedAt?: string;     // ISO timestamp of closeout (for 24hr reopen window)
   extractedAt?: any;
 }
 

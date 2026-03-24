@@ -7,6 +7,12 @@ import { auth } from './firebase';
 
 export default function LoginPage() {
   const { user, loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
+
+  // Unique page title
+  useEffect(() => {
+    document.title = 'Sign In | CivicPath';
+    return () => { document.title = 'CivicPath — AI Grant Finder'; };
+  }, []);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [role, setRole] = useState<'seeker' | 'funder'>(searchParams.get('role') === 'funder' ? 'funder' : 'seeker');

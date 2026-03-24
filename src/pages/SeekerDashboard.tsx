@@ -158,7 +158,7 @@ export default function SeekerDashboard() {
   useEffect(() => {
     document.title = 'Find My Grant | CivicPath — AI Grant Discovery';
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', 'Find My Grant with CivicPath. 7 AI agents scan every federal and state grant, score your fit, draft a proposal, submit, and manage compliance — automatically. Free to start.');
+    if (metaDesc) metaDesc.setAttribute('content', 'Find My Grant with CivicPath. 8 AI agents scan every federal and state grant, score your fit, draft a proposal, submit, and manage compliance — automatically. Free to start.');
     const canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (canonical) canonical.href = 'https://civicpath.ai/find-my-grant';
     return () => {
@@ -570,7 +570,7 @@ Respond in clean markdown with EXACTLY these 4 sections:
       </div>
     },
     {
-      text: "7 AI agents cover the full grant lifecycle — discovery to compliance.",
+      text: "8 AI agents cover the full grant lifecycle — discovery to compliance.",
       duration: 3000,
       screen: <div className="bg-stone-950 rounded-2xl p-5 w-3/4 max-w-md font-mono text-xs border border-stone-800 space-y-2">
         {['🔍 Hunter scanning Grants.gov + SBA SBIR live...','🎯 Matchmaker scoring 47 grants 0–100...','✍️ Drafter writing proposal via Gemini...','✅ Controller verifying eligibility...','📤 Submitter queuing for your approval...','👁️ Watcher activating 24/7 monitor...'].map((l, i) => (
@@ -1692,7 +1692,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             {/* Active Copilots Section (Genspark style) */}
             <div className="mt-6 border-t border-stone-100 pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-stone-700 uppercase tracking-wider">7 Active Action Agents</h3>
+                <h3 className="text-sm font-bold text-stone-700 uppercase tracking-wider">8 Active Action Agents</h3>
                 <button 
                   onClick={() => setShowAgentsMenu(!showAgentsMenu)}
                   className="flex items-center text-xs font-bold text-[#76B900] bg-[#76B900]/10 hover:bg-[#76B900]/20 px-3 py-1.5 rounded-full transition-colors"
@@ -1712,7 +1712,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center z-[20] shadow-sm"><Send className="w-4 h-4 text-[#76B900]" /></div>
                     <div className="w-8 h-8 rounded-full bg-[#76B900]/10 border border-[#76B900]/30 flex items-center justify-center z-[10] shadow-sm"><Eye className="w-4 h-4 text-[#76B900] animate-pulse" /></div>
                   </div>
-                  <span className="text-xs text-stone-500 font-medium">7 Agents Ready to Act</span>
+                  <span className="text-xs text-stone-500 font-medium">8 Agents Ready to Act</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

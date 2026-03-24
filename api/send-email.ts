@@ -160,7 +160,38 @@ function buildApproval(data: any): { subject: string; html: string } {
   };
 }
 
-// ── Handler ─────────────────────────────────────────────────────────────────
+function buildCloseout(data: any): { subject: string; html: string } {
+  const { grantTitle = 'Grant', orgName = 'Your Organization', merkleRoot = '', txHash = '', blockHeight = '' } = data;
+  return {
+    subject: `🔒 Sovereign Closeout Complete — ${grantTitle}`,
+    html: wrap(`
+      ${HEADER('Sovereign Closeout')}
+      <tr><td style="padding:40px;">
+        <div style="font-size:36px;text-align:center;margin-bottom:16px;">🔒</div>
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#1A1A1A;text-align:center;">Closeout Complete</h1>
+        <p style="margin:0 0 24px;font-size:14px;color:#6B6860;text-align:center;line-height:1.6;">Your Audit Pack for <strong>${grantTitle}</strong> has been generated, anchored to 0G Labs, and downloaded.</p>
+        <div style="background:#0D0D0D;border-radius:12px;padding:20px;margin-bottom:24px;font-family:monospace;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:6px 0;border-bottom:1px solid #1f1f1f;"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;">Organization</span><br/><span style="font-size:13px;color:#eee;font-weight:700;">${orgName}</span></td></tr>
+            <tr><td style="padding:6px 0;border-bottom:1px solid #1f1f1f;"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;">Grant</span><br/><span style="font-size:13px;color:#eee;font-weight:700;">${grantTitle}</span></td></tr>
+            <tr><td style="padding:6px 0;border-bottom:1px solid #1f1f1f;"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;">Merkle Root</span><br/><span style="font-size:11px;color:#76B900;">${merkleRoot}</span></td></tr>
+            <tr><td style="padding:6px 0;border-bottom:1px solid #1f1f1f;"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;">0G Labs TX</span><br/><span style="font-size:11px;color:#67e8f9;">${txHash}</span></td></tr>
+            <tr><td style="padding:6px 0;"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;">Block Height</span><br/><span style="font-size:13px;color:#eee;">${blockHeight}</span></td></tr>
+          </table>
+        </div>
+        <div style="background:#76B90010;border:1px solid #76B90030;border-radius:10px;padding:14px;margin-bottom:24px;">
+          <p style="margin:0;font-size:12px;color:#5a9000;font-weight:700;">🛡️ Sovereign Purge Executed</p>
+          <p style="margin:6px 0 0;font-size:12px;color:#6B6860;">All in-memory GrantData has been cleared from the enclave. Your Audit Pack is the permanent record.</p>
+        </div>
+        <div style="text-align:center;">
+          <a href="https://civicpath.ai/seeker" style="display:inline-block;background:#76B900;color:#111;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">View Dashboard →</a>
+        </div>
+      </td></tr>
+      ${FOOTER}`),
+  };
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -187,6 +218,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'digest':       emailData = await buildDigest(data, geminiKey); break;
       case 'confirmation': emailData = buildConfirmation(data); break;
       case 'approval':     emailData = buildApproval(data); break;
+      case 'closeout':     emailData = buildCloseout(data); break;
       default: return res.status(400).json({ error: `Unknown email type: ${type}` });
     }
 

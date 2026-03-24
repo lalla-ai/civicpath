@@ -2,50 +2,53 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Loader2, X } from 'lucide-react';
 
-const plans = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    desc: 'Perfect for getting started',
-    features: ['5 grant searches / month', '1 AI proposal draft', 'Basic match scoring', 'Email support'],
-    cta: 'Get Started Free',
-    stripe: null,
-    role: 'seeker',
-    highlight: false,
-  },
-  {
-    name: 'Pro',
-    price: '$49',
-    period: 'per month',
-    desc: '14-day free trial included',
-    features: ['Unlimited grant searches', 'Unlimited AI proposals', 'Real-time Gemini matching', 'Google Calendar sync', 'PDF proposal downloads', 'Ask MyLalla advisor', 'Priority support'],
-    cta: 'Start Free Trial',
-    stripe: 'pro',
-    role: 'seeker',
-    highlight: true,
-  },
-  {
-    name: 'Funder',
-    price: '$199',
-    period: 'per month',
-    desc: '14-day free trial included',
-    features: ['Post unlimited grants', 'AI applicant matching', 'Full applicant dashboard', 'Analytics & reporting', 'Approve / reject workflow', 'Ask MyLalla advisor', 'Dedicated support'],
-    cta: 'Start Free Trial',
-    stripe: 'funder',
-    role: 'funder',
-    highlight: false,
-  },
-];
+const PLANS: Record<string, any[]> = {
+  monthly: [
+    { name:'Free', price:'$0', period:'forever', annualNote:'', desc:'Perfect for getting started',
+      features:['5 grant searches / month','1 AI proposal draft','Basic match scoring','Email support'],
+      cta:'Get Started Free', stripe:null, role:'seeker', highlight:false },
+    { name:'Pro', price:'$49', period:'per month', annualNote:'',
+      desc:'14-day free trial included',
+      features:['Unlimited grant searches','Unlimited AI proposals','Real-time Gemini matching',
+        'Google Calendar sync','PDF + DOCX export','Ask MyLalla advisor (live search)',
+        'Post-Award Compliance Manager — Agent 7','Audit Pack + Sovereign Closeout — Agent 8','Priority support'],
+      cta:'Start Free Trial', stripe:'pro', role:'seeker', highlight:true },
+    { name:'Funder', price:'$199', period:'per month', annualNote:'',
+      desc:'14-day free trial included',
+      features:['Post unlimited grants','AI applicant matching','Full applicant dashboard','Analytics & reporting','Approve / reject workflow','Ask MyLalla advisor','Dedicated support'],
+      cta:'Start Free Trial', stripe:'funder', role:'funder', highlight:false },
+  ],
+  annual: [
+    { name:'Free', price:'$0', period:'forever', annualNote:'', desc:'Perfect for getting started',
+      features:['5 grant searches / month','1 AI proposal draft','Basic match scoring','Email support'],
+      cta:'Get Started Free', stripe:null, role:'seeker', highlight:false },
+    { name:'Pro', price:'$490', period:'per year', annualNote:'2 months free — $40.8/mo',
+      desc:'Save $98 vs monthly billing',
+      features:['Unlimited grant searches','Unlimited AI proposals','Real-time Gemini matching',
+        'Google Calendar sync','PDF + DOCX export','Ask MyLalla advisor (live search)',
+        'Post-Award Compliance Manager — Agent 7','Audit Pack + Sovereign Closeout — Agent 8','Priority support'],
+      cta:'Start Free Trial', stripe:'pro_annual', role:'seeker', highlight:true },
+    { name:'Funder', price:'$1,990', period:'per year', annualNote:'2 months free — $165.8/mo',
+      desc:'Save $398 vs monthly billing',
+      features:['Post unlimited grants','AI applicant matching','Full applicant dashboard','Analytics & reporting','Approve / reject workflow','Ask MyLalla advisor','Dedicated support'],
+      cta:'Start Free Trial', stripe:'funder_annual', role:'funder', highlight:false },
+  ],
+};
 
 export default function Pricing() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [topError, setTopError] = useState('');
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
   const successPlan = searchParams.get('plan');
+
+  useEffect(() => {
+    document.title = 'Pricing | CivicPath — Free, Pro & Funder Plans';
+    return () => { document.title = 'CivicPath — AI Grant Finder'; };
+  }, []);
 
   // Save plan to localStorage on successful return from Stripe
   useEffect(() => {
@@ -154,16 +157,28 @@ export default function Pricing() {
           </div>
         )}
 
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h1 className="text-5xl font-[900] text-stone-900 mb-4 tracking-tight">Simple, transparent pricing</h1>
           <p className="text-xl text-stone-500">Start free. Upgrade anytime. Cancel anytime.</p>
+          {/* Monthly / Annual toggle */}
+          <div className="mt-6 inline-flex items-center bg-stone-100 rounded-full p-1">
+            {(['monthly','annual'] as const).map(b => (
+              <button key={b} onClick={() => setBilling(b)}
+                className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
+                  billing === b ? 'bg-white shadow text-stone-900' : 'text-stone-500 hover:text-stone-700'
+                }`}>
+                {b === 'monthly' ? 'Monthly' : 'Annual'}
+                {b === 'annual' && <span className="text-[10px] font-black bg-[#76B900] text-[#111] px-1.5 py-0.5 rounded-full">SAVE 2 MO</span>}
+              </button>
+            ))}
+          </div>
           <div className="mt-4 inline-flex items-center gap-2 bg-[#76B90015] text-[#76B900] rounded-full px-4 py-1.5 text-sm font-semibold">
             ✨ All paid plans include a 14-day free trial
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((p, i) => (
+          {PLANS[billing].map((p, i) => (
             <div key={i} className={`rounded-2xl p-8 flex flex-col ${
               p.highlight ? 'bg-[#1A1A1A] text-white border-2 border-[#76B900]' : 'bg-white border border-stone-200'
             }`}>
@@ -174,10 +189,11 @@ export default function Pricing() {
                 <div className={`text-xs font-bold uppercase tracking-widest mb-2 ${p.highlight ? 'text-[#76B900]' : 'text-stone-400'}`}>{p.name}</div>
                 <div className={`text-4xl font-[900] mb-1 ${p.highlight ? 'text-white' : 'text-stone-900'}`}>{p.price}</div>
                 <div className={`text-sm ${p.highlight ? 'text-stone-400' : 'text-stone-500'}`}>{p.period}</div>
+                {p.annualNote && <div className="text-xs text-[#76B900] font-bold mt-0.5">{p.annualNote}</div>}
                 <p className={`text-sm mt-2 font-medium ${p.highlight ? 'text-[#76B900]' : 'text-stone-500'}`}>{p.desc}</p>
               </div>
               <ul className="space-y-3 flex-1 mb-8">
-                {p.features.map((f, j) => (
+                {p.features.map((f: string, j: number) => (
                   <li key={j} className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className={`w-4 h-4 shrink-0 ${p.highlight ? 'text-[#76B900]' : 'text-[#76B900]'}`} />
                     <span className={p.highlight ? 'text-stone-300' : 'text-stone-600'}>{f}</span>
@@ -210,7 +226,10 @@ export default function Pricing() {
           ))}
         </div>
 
-        <p className="text-center text-stone-400 text-sm mt-10">
+        <p className="text-center text-xs text-stone-400 mt-4">
+          {billing === 'annual' ? 'Annual plans require STRIPE_PRICE_PRO_ANNUAL + STRIPE_PRICE_FUNDER_ANNUAL env vars in Vercel.' : ''}
+        </p>
+        <p className="text-center text-stone-400 text-sm mt-6">
           All plans include sovereign data infrastructure. Your data never leaves the platform.{' '}
           <Link to="/privacy" className="text-[#76B900] hover:underline">Privacy Policy</Link>
         </p>
