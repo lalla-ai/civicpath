@@ -19,6 +19,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  limit,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -88,5 +89,77 @@ export async function loadProposals(uid: string): Promise<ProposalDoc[]> {
   } catch (err) {
     console.warn('[CivicPath] loadProposals failed:', err);
     return [];
+  }
+}
+
+// ── Grant Applications (seeker → funder pipeline) ──────────────────────
+
+export interface GrantApplicationDoc {
+  id?: string;
+  seekerUid: string;
+  seekerEmail: string;
+  orgName: string;
+  orgType?: string;
+  location: string;
+  mission: string;
+  focusArea?: string;
+  grantTitle: string;
+  grantAgency: string;
+  grantAmount?: string;
+  grantDeadline?: string;
+  proposalText: string;
+  status: 'pending' | 'in-review' | 'approved' | 'rejected';
+  score?: number;
+  funderUid?: string;
+  funderEmail?: string;
+  submittedAt?: any;
+  updatedAt?: any;
+}
+
+/** Save a seeker’s submitted application to the shared grant_applications collection. */
+export async function saveApplication(
+  app: Omit<GrantApplicationDoc, 'id' | 'submittedAt' | 'updatedAt'>
+): Promise<string | null> {
+  try {
+    const ref = await addDoc(collection(db, 'grant_applications'), {
+      ...app,
+      submittedAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.warn('[CivicPath] saveApplication failed:', err);
+    return null;
+  }
+}
+
+/** Load all applications, newest first. Funders call this to see their inbox. */
+export async function loadApplications(maxResults = 100): Promise<GrantApplicationDoc[]> {
+  try {
+    const q = query(
+      collection(db, 'grant_applications'),
+      orderBy('submittedAt', 'desc'),
+      limit(maxResults)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as GrantApplicationDoc));
+  } catch (err) {
+    console.warn('[CivicPath] loadApplications failed:', err);
+    return [];
+  }
+}
+
+/** Update the status of an application (funder approve / reject). */
+export async function updateApplicationStatus(
+  id: string,
+  status: GrantApplicationDoc['status']
+): Promise<void> {
+  try {
+    await setDoc(
+      doc(db, 'grant_applications', id),
+      { status, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('[CivicPath] updateApplicationStatus failed:', err);
   }
 }

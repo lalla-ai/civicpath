@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { auth } from '../firebase';
-import { saveUserData, loadUserData, saveProposal } from '../lib/db';
+import { saveUserData, loadUserData, saveProposal, saveApplication } from '../lib/db';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
@@ -692,6 +692,9 @@ Respond in clean markdown with EXACTLY these 4 sections:
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  // Captures top Matchmaker score so Submitter can include it in the application
+  const topMatchScoreRef = useRef<number>(0);
+
   const streamOutput = async (id: string, text: string) => {
     let currentText = '';
     updateAgent(id, { output: '' });
@@ -827,6 +830,7 @@ Sort by score descending. Score all ${grantsToScore.length} grants.`;
         addGlobalLog(`[\ud83c\udfaf The Matchmaker] Top match: "${scored[0].title.slice(0, 50)}" \u2014 Score: ${scored[0].score}/100`);
         addGlobalLog(`[\ud83e\udd16 ACTIVITY]       Matchmaker \u2192 Drafter: "Best fit score ${scored[0].score}/100. Initiating proposal draft."`);
         addLog('matchmaker', `${scored.length} grants scored. Top: ${scored[0].score}/100`);
+        topMatchScoreRef.current = scored[0].score;
 
         matchmakerText = `### AI Match Scores \u2014 ${scored.length} Grants Evaluated\n\n` +
           scored.slice(0, 5).map((g: any, i: number) =>
@@ -1049,6 +1053,28 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
     addGlobalLog(`[\u2709\ufe0f The Submitter]  Application package prepared and queued \u2713`);
     addLog('submitter', 'Proposal packaged. Sending confirmation email...');
     await delay(800);
+
+    // ── Save real application to Firestore ──
+    const appGrant = discoveredGrants[0] || { title: 'Grant Application', agency: '', closeDate: '' };
+    const appAmount = (allDiscoveredGrants[0] as any)?.amount || '$150,000';
+    saveApplication({
+      seekerUid: auth.currentUser?.uid || '',
+      seekerEmail: user?.email || '',
+      orgName: profile.companyName || 'Unknown Organization',
+      orgType: profile.orgType,
+      location: profile.location || '',
+      mission: profile.missionStatement || profile.backgroundInfo || '',
+      focusArea: profile.focusArea,
+      grantTitle: (appGrant as any).title || 'Grant Application',
+      grantAgency: (appGrant as any).agency || '',
+      grantAmount: appAmount,
+      grantDeadline: (appGrant as any).closeDate || '',
+      proposalText: drafterOutput || '',
+      status: 'pending',
+      score: topMatchScoreRef.current || 0,
+      funderEmail: (allDiscoveredGrants[0] as any)?.funderEmail || '',
+      funderUid: (allDiscoveredGrants[0] as any)?.funderUid || '',
+    }).catch(() => {});
 
     // Send real confirmation email via Resend
     if (user?.email) {

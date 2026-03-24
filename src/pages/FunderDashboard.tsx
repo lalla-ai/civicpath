@@ -5,11 +5,12 @@ import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, 
 import type { ChatMessage } from '../gemini';
 import ReactMarkdown from 'react-markdown';
 import { postFunderGrant, getFunderGrants } from '../lib/funderGrants';
+import { loadApplications, updateApplicationStatus } from '../lib/db';
 
 const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
 type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
 interface Grant { id: string; name: string; amount: string; focus: string[]; location: string; deadline: string; status: 'active'|'draft'; applications: number; }
-interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; }
+interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; proposalText?: string; isLive?: boolean; }
 const GRANTS: Grant[] = [
   { id:'1', name:'Mom and Pop Small Business Grant', amount:'$10,000', focus:['Small Business'], location:'Miami-Dade County', deadline:'2026-06-30', status:'active', applications:23 },
   { id:'2', name:'MDEAT Black Business Grant', amount:'$25,000', focus:['Business','Community'], location:'Miami-Dade County', deadline:'2026-07-15', status:'active', applications:41 },
@@ -34,6 +35,7 @@ export default function FunderDashboard() {
   const [activeTab, setActiveTab] = useState<FunderTab>('overview');
   const [grants, setGrants] = useState<Grant[]>(GRANTS);
   const [applicants, setApplicants] = useState<Applicant[]>(APPLICANTS);
+  const [liveAppCount, setLiveAppCount] = useState(0);
   const [celebration, setCelebration] = useState<string | null>(null);
   const [proposalModal, setProposalModal] = useState<Applicant | null>(null);
   const [filterGrant, setFilterGrant] = useState('all');
@@ -76,6 +78,31 @@ export default function FunderDashboard() {
     }
   };
 
+  // ── Load real applications from Firestore ─────────────────────────────
+  useEffect(() => {
+    loadApplications().then(docs => {
+      if (docs.length === 0) return; // Keep demo data if Firestore is empty
+      const live: Applicant[] = docs.map(d => ({
+        id: d.id || String(Date.now()),
+        org: d.orgName,
+        mission: d.mission,
+        location: d.location,
+        score: d.score || 75,
+        grant: d.grantTitle,
+        date: d.submittedAt?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || 'Recent',
+        status: (d.status === 'in-review' ? 'review' : d.status) as Applicant['status'],
+        proposalText: d.proposalText,
+        isLive: true,
+      }));
+      // Merge live applications on top of demo data (live apps first)
+      setApplicants(prev => [
+        ...live,
+        ...prev.filter(p => !p.isLive), // keep demo data that isn't a duplicate
+      ]);
+      setLiveAppCount(live.length);
+    }).catch(() => {}); // fail silently — demo data remains
+  }, []);
+
   // Seed demo grants to Firestore on first funder visit
   useEffect(() => {
     if (!user?.email) return;
@@ -108,12 +135,18 @@ export default function FunderDashboard() {
   }, [user]);
 
   const handleApprove = (id: string) => {
-    const name = applicants.find(a => a.id === id)?.org || '';
+    const applicant = applicants.find(a => a.id === id);
     setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'approved'} : a));
-    setCelebration(name);
+    setCelebration(applicant?.org || '');
     setTimeout(() => setCelebration(null), 3500);
+    // Persist to Firestore if it's a live (real) application
+    if (applicant?.isLive) updateApplicationStatus(id, 'approved').catch(() => {});
   };
-  const handleReject = (id: string) => setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'rejected'} : a));
+  const handleReject = (id: string) => {
+    const applicant = applicants.find(a => a.id === id);
+    setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'rejected'} : a));
+    if (applicant?.isLive) updateApplicationStatus(id, 'rejected').catch(() => {});
+  };
   const handleSchedule = (a: Applicant) => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Discovery Call: ' + a.org)}&details=${encodeURIComponent('CivicPath grant review')}`, '_blank');
   const [posting, setPosting] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
@@ -168,10 +201,19 @@ export default function FunderDashboard() {
               <div><span className="font-bold text-stone-800">Mission:</span> {proposalModal.mission}</div>
               <div><span className="font-bold text-stone-800">Location:</span> {proposalModal.location}</div>
               <div><span className="font-bold text-stone-800">Match Score:</span> <span className="text-[#76B900] font-bold">{proposalModal.score}/100</span></div>
-              <div className="p-4 bg-[#76B900]/5 rounded-xl border border-[#76B900]/20">
-                <p className="font-bold text-stone-800 mb-2">Why they match:</p>
-                <ul className="space-y-1"><li>• Strong mission alignment with grant objectives</li><li>• Location matches geographic requirements</li><li>• Demonstrated community impact track record</li></ul>
-              </div>
+              {proposalModal.isLive && proposalModal.proposalText ? (
+                <div className="mt-2">
+                  <p className="font-bold text-stone-800 mb-2">AI-Drafted Proposal:</p>
+                  <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 max-h-60 overflow-y-auto prose prose-sm prose-stone max-w-none">
+                    <ReactMarkdown>{proposalModal.proposalText}</ReactMarkdown>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-[#76B900]/5 rounded-xl border border-[#76B900]/20">
+                  <p className="font-bold text-stone-800 mb-2">Why they match:</p>
+                  <ul className="space-y-1"><li>• Strong mission alignment with grant objectives</li><li>• Location matches geographic requirements</li><li>• Demonstrated community impact track record</li></ul>
+                </div>
+              )}
             </div>
             <div className="px-6 py-4 border-t border-stone-100 flex gap-3">
               <button onClick={() => { handleApprove(proposalModal.id); setProposalModal(null); }} className="flex-1 py-2.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] text-sm">Approve & Fund</button>
@@ -278,7 +320,13 @@ export default function FunderDashboard() {
         {activeTab === 'applicants' && (
           <div className="animate-in fade-in space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div><h2 className="text-xl font-bold text-stone-900">All Applicants</h2><p className="text-sm text-stone-500 mt-0.5">{applicants.length} total applications across {grants.length} grants</p></div>
+              <div>
+                <h2 className="text-xl font-bold text-stone-900">All Applicants</h2>
+                <p className="text-sm text-stone-500 mt-0.5">
+                  {applicants.length} total applications across {grants.length} grants
+                  {liveAppCount > 0 && <span className="ml-2 bg-[#76B900] text-[#111] text-[10px] font-black px-2 py-0.5 rounded-full">{liveAppCount} live</span>}
+                </p>
+              </div>
               <div className="flex items-center gap-2"><Filter className="w-4 h-4 text-stone-400" /><select value={filterGrant} onChange={e => setFilterGrant(e.target.value)} className="px-3 py-2 rounded-lg bg-white border border-stone-200 text-sm text-stone-700 outline-none focus:ring-2 focus:ring-[#76B900]/40"><option value="all">All Grants</option>{grants.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}</select></div>
             </div>
             <div className="space-y-4">
