@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { auth } from '../firebase';
 import { saveUserData, loadUserData, saveProposal, saveApplication } from '../lib/db';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
@@ -243,6 +245,49 @@ export default function SeekerDashboard() {
         localStorage.setItem('civicpath_plan', data.plan);
       }
     }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // ── Real-time funder approval sync ───────────────────────────────────────
+  // FIG.3 Marketplace: When Funder clicks 'Approve', Seeker's Watcher (Agent 6)
+  // reflects the update instantly via Firestore onSnapshot.
+  const seenApprovals = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const q = query(
+      collection(db, 'grant_applications'),
+      where('seekerUid', '==', uid),
+      where('status', '==', 'approved')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'modified' || change.type === 'added') {
+          const app = change.doc.data();
+          const appId = change.doc.id;
+          // Only fire notification for newly-approved apps (not already known)
+          if (!seenApprovals.current.has(appId)) {
+            seenApprovals.current.add(appId);
+            const grantTitle = app.grantTitle || 'your grant';
+            const funderName = app.funderName || 'A funder';
+            updateAgent('watcher', {
+              status: 'working',
+              logs: [`\ud83d\udfe2 APPROVAL RECEIVED: ${grantTitle}`],
+              output: `## \ud83c\udf89 Application Approved!\n\n**${funderName}** has approved your application for:\n\n**${grantTitle}**\n\n> Your proposal has been reviewed and accepted. Head to your Grant Tracker to record this win.`,
+            });
+            addGlobalLog(`[\ud83d\udc41\ufe0f The Watcher]    \ud83c\udf89 REAL-TIME UPDATE: "${grantTitle}" \u2014 APPROVED by funder!`);
+            window.dispatchEvent(new CustomEvent('civicpath:sovereign-log', {
+              detail: `[WATCHER] APPROVAL EVENT \u2014 ${grantTitle} status: APPROVED`,
+            }));
+          }
+        }
+      });
+    }, () => {}); // fail silently if Firestore permissions issue
+
+    return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

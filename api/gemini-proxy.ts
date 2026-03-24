@@ -18,8 +18,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured on server' });
 
-  const { prompt, messages, systemContext, useSearch } = req.body || {};
+  const { prompt, messages, systemContext, useSearch, useNIM, nimModel } = req.body || {};
   if (!prompt && !messages) return res.status(400).json({ error: 'prompt or messages required' });
+
+  // ── NVIDIA NIM slot ──────────────────────────────────────────────────────────────────────
+  // Activation: Set NVIDIA_API_KEY in Vercel env vars.
+  // When present + useNIM=true, routes inference through NVIDIA NIM GPU microservice.
+  // FIG.1 [108] Neural Inference Microservice: GPU-Accelerated · Inside TEE
+  const nimApiKey = process.env.NVIDIA_API_KEY;
+  if (useNIM && nimApiKey && prompt) {
+    try {
+      const model = nimModel || process.env.NVIDIA_NIM_MODEL || 'meta/llama-3.1-70b-instruct';
+      const nimRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${nimApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            ...(systemContext ? [{ role: 'system', content: systemContext }] : []),
+            { role: 'user', content: prompt },
+          ],
+          max_tokens: 2048,
+          temperature: 0.7,
+          stream: false,
+        }),
+      });
+      const nimData = await nimRes.json();
+      if (nimData.choices?.[0]?.message?.content) {
+        return res.status(200).json({
+          text: nimData.choices[0].message.content,
+          provider: 'nvidia-nim',
+          nimModel: model,
+        });
+      }
+      // NIM returned error — fall through to Gemini
+      console.warn('[NIM] Response missing content, falling back to Gemini:', JSON.stringify(nimData).slice(0, 200));
+    } catch (nimErr: any) {
+      console.warn('[NIM] Call failed, falling back to Gemini:', nimErr.message);
+    }
+  }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -40,11 +80,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const chat = model.startChat({ history, systemInstruction: systemContext });
       const last = messages[messages.length - 1];
       const result = await chat.sendMessage(last.content);
-      return res.status(200).json({ text: result.response.text() });
+    return res.status(200).json({ text: result.response.text(), provider: 'gemini-fallback' });
     } else {
       // Single prompt
       const result = await model.generateContent(prompt);
-      return res.status(200).json({ text: result.response.text() });
+      return res.status(200).json({ text: result.response.text(), provider: 'gemini-fallback' });
     }
   } catch (err: any) {
     console.error('Gemini proxy error:', err);
