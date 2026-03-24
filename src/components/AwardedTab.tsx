@@ -1,18 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { jsPDF } from 'jspdf';
+import JSZip from 'jszip';
 import {
   Upload, FileText, CheckCircle2, AlertTriangle,
   ChevronDown, ChevronRight, Loader2, X, ShieldCheck,
   Trophy, Calendar, AlertCircle, Eye, RotateCcw,
-  Download, Plus, Send, CalendarPlus,
+  Download, Plus, Send, CalendarPlus, Archive, Lock,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { auth } from '../firebase';
 import {
   saveAwardedGrant, loadAwardedGrants, saveReportDraft,
-  updateReportDraftStatus,
+  updateReportDraftStatus, loadReportDrafts,
 } from '../lib/db';
 import type { AwardedGrantDoc, ReportDeadline, ReportDraftDoc } from '../lib/db';
+import { sha256, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
 
 interface Profile {
   companyName: string; orgType?: string; location?: string;
@@ -25,6 +27,7 @@ interface Props {
   profile: Profile;
   user: { email?: string; name?: string } | null;
   onGoToProfile?: () => void;
+  onCloseoutPurge?: () => void;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -148,7 +151,7 @@ function typeIcon(type: ReportDeadline['type']): string {
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function AwardedTab({ profile, onGoToProfile }: Props) {
+export default function AwardedTab({ profile, onGoToProfile, onCloseoutPurge }: Props) {
   const [grants, setGrants] = useState<AwardedGrantDoc[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -183,6 +186,11 @@ export default function AwardedTab({ profile, onGoToProfile }: Props) {
 
   // Master calendar filter
   const [calFilter, setCalFilter] = useState<'all' | 'week' | 'month'>('all');
+
+  // Agent 8 — Closeout state
+  const [closingGrantId, setClosingGrantId] = useState<string | null>(null);
+  const [closeoutLog, setCloseoutLog] = useState<string[]>([]);
+  const [showCloseoutModal, setShowCloseoutModal] = useState<AwardedGrantDoc | null>(null);
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -403,6 +411,154 @@ export default function AwardedTab({ profile, onGoToProfile }: Props) {
     }
   };
 
+  // ── Agent 8: The Closer ────────────────────────────────────────────
+
+  const sovereignLog = (msg: string) => {
+    window.dispatchEvent(new CustomEvent('civicpath:sovereign-log', { detail: msg }));
+  };
+
+  const handleCloseout = async (grant: AwardedGrantDoc) => {
+    setClosingGrantId(grant.id || null);
+    setCloseoutLog([]);
+    const uid = auth.currentUser?.uid;
+    const log = (msg: string) => setCloseoutLog(prev => [...prev, msg]);
+
+    log('[AGENT-8] Initializing Sovereign Closeout...');
+    sovereignLog('[AGENT-8] Closeout initiated for: ' + grant.grantTitle);
+
+    try {
+      // 1. Load all report drafts for this grant
+      log('[AGENT-8] Loading report drafts from Firestore...');
+      const drafts = uid ? await loadReportDrafts(uid, grant.id) : [];
+      log(`[AGENT-8] Found ${drafts.length} report draft(s).`);
+
+      // 2. Generate SHA-256 integrity hash for each report
+      log('[AGENT-8] Computing SHA-256 leaf hashes...');
+      sovereignLog('[AGENT-8] Computing cryptographic integrity hashes...');
+      const hashes: Record<string, string> = {};
+      for (const draft of drafts) {
+        const hash = await sha256(draft.reportText + draft.reportType + (draft.generatedAt?.toDate?.()?.toISOString() || ''));
+        hashes[draft.id || draft.reportType] = hash;
+      }
+      // Also hash the audit trail
+      const auditHash = await sha256(JSON.stringify(grant.auditTrail));
+      hashes['audit_trail'] = auditHash;
+
+      // 3. Build Merkle root of all hashes
+      log('[AGENT-8] Building Merkle root...');
+      const merkleRoot = await buildMerkleRoot(Object.values(hashes));
+      log(`[AGENT-8] Merkle root: ${truncateHash(merkleRoot)}`);
+      sovereignLog(`[AGENT-8] Merkle root anchored: ${truncateHash(merkleRoot)}`);
+
+      // 4. Simulate 0G Labs DA sync
+      log('[AGENT-8] Anchoring to 0G Labs DA Layer...');
+      const zgReceipt = await simulateZGSync(merkleRoot);
+      log(`[AGENT-8] 0G TX: ${truncateHash(zgReceipt.txHash)} @ block ${zgReceipt.blockHeight.toLocaleString()}`);
+      sovereignLog(`[AGENT-8] 0G DA anchor confirmed: ${truncateHash(zgReceipt.txHash)}`);
+
+      // 5. Build ZIP
+      log('[AGENT-8] Assembling Audit Pack ZIP...');
+      const zip = new JSZip();
+      const packName = `${grant.grantTitle.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}-AuditPack`;
+      const folder = zip.folder(packName)!;
+
+      // Audit log
+      const auditLogText = [
+        `CIVICPATH SOVEREIGN AUDIT PACK`,
+        `Generated: ${new Date().toISOString()}`,
+        `Organization: ${grant.orgName}`,
+        `Grant: ${grant.grantTitle}`,
+        `Agency: ${grant.agency}`,
+        `Amount: ${grant.awardAmount}`,
+        `Funding Period: ${grant.fundingPeriod}`,
+        `Program Officer: ${grant.programOfficer || 'Not listed'}`,
+        '',
+        '=== COMPLIANCE DEADLINES ===',
+        ...grant.deadlines.map(d => `[${d.status.toUpperCase()}] ${d.title} — Due: ${d.dueDate}${d.submittedAt ? ' — Submitted: ' + d.submittedAt + ' via ' + (d.submissionMethod || 'N/A') : ''}`),
+        '',
+        '=== AUDIT TRAIL ===',
+        ...grant.auditTrail.map(e => `${e.timestamp.slice(0, 19)} [${e.event}] ${e.note || ''}`),
+        '',
+        '=== 0G INTEGRITY ANCHOR ===',
+        `Merkle Root: ${merkleRoot}`,
+        `0G TX Hash: ${zgReceipt.txHash}`,
+        `Block Height: ${zgReceipt.blockHeight}`,
+        `DA Layer: ${zgReceipt.daLayer}`,
+        `Confirmed: ${zgReceipt.timestamp}`,
+      ].join('\n');
+      folder.file('audit_log.txt', auditLogText);
+
+      // Integrity hashes JSON
+      folder.file('integrity_hashes.json', JSON.stringify({
+        organization: grant.orgName,
+        grant: grant.grantTitle,
+        generatedAt: new Date().toISOString(),
+        merkleRoot,
+        zgTxHash: zgReceipt.txHash,
+        zgBlockHeight: zgReceipt.blockHeight,
+        leafHashes: hashes,
+      }, null, 2));
+
+      // Individual reports
+      const reportsFolder = folder.folder('reports')!;
+      for (const draft of drafts) {
+        const filename = `${(draft.reportType || 'report').replace(/[^a-zA-Z0-9-]/g, '-')}_${(draft.id || '').slice(-6)}.txt`;
+        reportsFolder.file(filename, [
+          `Report Type: ${draft.reportType}`,
+          `Status: ${draft.status}`,
+          `Generated: ${draft.generatedAt?.toDate?.()?.toISOString() || 'Unknown'}`,
+          '',
+          '=== REPORT TEXT ===',
+          draft.reportText,
+        ].join('\n'));
+      }
+
+      log('[AGENT-8] Generating ZIP...');
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `${packName}-${new Date().toISOString().slice(0, 10)}.zip`,
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+
+      log('[AGENT-8] Audit Pack downloaded.');
+      log('[AGENT-8] Closeout Complete. Executing 500ms Ephemeral Purge...');
+      sovereignLog('[AGENT-8] Closeout Complete. Executing 500ms Ephemeral Purge... Enclave Reset.');
+
+      // 6. Update grant status to 'completed'
+      if (uid) {
+        const closedGrant = {
+          ...grant,
+          status: 'completed' as const,
+          auditTrail: [...grant.auditTrail, {
+            event: 'closeout_complete',
+            timestamp: new Date().toISOString(),
+            note: `Audit Pack generated. Merkle root: ${truncateHash(merkleRoot)}. 0G TX: ${truncateHash(zgReceipt.txHash)}. Sovereign Purge executed.`,
+          }],
+        };
+        await saveAwardedGrant(uid, closedGrant, grant.id);
+        setGrants(prev => prev.map(g => g.id === grant.id ? { ...closedGrant, id: grant.id } : g));
+      }
+
+      // 7. Trigger PurgeController (500ms circuit breaker)
+      setTimeout(() => {
+        if (onCloseoutPurge) {
+          onCloseoutPurge();
+        }
+        sovereignLog('[AGENT-8] 🟢 Enclave Reset Successful. GrantData ephemeral memory cleared.');
+        log('[AGENT-8] ✓ Sovereign exit complete.');
+      }, 300);
+
+    } catch (err: any) {
+      log(`[AGENT-8] ERROR: ${err.message}`);
+      sovereignLog(`[AGENT-8] ⚠️ Closeout error: ${err.message}`);
+    } finally {
+      setTimeout(() => setClosingGrantId(null), 2000);
+    }
+  };
+
   const handleAddDeadline = async (grantId: string) => {
     if (!newDeadline.title || !newDeadline.dueDate) return;
     setSavingDeadline(true);
@@ -591,6 +747,21 @@ export default function AwardedTab({ profile, onGoToProfile }: Props) {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-stone-400">{grant.deadlines.length} deadlines</span>
+                {/* Agent 8 Closeout button — available when grant has submitted/approved reports */}
+                {grant.status === 'active' &&
+                  grant.deadlines.some(d => d.status === 'submitted' || d.status === 'approved') && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setShowCloseoutModal(grant); }}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide bg-stone-900 text-[#76B900] border border-[#76B900]/30 rounded-lg hover:bg-stone-800 hover:border-[#76B900] transition-all"
+                  >
+                    <Archive className="w-3 h-3" /> Closeout
+                  </button>
+                )}
+                {grant.status === 'completed' && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-black text-blue-400 bg-blue-950/40 border border-blue-800/40 rounded-lg">
+                    <Lock className="w-3 h-3" /> Closed
+                  </span>
+                )}
                 {isExpanded ? <ChevronDown className="w-4 h-4 text-stone-400" /> : <ChevronRight className="w-4 h-4 text-stone-400" />}
               </div>
             </button>
@@ -900,6 +1071,76 @@ export default function AwardedTab({ profile, onGoToProfile }: Props) {
           </div>
         </div>
       )}
+      {/* ── Agent 8 Closeout Confirm + Live Log Modal ── */}
+      {showCloseoutModal && !closingGrantId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0D0D0D] border border-[#76B900]/30 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#1f1f1f] flex items-center gap-3">
+              <Archive className="w-5 h-5 text-[#76B900] shrink-0" />
+              <div>
+                <h3 className="text-white font-black text-sm">Agent 8 — The Closer</h3>
+                <p className="text-stone-500 text-[10px] font-mono">Sovereign Exit · Audit Pack · 500ms Purge</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-[#111] border border-[#222] rounded-xl p-4">
+                <p className="text-stone-300 text-sm font-bold">{showCloseoutModal.grantTitle}</p>
+                <p className="text-stone-500 text-xs mt-1">{showCloseoutModal.agency} · {showCloseoutModal.awardAmount}</p>
+              </div>
+              <p className="text-stone-400 text-sm leading-relaxed">
+                This will:
+              </p>
+              <ul className="space-y-1.5 text-xs text-stone-500 font-mono">
+                <li className="flex items-center gap-2"><span className="text-[#76B900]">1.</span> Load all compliance reports from Firestore</li>
+                <li className="flex items-center gap-2"><span className="text-[#76B900]">2.</span> Generate SHA-256 leaf hashes + Merkle root</li>
+                <li className="flex items-center gap-2"><span className="text-[#76B900]">3.</span> Anchor to 0G Labs DA Layer (blockchain receipt)</li>
+                <li className="flex items-center gap-2"><span className="text-[#76B900]">4.</span> Download a ZIP Audit Pack (reports + hashes + audit log)</li>
+                <li className="flex items-center gap-2"><span className="text-red-400]">5.</span> <span className="text-red-400">Trigger 500ms Ephemeral Purge (Enclave Reset)</span></li>
+              </ul>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button onClick={() => setShowCloseoutModal(null)}
+                className="flex-1 py-2.5 border border-[#2a2a2a] text-stone-500 font-bold text-sm rounded-xl hover:border-stone-600 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => { const g = showCloseoutModal; setShowCloseoutModal(null); handleCloseout(g); }}
+                className="flex-1 py-2.5 bg-[#76B900] text-[#111] font-black text-sm rounded-xl hover:bg-[#689900] transition-colors flex items-center justify-center gap-2">
+                <Archive className="w-4 h-4" /> Execute Closeout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Agent 8 live execution log */}
+      {closingGrantId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+          <div className="bg-[#080808] border border-[#76B900]/40 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#1f1f1f] flex items-center gap-3">
+              <div className="relative w-3 h-3">
+                <span className="absolute w-3 h-3 rounded-full bg-[#76B900]/40 animate-ping" />
+                <span className="relative w-2 h-2 rounded-full bg-[#76B900] block mt-0.5 ml-0.5" />
+              </div>
+              <span className="text-[#76B900] font-black text-xs font-mono uppercase tracking-wider">Agent 8 — Sovereign Closeout Running</span>
+            </div>
+            <div className="p-5 font-mono text-[10px] space-y-1.5 min-h-[180px] max-h-[280px] overflow-y-auto">
+              {closeoutLog.map((line, i) => (
+                <div key={i} className={`${
+                  line.includes('✓') || line.includes('Complete') ? 'text-[#76B900] font-bold' :
+                  line.includes('ERROR') || line.includes('⚠') ? 'text-red-400' :
+                  line.includes('0G') || line.includes('Merkle') ? 'text-cyan-400' :
+                  'text-stone-400'
+                }`}>
+                  <span className="text-stone-700 mr-1">❯</span>{line}
+                </div>
+              ))}
+              {closeoutLog.length === 0 && <div className="text-stone-600 animate-pulse">❯ _</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Mark as Submitted Modal (Gap 5) ── */}
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

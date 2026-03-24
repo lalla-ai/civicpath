@@ -3157,7 +3157,26 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
         {/* ── AWARDED TAB — Post-Award Compliance Manager ── */}
         {activeTab === 'awarded' && (
-          <AwardedTab profile={profile} user={user} onGoToProfile={() => setActiveTab('profile')} />
+          <AwardedTab
+            profile={profile}
+            user={user}
+            onGoToProfile={() => setActiveTab('profile')}
+            onCloseoutPurge={() => {
+              // Agent 8: Direct 500ms purge — no modal, just fire
+              purgeControllerRef.current?.trigger(() => {
+                setAgents(prev => prev.map(a => ({ ...a, status: 'idle', logs: [], output: null })));
+                setDiscoveredGrants([]);
+                setAllDiscoveredGrants([]);
+                setTotalGrantsFound(0);
+                setGlobalLogs([]);
+                setDrafterOutput(null);
+                setAwaitingApproval(false);
+                setNextAction(null);
+                setIsRunning(false);
+                addGlobalLog('[AGENT-8] Closeout Complete. Executing 500ms Ephemeral Purge... Enclave Reset.');
+              });
+            }}
+          />
         )}
 
         {/* ── SECURITY TAB ── */}

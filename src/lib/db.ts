@@ -260,6 +260,26 @@ export async function saveReportDraft(
   }
 }
 
+/** Load all report drafts for a user (optionally filtered by awardedGrantId). */
+export async function loadReportDrafts(
+  uid: string,
+  awardedGrantId?: string
+): Promise<ReportDraftDoc[]> {
+  try {
+    const q = query(
+      collection(db, 'users', uid, 'report_drafts'),
+      orderBy('generatedAt', 'desc'),
+      limit(200)
+    );
+    const snap = await getDocs(q);
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReportDraftDoc));
+    return awardedGrantId ? all.filter(d => d.awardedGrantId === awardedGrantId) : all;
+  } catch (err) {
+    console.warn('[CivicPath] loadReportDrafts failed:', err);
+    return [];
+  }
+}
+
 /** Update the status of a report draft (approved / submitted). */
 export async function updateReportDraftStatus(
   uid: string,
