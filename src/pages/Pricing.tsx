@@ -47,10 +47,6 @@ export default function Pricing() {
   const canceled = searchParams.get('canceled');
   const successPlan = searchParams.get('plan');
 
-  // Show role-appropriate plans: seekers see Free + Pro, funders see Funder only
-  const viewRole = searchParams.get('role') || localStorage.getItem('civicpath_role') || 'seeker';
-  const visiblePlans = plans.filter(p => viewRole === 'funder' ? p.role === 'funder' : p.role === 'seeker');
-
   // Save plan to localStorage on successful return from Stripe
   useEffect(() => {
     if (success && successPlan) {
@@ -166,20 +162,8 @@ export default function Pricing() {
           </div>
         </div>
 
-        {viewRole === 'funder' && (
-          <div className="text-center mb-8 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-            <p className="text-blue-800 font-bold">Funder Pricing</p>
-            <p className="text-blue-600 text-sm mt-1">Post grants, match applicants, and manage your portfolio. <a href="/login?role=seeker" className="text-[#76B900] font-bold hover:underline">Looking to apply for grants instead? →</a></p>
-          </div>
-        )}
-        {viewRole === 'seeker' && (
-          <div className="text-center mb-8 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-2xl">
-            <p className="text-stone-800 font-bold">Grant Seeker Pricing</p>
-            <p className="text-stone-500 text-sm mt-1">Find, apply for, and win grants. <a href="/pricing?role=funder" className="text-[#76B900] font-bold hover:underline">Are you a grant funder? See funder plans →</a></p>
-          </div>
-        )}
-        <div className={`grid grid-cols-1 gap-6 ${visiblePlans.length === 1 ? 'max-w-sm mx-auto md:grid-cols-1' : visiblePlans.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' : 'md:grid-cols-3'}`}>
-          {visiblePlans.map((p, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((p, i) => (
             <div key={i} className={`rounded-2xl p-8 flex flex-col ${
               p.highlight ? 'bg-[#1A1A1A] text-white border-2 border-[#76B900]' : 'bg-white border border-stone-200'
             }`}>

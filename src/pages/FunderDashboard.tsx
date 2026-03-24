@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight, Sparkles, Send, Loader2 } from 'lucide-react';
-import { chatWithLalla } from '../gemini';
 import type { ChatMessage } from '../gemini';
 import ReactMarkdown from 'react-markdown';
+import { postFunderGrant, getFunderGrants } from '../lib/funderGrants';
 
 const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
 type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
@@ -63,14 +63,49 @@ export default function FunderDashboard() {
     setLallaLoading(true);
     const ctx = `You are MyLalla, a senior AI grant advisor inside CivicPath for grant funders. Be warm, strategic, and concise. Use markdown for lists and bold. Keep answers under 200 words unless asked for more.\n\nFunder context:\n- Active grants: ${grants.map(g => g.name).join(', ')}\n- Total applicants: ${applicants.length}\n- Average match score: ${avgScore}%\n- Funded so far: ${funded} organizations\n\nHelp with applicant evaluation, grant design, portfolio strategy, and impact measurement.`;
     try {
-      const reply = await chatWithLalla(next, ctx);
-      setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      // Route through server proxy
+      const history = next.slice(0, -1).map(m => `${m.role === 'user' ? 'User' : 'MyLalla'}: ${m.content}`).join('\n');
+      const fullPrompt = `${ctx}\n\n${history ? `Conversation so far:\n${history}\n\n` : ''}User: ${text}\nMyLalla:`;
+      const res = await fetch('/api/gemini-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: fullPrompt }) });
+      const data = await res.json();
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: data.text || 'No response.' }]);
     } catch {
-      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Check your Gemini API key and try again." }]);
+      setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again." }]);
     } finally {
       setLallaLoading(false);
     }
   };
+
+  // Seed demo grants to Firestore on first funder visit
+  useEffect(() => {
+    if (!user?.email) return;
+    const seeded = localStorage.getItem('civicpath_funder_seeded');
+    if (seeded) return;
+    (async () => {
+      try {
+        const existing = await getFunderGrants();
+        if (existing.length > 0) { localStorage.setItem('civicpath_funder_seeded', '1'); return; }
+        // Seed the demo grants to Firestore
+        for (const g of GRANTS) {
+          await postFunderGrant({
+            title: g.name,
+            agency: user.name || 'CivicPath Funder',
+            amount: g.amount,
+            description: `${g.focus.join(', ')} grant for ${g.location}`,
+            deadline: g.deadline,
+            location: g.location,
+            focusAreas: g.focus,
+            funderEmail: user.email || 'grants@civicpath.ai',
+            funderUid: '',
+            active: true,
+            url: `mailto:${user.email || 'grants@civicpath.ai'}?subject=Application: ${encodeURIComponent(g.name)}`,
+          });
+        }
+        localStorage.setItem('civicpath_funder_seeded', '1');
+      } catch {}
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleApprove = (id: string) => {
     const name = applicants.find(a => a.id === id)?.org || '';
@@ -80,11 +115,31 @@ export default function FunderDashboard() {
   };
   const handleReject = (id: string) => setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'rejected'} : a));
   const handleSchedule = (a: Applicant) => window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Discovery Call: ' + a.org)}&details=${encodeURIComponent('CivicPath grant review')}`, '_blank');
-  const handlePost = () => {
+  const [posting, setPosting] = useState(false);
+  const [postSuccess, setPostSuccess] = useState(false);
+
+  const handlePost = async () => {
     if (!form.name || !form.amount) return;
+    setPosting(true);
+    // Write to Firestore funder_grants collection
+    await postFunderGrant({
+      title: form.name,
+      agency: user?.name || 'CivicPath Funder',
+      amount: form.amount,
+      description: form.description,
+      deadline: form.deadline,
+      location: form.location,
+      focusAreas: form.focus,
+      funderEmail: user?.email || '',
+      funderUid: '',
+      active: true,
+      url: `mailto:${user?.email || 'grants@civicpath.ai'}?subject=Application: ${encodeURIComponent(form.name)}`,
+    });
     setGrants(prev => [{ id:String(Date.now()), name:form.name, amount:form.amount, focus:form.focus, location:form.location, deadline:form.deadline, status:'active', applications:0 }, ...prev]);
     setForm({ name:'', description:'', amount:'', deadline:'', focus:[], location:'Miami Dade County', requirements:'' });
-    setActiveTab('overview');
+    setPosting(false);
+    setPostSuccess(true);
+    setTimeout(() => { setPostSuccess(false); setActiveTab('overview'); }, 2000);
   };
   const filtered = filterGrant === 'all' ? applicants : applicants.filter(a => a.grant === filterGrant);
   const tabs: {id:FunderTab;label:string;purple?:boolean}[] = [{id:'overview',label:'📊 Overview'},{id:'post',label:'➕ Post Grant'},{id:'applicants',label:'👥 Applicants'},{id:'analytics',label:'📈 Analytics'},{id:'lalla',label:'✨ Ask MyLalla',purple:true}];
@@ -204,8 +259,15 @@ export default function FunderDashboard() {
                 </div>
                 <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Location Scope</label><select value={form.location} onChange={e => setForm({...form,location:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900"><option>Miami Dade County</option><option>South Florida</option><option>Statewide Florida</option><option>Federal</option></select></div>
                 <div><label className="text-sm font-semibold text-stone-700 block mb-2">Focus Areas</label><div className="flex flex-wrap gap-2">{FOCUS_AREAS.map(f => (<button key={f} onClick={() => setForm(prev => ({...prev,focus:prev.focus.includes(f)?prev.focus.filter(x=>x!==f):[...prev.focus,f]}))} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${form.focus.includes(f)?'bg-[#76B900] text-[#111111] border-[#76B900]':'border-stone-200 text-stone-600 hover:border-[#76B900] hover:text-[#76B900]'}`}>{f}</button>))}</div></div>
+                {postSuccess && (
+                  <div className="p-4 bg-[#76B900]/10 border border-[#76B900]/30 rounded-xl flex items-center gap-2 text-sm font-bold text-[#76B900]">
+                    <CheckCircle2 className="w-4 h-4" /> Grant published to CivicPath network! Seekers will see it on their next pipeline run.
+                  </div>
+                )}
                 <div className="flex gap-3 pt-2">
-                  <button onClick={handlePost} className="flex-1 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] shadow-sm">Publish Grant</button>
+                  <button onClick={handlePost} disabled={posting} className="flex-1 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] shadow-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                    {posting ? <><Loader2 className="w-4 h-4 animate-spin" /> Publishing...</> : 'Publish Grant to CivicPath Network'}
+                  </button>
                   <button onClick={() => setActiveTab('overview')} className="px-6 py-3.5 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50">Cancel</button>
                 </div>
               </div>

@@ -11,12 +11,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured on server' });
 
-  const { prompt, messages, systemContext } = req.body || {};
+  const { prompt, messages, systemContext, useSearch } = req.body || {};
   if (!prompt && !messages) return res.status(400).json({ error: 'prompt or messages required' });
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    // Enable Google Search grounding when requested (e.g. MyLalla live search)
+    const modelConfig: any = { model: 'gemini-2.0-flash' };
+    if (useSearch) {
+      modelConfig.tools = [{ googleSearch: {} }];
+    }
+    const model = genAI.getGenerativeModel(modelConfig);
 
     if (messages && Array.isArray(messages) && messages.length > 0) {
       // Multi-turn chat

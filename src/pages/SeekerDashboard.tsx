@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
 import { grantLeafHash, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
 import type { ZGReceipt } from '../lib/merkle';
+import { getFunderGrants, normalizeFunderGrant } from '../lib/funderGrants';
 import AgentStatus from '../components/AgentStatus';
 import type { AgentItem } from '../components/AgentStatus';
 import SovereignHeader from '../components/SovereignHeader';
@@ -362,11 +363,11 @@ Respond in clean markdown with EXACTLY these 4 sections:
   const profileScoreColor = profileScore >= 80 ? 'text-[#76B900]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
   const profileBarColor = profileScore >= 80 ? 'bg-[#76B900]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
 
-  const callGeminiProxy = async (prompt: string): Promise<string> => {
+  const callGeminiProxy = async (prompt: string, useSearch = false): Promise<string> => {
     const res = await fetch('/api/gemini-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, useSearch }),
     });
     if (!res.ok) throw new Error(`Proxy error ${res.status}`);
     const data = await res.json();
@@ -590,7 +591,7 @@ Respond in clean markdown with EXACTLY these 4 sections:
       // Route through server proxy — never expose API key client-side
       const history = next.slice(0, -1).map(m => `${m.role === 'user' ? 'User' : 'MyLalla'}: ${m.content}`).join('\n');
       const fullPrompt = `${ctx}\n\n${history ? `Conversation so far:\n${history}\n\n` : ''}User: ${text}\nMyLalla:`;
-      const reply = await callGeminiProxy(fullPrompt);
+      const reply = await callGeminiProxy(fullPrompt, true);
       setLallaMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       setLallaMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again in a moment." }]);
@@ -653,6 +654,9 @@ Respond in clean markdown with EXACTLY these 4 sections:
     }
   };
 
+  // ── Direct Funder Connections state ────────────────────────────────
+  const [directConnections, setDirectConnections] = useState<any[]>([]);
+
   // --- Agent Behaviors ---
   const runHunter = async () => {
     updateAgent('hunter', { status: 'working', logs: [], output: null });
@@ -660,8 +664,21 @@ Respond in clean markdown with EXACTLY these 4 sections:
     const targetLoc = profile.location || 'Florida';
     const targetTech = profile.focusArea || 'technology';
 
+    // ── Step 0: Query funder_grants Firestore collection FIRST ──────────────────
+    addLog('hunter', 'Checking CivicPath Funder network (private listings)...');
+    addGlobalLog(`[\ud83d\udd0d The Hunter]     Querying CivicPath funder_grants collection...`);
+    const funderDocs = await getFunderGrants();
+    const directGrants = funderDocs.map(normalizeFunderGrant);
+    setDirectConnections(directGrants);
+    if (directGrants.length > 0) {
+      addLog('hunter', `Found ${directGrants.length} Direct Funder Connection${directGrants.length > 1 ? 's' : ''} from CivicPath network.`);
+      addGlobalLog(`[\ud83d\udd0d The Hunter]     🟢 ${directGrants.length} Direct Funder Connection${directGrants.length > 1 ? 's' : ''} found in CivicPath network ✓`);
+    } else {
+      addLog('hunter', 'No direct funder listings yet — proceeding to public databases.');
+    }
+
     addLog('hunter', 'Connecting to Grants.gov live database...');
-    addGlobalLog(`[🔍 The Hunter]     Querying Grants.gov for "${targetTech}" in ${targetLoc}...`);
+    addGlobalLog(`[\ud83d\udd0d The Hunter]     Querying Grants.gov for "${targetTech}" in ${targetLoc}...`);
 
     let hunterText = '';
     try {
@@ -674,10 +691,11 @@ Respond in clean markdown with EXACTLY these 4 sections:
       const grants = data.grants || [];
       const total = data.total || 0;
 
-      // Store ALL grants — no slice limit
-      const grantsWithDeadlines = grants.filter((g: any) => g.closeDate && g.closeDate !== 'Rolling');
+      // Prepend direct funder connections — they go FIRST
+      const allGrants = [...directGrants, ...grants];
+      const grantsWithDeadlines = allGrants.filter((g: any) => g.closeDate && g.closeDate !== 'Rolling');
       setDiscoveredGrants(grantsWithDeadlines); // all for scheduler
-      setAllDiscoveredGrants(grants); // all for grants list
+      setAllDiscoveredGrants(allGrants); // all for grants list
       setTotalGrantsFound(total);
       setLiveGrantsCount(data.liveCount || 0);
 
@@ -685,7 +703,11 @@ Respond in clean markdown with EXACTLY these 4 sections:
       addGlobalLog(`[\ud83d\udd0d The Hunter]     Found ${total} matching opportunities \u2713`);
       addGlobalLog(`[\ud83e\udd16 ACTIVITY]       Hunter \u2192 Matchmaker: "Found ${total} grants. Sending for semantic scoring."`);
 
-      hunterText = `**Live Results: ${total} total matches (${data.liveCount || 0} from live APIs, ${grants.length - (data.liveCount || 0)} curated):**
+      hunterText = `${directGrants.length > 0 ? `## 🟢 ${directGrants.length} Direct Funder Connection${directGrants.length > 1 ? 's' : ''} (CivicPath Network)
+${directGrants.map((g: any) => `* **${g.title}** — ${g.agency}  \n  ${g.amount} · Deadline: ${g.closeDate} · [Apply directly](${g.url})`).join('\n\n')}
+
+---
+` : ''}**Live Results: ${total} total matches (${data.liveCount || 0} from live APIs, ${grants.length - (data.liveCount || 0)} curated):**
 
 ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
   ${g.agency} · Posted: ${g.openDate || 'N/A'} · Deadline: ${g.closeDate} · [View Grant](${g.url})`).join('\n\n')}
@@ -1898,7 +1920,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         className={`group flex flex-col sm:grid border-b border-stone-100 last:border-b-0 hover:bg-stone-50/60 transition-colors ${i % 2 !== 0 ? 'bg-[#FAFAFA]' : ''}`}
                         style={{gridTemplateColumns:'2.5fr 1.5fr 100px 100px 36px'}}>
                         <div className="px-4 py-3 flex items-start gap-2 sm:border-r border-stone-100">
-                          {isLive && <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-[#76B900] animate-pulse" title="Live" />}
+                          {(g as any).isDirect && <span className="shrink-0 mt-1 px-1.5 py-0.5 text-[8px] font-black bg-blue-600 text-white rounded-full uppercase tracking-wider">Direct</span>}
+                          {isLive && !((g as any).isDirect) && <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-[#76B900] animate-pulse" title="Live" />}
                           <div className="flex-1 min-w-0">
                             <a href={g.url} target="_blank" rel="noopener noreferrer"
                               className="text-[13px] font-medium text-stone-900 hover:text-[#76B900] block truncate leading-snug">
@@ -2957,6 +2980,48 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <div className="w-2 h-2 rounded-full bg-[#76B900] animate-pulse"></div>
               <span className="text-sm font-semibold text-stone-700">Live data powered by <a href="https://www.grants.gov" target="_blank" rel="noopener noreferrer" className="text-[#76B900] hover:underline">Grants.gov</a> + SBA SBIR — real-time federal grant database</span>
             </div>
+
+            {/* 🟢 Direct Funder Connections banner */}
+            {directConnections.length > 0 && (
+              <div className="mb-5 rounded-xl border-2 border-blue-400 bg-blue-50 overflow-hidden animate-in fade-in">
+                <div className="px-5 py-3 bg-blue-600 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <span className="text-white font-black text-sm tracking-wide">Direct Funder Connections</span>
+                    <span className="bg-white text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full">{directConnections.length}</span>
+                  </div>
+                  <span className="text-blue-200 text-[10px] font-medium">CivicPath Network · Private listings from verified funders</span>
+                </div>
+                <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {directConnections.map((g, i) => (
+                    <div key={g.id || i} className="bg-white border border-blue-200 rounded-xl p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wider">Direct</span>
+                            <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">CivicPath Funder</span>
+                          </div>
+                          <p className="text-sm font-bold text-stone-900 leading-snug">{g.title}</p>
+                          <p className="text-xs text-stone-500 mt-0.5">{g.agency}</p>
+                        </div>
+                        <span className="text-sm font-black text-[#76B900] shrink-0">{g.amount}</span>
+                      </div>
+                      {g.focusAreas?.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {g.focusAreas.slice(0, 3).map((f: string) => (
+                            <span key={f} className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">{f}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[11px] text-stone-400">Due: {g.closeDate}</span>
+                        <a href={g.url} className="text-xs font-bold text-blue-600 hover:underline">Apply directly →</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Active Profile & Controls */}
             <div className="mb-6 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
