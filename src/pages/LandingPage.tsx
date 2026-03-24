@@ -118,29 +118,39 @@ export default function LandingPage() {
         <p className="mt-5 text-xs text-stone-400 tracking-wide">Free · No credit card · Sovereign data</p>
       </section>
 
-      {/* 6 AGENTS */}
+      {/* 8 AGENTS */}
       <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-t border-stone-100">
         <div className="text-center mb-10 sm:mb-12">
           <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-3">THE ENGINE</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Seven AI agents. One click.</h2>
-          <p className="text-stone-400 max-w-md mx-auto mt-3 text-sm">From live grant discovery to proposal delivery — your AI team runs 24/7.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Eight AI agents. Full lifecycle.</h2>
+          <p className="text-stone-400 max-w-lg mx-auto mt-3 text-sm">From live grant discovery to sovereign closeout — the only platform that covers the complete grant lifecycle, automatically.</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-5xl mx-auto">
           {[
-            {n:'01',t:'Hunter',d:'Scans Grants.gov and 50+ databases live for your exact profile.'},
-            {n:'02',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini AI — not keywords.'},
-            {n:'03',t:'Drafter',d:'Writes your full proposal in under 60 seconds.'},
-            {n:'04',t:'Controller',d:'Verifies eligibility before you spend time applying.'},
-            {n:'05',t:'Submitter',d:'Queues and sends applications on your schedule.'},
-            {n:'06',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.'},
+            {n:'01',t:'Hunter',d:'Scans Grants.gov and 50+ databases live for your exact profile.',tag:''},
+            {n:'02',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini AI — not keywords.',tag:''},
+            {n:'03',t:'Drafter',d:'Writes your full proposal in under 60 seconds.',tag:''},
+            {n:'04',t:'Controller',d:'Verifies eligibility before you spend time applying.',tag:''},
+            {n:'05',t:'Submitter',d:'Queues and sends applications on your schedule.',tag:''},
+            {n:'06',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.',tag:''},
+            {n:'07',t:'Compliance Scanner',d:'Extracts every reporting deadline from your Award Letter. Drafts compliance reports with Hard Block detection.',tag:'New'},
+            {n:'08',t:'The Closer',d:'Generates a cryptographic Audit Pack (ZIP + Merkle root + 0G anchor) and executes the 500ms Sovereign Purge.',tag:'New'},
           ].map((a,i) => (
-            <div key={i} className="bg-[#FAFAF8] border border-stone-200 rounded-xl p-5 hover:border-[#76B900] hover:bg-white transition-all cursor-default group">
-              <div className="text-[11px] font-black text-stone-300 mb-3 tracking-widest group-hover:text-[#76B900] transition-colors">{a.n}</div>
-              <div className="text-stone-900 font-semibold text-sm mb-1.5">{a.t}</div>
-              <div className="text-stone-400 text-xs leading-relaxed">{a.d}</div>
+            <div key={i} className={`border rounded-xl p-5 hover:border-[#76B900] hover:bg-white transition-all cursor-default group relative ${
+              i >= 6 ? 'bg-[#111] border-[#76B900]/20 hover:border-[#76B900]/60' : 'bg-[#FAFAF8] border-stone-200'
+            }`}>
+              {a.tag && (
+                <span className="absolute top-3 right-3 text-[9px] font-black bg-[#76B900] text-[#111] px-1.5 py-0.5 rounded uppercase tracking-wide">{a.tag}</span>
+              )}
+              <div className={`text-[11px] font-black mb-3 tracking-widest transition-colors ${
+                i >= 6 ? 'text-[#76B900]/40 group-hover:text-[#76B900]' : 'text-stone-300 group-hover:text-[#76B900]'
+              }`}>{a.n}</div>
+              <div className={`font-semibold text-sm mb-1.5 ${i >= 6 ? 'text-white' : 'text-stone-900'}`}>{a.t}</div>
+              <div className={`text-xs leading-relaxed ${i >= 6 ? 'text-stone-500' : 'text-stone-400'}`}>{a.d}</div>
             </div>
           ))}
         </div>
+        <p className="text-center text-xs text-stone-400 mt-6">Agents 1–6: Grant discovery &amp; submission pipeline &nbsp;&middot;&nbsp; Agents 7–8: Post-award compliance &amp; sovereign closeout</p>
       </section>
 
       {/* HOW IT WORKS */}
@@ -167,10 +177,10 @@ export default function LandingPage() {
               <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </div>
             <h3 className="text-lg font-bold text-white mt-4">Agents do everything</h3>
-            <p className="text-stone-500 text-sm mt-2">Your 7-agent team runs automatically:</p>
+            <p className="text-stone-500 text-sm mt-2">Your 8-agent team runs automatically:</p>
             <div className="mt-3 space-y-1.5">
-              {['Hunter scans Grants.gov + SBA live','Matchmaker scores every grant 0–100','Drafter writes your proposal via Gemini','Controller checks all compliance','Submitter queues for your approval','Watcher monitors 24/7 for new grants'].map((a,i) => (
-                <div key={i} className="text-xs text-stone-500 flex items-center gap-2">
+              {['Hunter scans Grants.gov + SBA live','Matchmaker scores every grant 0–100','Drafter writes your proposal via Gemini','Controller checks all compliance','Submitter queues for your approval','Watcher monitors 24/7 for new grants','Compliance Scanner manages post-award reporting','The Closer executes sovereign closeout + Audit Pack'].map((a,i) => (
+                <div key={i} className={`text-xs flex items-center gap-2 ${i >= 6 ? 'text-[#76B900]/70' : 'text-stone-500'}`}>
                   <span className="w-1 h-1 rounded-full bg-[#76B900] shrink-0" />{a}
                 </div>
               ))}
@@ -226,7 +236,7 @@ export default function LandingPage() {
       {/* FINAL CTA */}
       <section className="py-20 sm:py-28 text-center px-5 sm:px-6 bg-[#111111]">
         <h2 className="text-3xl sm:text-4xl font-bold text-white max-w-xl mx-auto leading-tight tracking-tight">Your community deserves<br />to be funded.</h2>
-        <p className="mt-4 text-stone-400 text-base max-w-md mx-auto">Connect to 33+ grant databases. Let AI find, draft, and submit the ones that fit you.</p>
+          <p className="mt-4 text-stone-400 max-w-md mx-auto">8 AI agents. Full lifecycle. Discovery → Submission → Compliance → Sovereign Closeout.</p>
         <Link to="/login?role=seeker" className="mt-8 inline-block bg-[#76B900] text-[#111111] font-bold px-8 py-3.5 rounded-lg hover:bg-[#689900] transition-colors text-sm">
           Find My Grants →
         </Link>
