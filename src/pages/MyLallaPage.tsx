@@ -4,8 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import {
   Send, Loader2, Sparkles, ExternalLink,
   Search, BookOpen, ShieldCheck, Copy, Check,
-  ArrowRight, Zap,
+  ArrowRight, Zap, Upload, FileText, X, User,
 } from 'lucide-react';
+import { myLallaQuery, analyzeDocument, getCivicPathProfile } from '../lib/mylallaClient';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,8 @@ interface Source {
   agency: string;
   deadline: string;
   url: string;
-  type: string;
+  type?: string;
+  source?: string;
 }
 
 // ── Suggested prompts ──────────────────────────────────────────────────────────
@@ -47,8 +49,16 @@ export default function MyLallaPage() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [uploadedDoc, setUploadedDoc] = useState<{ name: string; text: string } | null>(null);
+  const [showProfileBadge, setShowProfileBadge] = useState(false);
+  const orgProfile = getCivicPathProfile();
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setShowProfileBadge(!!orgProfile);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,42 +72,52 @@ export default function MyLallaPage() {
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
   }, [input]);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setUploadedDoc({ name: file.name, text: text.slice(0, 100_000) });
+    };
+    reader.readAsText(file);
+  };
+
   const handleSubmit = async (query?: string) => {
     const text = (query ?? input).trim();
     if (!text || loading) return;
 
+    const userContent = uploadedDoc
+      ? `[Analyzing: ${uploadedDoc.name}]\n\n${text}`
+      : text;
+
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: text,
+      content: userContent,
       timestamp: Date.now(),
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+    const docToAnalyze = uploadedDoc;
+    setUploadedDoc(null);
 
     try {
-      const res = await fetch('/api/sovereign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'mylalla-research',
-          query: text,
-          sessionId,
-        }),
-      });
+      const data = docToAnalyze
+        ? await analyzeDocument(docToAnalyze.text, text, orgProfile)
+        : await myLallaQuery({ query: text, sessionId, orgProfile });
 
-      const data = await res.json();
       if (data.sessionId) setSessionId(data.sessionId);
 
       const assistantMsg: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.response || data.error || 'Sorry, I could not generate a response. Please try again.',
+        content: data.response,
         sources: data.sources || [],
         followUps: data.followUps || [],
-        modelTier: data.modelTier,
+        modelTier: data.modelTier + (data.backend === 'gke' ? ' · GKE' : ''),
         queryType: data.queryType,
         timestamp: Date.now(),
       };
@@ -144,6 +164,12 @@ export default function MyLallaPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {showProfileBadge && orgProfile && (
+              <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-[#76B900] bg-[#76B900]/10 border border-[#76B900]/20 px-2.5 py-1 rounded-full">
+                <User className="w-3 h-3" />
+                {orgProfile.name}
+              </span>
+            )}
             <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               Nemotron-3-Super
@@ -306,6 +332,33 @@ export default function MyLallaPage() {
 
         {/* Input area */}
         <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#0A0A0B] to-transparent">
+
+          {/* Document upload preview */}
+          {uploadedDoc && (
+            <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-[#76B900]/10 border border-[#76B900]/20 rounded-xl">
+              <FileText className="w-4 h-4 text-[#76B900] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-[#76B900] truncate">{uploadedDoc.name}</p>
+                <p className="text-[10px] text-white/40">{(uploadedDoc.text.length / 1000).toFixed(0)}K chars · Ready for analysis</p>
+              </div>
+              <button onClick={() => setUploadedDoc(null)} className="text-white/30 hover:text-white/60 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* CivicPath profile badge */}
+          {orgProfile && messages.length === 0 && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-white/5 border border-white/8 rounded-xl">
+              <div className="w-5 h-5 rounded-full bg-[#76B900]/20 flex items-center justify-center shrink-0">
+                <User className="w-3 h-3 text-[#76B900]" />
+              </div>
+              <p className="text-[10px] text-white/50">
+                Using your <span className="text-[#76B900] font-bold">{orgProfile.name}</span> profile · {orgProfile.focus_area} · {orgProfile.location}
+              </p>
+            </div>
+          )}
+
           <div className="bg-white/8 border border-white/12 rounded-2xl overflow-hidden focus-within:border-[#76B900]/50 transition-colors">
             <textarea
               ref={textareaRef}
@@ -318,9 +371,17 @@ export default function MyLallaPage() {
               className="w-full bg-transparent px-5 py-4 text-sm text-white placeholder:text-white/25 outline-none resize-none disabled:opacity-50"
             />
             <div className="flex items-center justify-between px-4 pb-3">
-              <div className="flex items-center gap-2 text-[10px] text-white/25">
-                <ShieldCheck className="w-3 h-3" />
-                <span>Sovereign · Zero data retention</span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => fileRef.current?.click()}
+                  className="flex items-center gap-1 text-[10px] text-white/30 hover:text-[#76B900] transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload doc</span>
+                </button>
+                <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx,.md" className="hidden" onChange={handleFileUpload} />
+                <span className="flex items-center gap-1 text-[10px] text-white/20">
+                  <ShieldCheck className="w-3 h-3" />
+                  Sovereign
+                </span>
               </div>
               <button
                 onClick={() => handleSubmit()}
