@@ -299,6 +299,117 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
+      // ── MyLalla Research Engine (Nemotron-3-Super + live grants) ─────────────
+      case 'mylalla-research': {
+        const { query: mlQuery, sessionId: mlSession, orgProfile } = req.body;
+        if (!mlQuery) return res.status(400).json({ error: 'query required' });
+
+        const nimKey = process.env.NVIDIA_API_KEY;
+        const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+        if (!nimKey && !geminiKey) return res.status(500).json({ error: 'No inference API configured' });
+
+        // Step 1: Classify query type
+        const queryLower = mlQuery.toLowerCase();
+        const isGrantSearch = /find|search|grant|fund|sbir|nsf|nih|nasa|available|apply/.test(queryLower);
+        const isCompliance = /compliance|report|deadline|award letter|post.award/.test(queryLower);
+
+        // Step 2: Fetch live grant data if relevant
+        let liveGrantSources: any[] = [];
+        if (isGrantSearch) {
+          try {
+            const keyword = orgProfile?.focusArea || mlQuery.split(' ').slice(0, 3).join(' ');
+            const location = orgProfile?.location || 'United States';
+            const gr = await fetch('https://apply07.grants.gov/grantsws/rest/opportunities/search/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ keyword: `${keyword} ${location}`, oppStatuses: 'posted', rows: 5, sortBy: 'openDate|desc' }),
+              signal: AbortSignal.timeout(8_000),
+            });
+            const gd = await gr.json();
+            liveGrantSources = (gd.oppHits || []).map((g: any) => ({
+              title: g.title, agency: g.agency, deadline: g.closeDate || 'Rolling',
+              url: `https://www.grants.gov/search-results-detail/${g.id}`,
+              type: 'grants.gov',
+            }));
+          } catch { /* fail silently */ }
+        }
+
+        // Step 3: Build context-rich prompt for Nemotron-3-Super
+        const systemPrompt = [
+          'You are MyLalla, a world-class AI grant strategy advisor. You have mastered every federal grant program, state fund, SBIR/STTR, foundation grant, and compliance framework.',
+          'Provide responses that are specific, data-driven, and immediately actionable. Use markdown headers, bullet points, and bold text.',
+          'When citing grants, always include agency, amount, and deadline.',
+          orgProfile ? `\nUser\'s Organization Context:\n- Name: ${orgProfile.companyName}\n- Focus: ${orgProfile.focusArea}\n- Location: ${orgProfile.location}\n- Mission: ${(orgProfile.missionStatement || '').slice(0, 300)}` : '',
+          liveGrantSources.length > 0 ? `\nLive grants found for this query (from Grants.gov):\n${liveGrantSources.map((g: any) => `- ${g.title} | ${g.agency} | Due: ${g.deadline}`).join('\n')}` : '',
+        ].filter(Boolean).join('\n');
+
+        // Step 4: Synthesize with Nemotron-3-Super via NIM or Gemini fallback
+        let responseText = '';
+        let modelTierUsed = 'gemini-fallback';
+
+        if (nimKey) {
+          try {
+            const model = process.env.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-super-120b-instruct';
+            const nr = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${nimKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: mlQuery },
+                ],
+                max_tokens: 8192, temperature: 0.6, top_p: 0.95, stream: false,
+              }),
+              signal: AbortSignal.timeout(30_000),
+            });
+            const nd = await nr.json();
+            if (nd.choices?.[0]?.message?.content) {
+              responseText = nd.choices[0].message.content;
+              modelTierUsed = `Nemotron-3-Super-120B`;
+            }
+          } catch (e: any) {
+            console.warn('[MyLalla] NIM failed:', e.message);
+          }
+        }
+
+        if (!responseText && geminiKey) {
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
+          const genAI = new GoogleGenerativeAI(geminiKey);
+          const gmodel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', tools: [{ googleSearch: {} } as any] });
+          const result = await gmodel.generateContent(`${systemPrompt}\n\nUser: ${mlQuery}`);
+          responseText = result.response.text();
+          modelTierUsed = 'Gemini 2.0 Flash';
+        }
+
+        // Step 5: Generate follow-up questions
+        let followUps: string[] = [];
+        try {
+          const fuPrompt = `Given this grant research question: "${mlQuery}"\nAnd this response summary: "${responseText.slice(0, 500)}"\nGenerate 3 specific follow-up questions the user should ask next. Return ONLY a JSON array of strings.`;
+          const fuRes = nimKey
+            ? await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${nimKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: fuPrompt }], max_tokens: 200, temperature: 0.8 }),
+              })
+            : null;
+          if (fuRes) {
+            const fuData = await fuRes.json();
+            const fuText = fuData.choices?.[0]?.message?.content || '[]';
+            followUps = JSON.parse(fuText.replace(/```json|```/g, '').trim());
+          }
+        } catch { followUps = []; }
+
+        return res.status(200).json({
+          response: responseText,
+          sources: liveGrantSources,
+          followUps: followUps.slice(0, 3),
+          modelTier: modelTierUsed,
+          sessionId: mlSession || `session-${Date.now()}`,
+          queryType: isGrantSearch ? 'grant-search' : isCompliance ? 'compliance' : 'strategy',
+        });
+      }
+
       // ── AMAI SuperAgent Attestation ────────────────────────────────
       case 'check-attestation': {
         const amaiUrl = process.env.AMAI_ATTESTATION_URL || 'http://34.66.125.36/api/v1/attestation';

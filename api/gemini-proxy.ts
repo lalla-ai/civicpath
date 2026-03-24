@@ -28,7 +28,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const nimApiKey = process.env.NVIDIA_API_KEY;
   if (useNIM && nimApiKey && prompt) {
     try {
-      const model = nimModel || process.env.NVIDIA_NIM_MODEL || 'meta/llama-3.1-70b-instruct';
+      // Nemotron-3-Super-120B: Hybrid MoE, 1M context window, superior reasoning
+      // Tier routing: use Nemotron for research/complex tasks, Llama for fast pipeline
+      const isResearchMode = useNIM && (prompt.length > 500 || systemContext);
+      const model = nimModel
+        || (isResearchMode
+          ? (process.env.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-super-120b-instruct')
+          : 'meta/llama-3.1-8b-instruct');
+
+      const nimMessages = [
+        {
+          role: 'system' as const,
+          content: systemContext || 'You are MyLalla, a world-class AI grant advisor. You have deep expertise in federal and state grant programs, SBIR/STTR, nonprofit funding, and compliance. Provide specific, actionable, data-driven guidance. Use markdown for clarity.',
+        },
+        { role: 'user' as const, content: prompt },
+      ];
+
       const nimRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -37,12 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
         body: JSON.stringify({
           model,
-          messages: [
-            ...(systemContext ? [{ role: 'system', content: systemContext }] : []),
-            { role: 'user', content: prompt },
-          ],
-          max_tokens: 2048,
-          temperature: 0.7,
+          messages: nimMessages,
+          max_tokens: 8192,  // leverage expanded context
+          temperature: 0.6,
+          top_p: 0.95,
           stream: false,
         }),
       });

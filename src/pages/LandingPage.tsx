@@ -81,6 +81,9 @@ export default function LandingPage() {
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">Find My Grants →</Link>
           <Link to="/login?role=funder" className="border border-stone-300 text-stone-700 font-semibold px-6 py-3 rounded-lg hover:border-stone-500 hover:text-stone-900 transition-colors bg-white">Give Grants</Link>
+          <Link to="/mylalla" className="bg-stone-900 text-white font-semibold px-6 py-3 rounded-lg hover:bg-stone-800 transition-colors flex items-center gap-2">
+            <span className="text-sm">✨</span> Ask MyLalla
+          </Link>
         </div>
         {/* MyLalla Hero Chat Bar */}
         <div className="mt-10 max-w-2xl mx-auto">

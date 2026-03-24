@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './pages/NotFound'
+import MyLallaPage from './pages/MyLallaPage'
 import LoginPage from './LoginPage.tsx'
 import { AuthProvider, useAuth } from './AuthContext.tsx'
 import LandingPage from './pages/LandingPage.tsx'
@@ -47,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/mylalla" element={<MyLallaPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <OmninorChat />
