@@ -10,7 +10,7 @@ import { loadApplications, updateApplicationStatus } from '../lib/db';
 const Logo = () => (<div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]"><Hexagon className="w-8 h-8 absolute" strokeWidth={2.5} /><ArrowUpRight className="w-4 h-4 absolute" strokeWidth={3} /></div>);
 type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
 interface Grant { id: string; name: string; amount: string; focus: string[]; location: string; deadline: string; status: 'active'|'draft'; applications: number; }
-interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; proposalText?: string; isLive?: boolean; }
+interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; grantAmount?: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; proposalText?: string; seekerEmail?: string; seekerName?: string; isLive?: boolean; }
 const GRANTS: Grant[] = [
   { id:'1', name:'Mom and Pop Small Business Grant', amount:'$10,000', focus:['Small Business'], location:'Miami-Dade County', deadline:'2026-06-30', status:'active', applications:23 },
   { id:'2', name:'MDEAT Black Business Grant', amount:'$25,000', focus:['Business','Community'], location:'Miami-Dade County', deadline:'2026-07-15', status:'active', applications:41 },
@@ -92,6 +92,9 @@ export default function FunderDashboard() {
         date: d.submittedAt?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || 'Recent',
         status: (d.status === 'in-review' ? 'review' : d.status) as Applicant['status'],
         proposalText: d.proposalText,
+        seekerEmail: d.seekerEmail,
+        seekerName: d.orgName,
+        grantAmount: d.grantAmount,
         isLive: true,
       }));
       // Merge live applications on top of demo data (live apps first)
@@ -139,8 +142,24 @@ export default function FunderDashboard() {
     setApplicants(prev => prev.map(a => a.id === id ? {...a, status:'approved'} : a));
     setCelebration(applicant?.org || '');
     setTimeout(() => setCelebration(null), 3500);
-    // Persist to Firestore if it's a live (real) application
-    if (applicant?.isLive) updateApplicationStatus(id, 'approved').catch(() => {});
+    // Persist to Firestore + notify seeker if it's a real application
+    if (applicant?.isLive) {
+      updateApplicationStatus(id, 'approved').catch(() => {});
+      if (applicant.seekerEmail) {
+        fetch('/api/notify-approval', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seekerEmail: applicant.seekerEmail,
+            seekerName: applicant.seekerName || applicant.org,
+            orgName: applicant.org,
+            grantTitle: applicant.grant,
+            grantAmount: applicant.grantAmount || '',
+            funderName: user?.name || 'CivicPath Funder',
+          }),
+        }).catch(() => {});
+      }
+    }
   };
   const handleReject = (id: string) => {
     const applicant = applicants.find(a => a.id === id);
