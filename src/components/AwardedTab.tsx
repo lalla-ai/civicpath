@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { jsPDF } from 'jspdf';
 import {
   Upload, FileText, CheckCircle2, AlertTriangle,
   ChevronDown, ChevronRight, Loader2, X, ShieldCheck,
   Trophy, Calendar, AlertCircle, Eye, RotateCcw,
+  Download, Plus, Send, CalendarPlus,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { auth } from '../firebase';
@@ -22,6 +24,7 @@ interface Profile {
 interface Props {
   profile: Profile;
   user: { email?: string; name?: string } | null;
+  onGoToProfile?: () => void;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -41,13 +44,98 @@ function getDaysUntil(dateStr: string): number {
 }
 
 function statusBadge(status: ReportDeadline['status'], daysUntil: number) {
+  if (status === 'submitted') return { label: 'Submitted ✓', cls: 'bg-blue-500 text-white' };
   if (status === 'approved') return { label: 'Approved ✓', cls: 'bg-[#76B900] text-[#111]' };
-  if (status === 'submitted') return { label: 'Submitted', cls: 'bg-blue-500 text-white' };
   if (status === 'drafted') return { label: 'Draft Ready', cls: 'bg-amber-500 text-white' };
   if (status === 'overdue' || daysUntil < 0) return { label: 'OVERDUE', cls: 'bg-red-500 text-white' };
   if (daysUntil <= 7) return { label: `${daysUntil}d — Urgent`, cls: 'bg-red-100 text-red-700 border border-red-300' };
   if (daysUntil <= 30) return { label: `${daysUntil}d left`, cls: 'bg-amber-100 text-amber-700' };
   return { label: `${daysUntil}d left`, cls: 'bg-stone-100 text-stone-600' };
+}
+
+// ── Export helpers ───────────────────────────────────────────────────
+
+function mdToHtml(text: string): string {
+  return text
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:13pt;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:16px;">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size:15pt;color:#222;">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="font-size:18pt;color:#111;">$1</h1>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li style="margin:2px 0;">$1</li>')
+    .replace(/\[PLACEHOLDER:([^\]]+)\]/g, '<span style="background:#fff0f0;color:#dc2626;padding:0 4px;border-radius:3px">[TO FILL: $1]</span>')
+    .replace(/\n\n/g, '</p><p style="margin:6pt 0;">')
+    .replace(/\n/g, '<br/>');
+}
+
+export function downloadReportPDF(reportText: string, title: string, grantTitle: string, orgName: string) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const margin = 20;
+  const pageWidth = 210 - margin * 2;
+  let y = margin;
+
+  doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+  const titleLines = doc.splitTextToSize(title, pageWidth);
+  doc.text(titleLines, margin, y); y += titleLines.length * 8 + 4;
+
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+  doc.text(`Organization: ${orgName}`, margin, y); y += 5;
+  doc.text(`Grant: ${grantTitle}`, margin, y); y += 5;
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · CivicPath Post-Award Compliance`, margin, y); y += 8;
+
+  doc.setDrawColor(118, 185, 0); doc.setLineWidth(0.5);
+  doc.line(margin, y, 210 - margin, y); y += 6;
+
+  doc.setTextColor(30); doc.setFontSize(10);
+  const lines = reportText.split('\n');
+  for (const raw of lines) {
+    if (y > 270) { doc.addPage(); y = margin; }
+    const line = raw.replace(/^#{1,3} /, '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\[PLACEHOLDER:[^\]]+\]/g, '[TO FILL]');
+    const isHeading = /^#{1,3} /.test(raw);
+    if (isHeading) {
+      if (y > margin + 8) y += 3;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text(line, margin, y); y += 6;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    } else if (line.trim()) {
+      const wrapped = doc.splitTextToSize(line, pageWidth);
+      wrapped.forEach((l: string) => {
+        if (y > 270) { doc.addPage(); y = margin; }
+        doc.text(l, margin, y); y += 5;
+      });
+    } else {
+      y += 2;
+    }
+  }
+  doc.save(`${title.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}.pdf`);
+}
+
+export function downloadReportDOCX(reportText: string, title: string, grantTitle: string, orgName: string) {
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"/><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;margin:2cm;}h3{font-size:13pt;color:#333;border-bottom:1px solid #ddd;padding-bottom:3pt;}h1{font-size:18pt;}p{line-height:1.5;margin:6pt 0;}li{margin:2pt 0;}</style></head><body><h1>${title}</h1><p><strong>Organization:</strong> ${orgName}</p><p><strong>Grant:</strong> ${grantTitle}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} &middot; CivicPath Post-Award Compliance</p><hr/><p>${mdToHtml(reportText)}</p></body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `${title.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'')}.doc` });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── Google Calendar helper ──────────────────────────────────────────
+
+function toCalDate(iso: string): string {
+  return iso.replace(/-/g, '');
+}
+
+function addToCalendar(deadline: ReportDeadline, grantTitle: string) {
+  const nextDay = (iso: string) => {
+    const d = new Date(iso); d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0].replace(/-/g, '');
+  };
+  // Official deadline event
+  const officialUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`[${grantTitle}] ${deadline.title}`)}&dates=${toCalDate(deadline.dueDate)}/${nextDay(deadline.dueDate)}&details=${encodeURIComponent(`CivicPath Compliance: ${deadline.title}\nGrant: ${grantTitle}\nPeriod: ${deadline.period}`)}`;
+  window.open(officialUrl, '_blank');
+  // Soft deadline event (7 days before)
+  setTimeout(() => {
+    const softUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`[${grantTitle}] ${deadline.title} — Internal Review`)}&dates=${toCalDate(deadline.softDueDate)}/${nextDay(deadline.softDueDate)}&details=${encodeURIComponent(`Internal review due (7 days before official deadline)\nOfficial deadline: ${deadline.dueDate}\nGrant: ${grantTitle}`)}` ;
+    window.open(softUrl, '_blank');
+  }, 800);
 }
 
 function typeIcon(type: ReportDeadline['type']): string {
@@ -60,7 +148,7 @@ function typeIcon(type: ReportDeadline['type']): string {
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function AwardedTab({ profile }: Props) {
+export default function AwardedTab({ profile, onGoToProfile }: Props) {
   const [grants, setGrants] = useState<AwardedGrantDoc[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -81,6 +169,20 @@ export default function AwardedTab({ profile }: Props) {
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState<ReportDraftDoc | null>(null);
   const [approving, setApproving] = useState(false);
+
+  // Manual deadline add modal
+  const [showAddDeadline, setShowAddDeadline] = useState<string | null>(null); // grant id
+  const [newDeadline, setNewDeadline] = useState({ title: '', dueDate: '', type: 'other' as ReportDeadline['type'], period: '', notes: '' });
+  const [savingDeadline, setSavingDeadline] = useState(false);
+
+  // Submission modal (after Approve)
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitDate, setSubmitDate] = useState(new Date().toISOString().split('T')[0]);
+  const [submitMethod, setSubmitMethod] = useState('email');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Master calendar filter
+  const [calFilter, setCalFilter] = useState<'all' | 'week' | 'month'>('all');
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -265,12 +367,72 @@ export default function AwardedTab({ profile }: Props) {
         };
         await saveAwardedGrant(uid, updatedGrant, reportGrant.id);
         setGrants(prev => prev.map(g => g.id === reportGrant.id ? { ...updatedGrant, id: reportGrant.id } : g));
+        setReportGrant({ ...updatedGrant, id: reportGrant.id });
       }
       setShowReport(false);
       setDraft(null);
+      setShowSubmitModal(true); // Offer to mark as submitted right after approving
     } finally {
       setApproving(false);
     }
+  };
+
+  const handleMarkSubmitted = async () => {
+    if (!reportGrant || !reportDeadline) return;
+    setSubmitting(true);
+    try {
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        const updatedGrant = {
+          ...reportGrant,
+          deadlines: reportGrant.deadlines.map(d =>
+            d.id === reportDeadline.id ? { ...d, status: 'submitted' as const, submittedAt: submitDate, submissionMethod: submitMethod } : d
+          ),
+          auditTrail: [...reportGrant.auditTrail, {
+            event: 'report_submitted',
+            timestamp: new Date().toISOString(),
+            note: `${reportDeadline.title} submitted via ${submitMethod} on ${submitDate}`,
+          }],
+        };
+        await saveAwardedGrant(uid, updatedGrant, reportGrant.id);
+        setGrants(prev => prev.map(g => g.id === reportGrant.id ? { ...updatedGrant, id: reportGrant.id } : g));
+      }
+    } finally {
+      setSubmitting(false);
+      setShowSubmitModal(false);
+    }
+  };
+
+  const handleAddDeadline = async (grantId: string) => {
+    if (!newDeadline.title || !newDeadline.dueDate) return;
+    setSavingDeadline(true);
+    const grant = grants.find(g => g.id === grantId);
+    if (!grant) { setSavingDeadline(false); return; }
+    const soft = getSoftDate(newDeadline.dueDate);
+    const dl: ReportDeadline = {
+      id: `dl-manual-${Date.now()}`,
+      type: newDeadline.type,
+      title: newDeadline.title,
+      dueDate: newDeadline.dueDate,
+      softDueDate: soft,
+      period: newDeadline.period || 'Manual Entry',
+      status: 'upcoming',
+    };
+    const updatedGrant = {
+      ...grant,
+      deadlines: [...grant.deadlines, dl],
+      auditTrail: [...grant.auditTrail, {
+        event: 'deadline_added',
+        timestamp: new Date().toISOString(),
+        note: `Manual deadline added: ${dl.title} (due ${dl.dueDate})`,
+      }],
+    };
+    const uid = auth.currentUser?.uid;
+    if (uid) await saveAwardedGrant(uid, updatedGrant, grantId).catch(() => {});
+    setGrants(prev => prev.map(g => g.id === grantId ? { ...updatedGrant, id: grantId } : g));
+    setNewDeadline({ title: '', dueDate: '', type: 'other', period: '', notes: '' });
+    setShowAddDeadline(null);
+    setSavingDeadline(false);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -303,6 +465,85 @@ export default function AwardedTab({ profile }: Props) {
           <span className="text-sm">Loading your awarded grants...</span>
         </div>
       )}
+
+      {/* ── Master Compliance Calendar (Gap 3) ─────────────────────────── */}
+      {grants.length >= 1 && (() => {
+        const grantColors = ['#76B900', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981'];
+        const now = new Date();
+        const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+        const monthEnd = new Date(now); monthEnd.setDate(monthEnd.getDate() + 30);
+        const allDeadlines = grants.flatMap((g, gi) =>
+          g.deadlines
+            .filter(d => {
+              if (d.status === 'submitted') return false;
+              const due = new Date(d.dueDate);
+              if (calFilter === 'week') return due >= now && due <= weekEnd;
+              if (calFilter === 'month') return due >= now && due <= monthEnd;
+              return due >= new Date(now.getTime() - 86400000 * 7); // upcoming + 1 week past
+            })
+            .map(d => ({ ...d, grantTitle: g.grantTitle, grantId: g.id, color: grantColors[gi % grantColors.length], grant: g }))
+        ).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        return (
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+              <h3 className="font-bold text-stone-900 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#76B900]" /> Compliance Master Calendar
+                <span className="text-xs font-normal text-stone-400">({allDeadlines.length} upcoming across {grants.length} grant{grants.length > 1 ? 's' : ''})</span>
+              </h3>
+              <div className="flex items-center gap-1">
+                {(['all', 'week', 'month'] as const).map(f => (
+                  <button key={f} onClick={() => setCalFilter(f)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                      calFilter === f ? 'bg-[#76B900] text-[#111]' : 'text-stone-500 hover:bg-stone-100'
+                    }`}>
+                    {f === 'all' ? 'All' : f === 'week' ? 'This Week' : '30 Days'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="divide-y divide-stone-100">
+              {allDeadlines.length === 0 && (
+                <p className="text-sm text-stone-400 text-center py-8">No upcoming deadlines in this range.</p>
+              )}
+              {allDeadlines.map((d, i) => {
+                const days = getDaysUntil(d.dueDate);
+                const badge = statusBadge(d.status, days);
+                return (
+                  <div key={`${d.grantId}-${d.id}-${i}`} className={`flex items-center gap-3 px-5 py-3 hover:bg-stone-50 ${
+                    days < 0 && d.status === 'upcoming' ? 'bg-red-50' : days <= 7 && d.status === 'upcoming' ? 'bg-amber-50' : ''
+                  }`}>
+                    <div className="w-1 h-10 rounded-full shrink-0" style={{ background: d.color }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-stone-900 text-sm truncate">{d.title}</div>
+                      <div className="text-xs text-stone-500 flex items-center gap-2 mt-0.5">
+                        <span className="font-semibold truncate" style={{ color: d.color }}>{d.grantTitle}</span>
+                        <span>·</span><span>{d.period}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-stone-500">{d.dueDate}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                      {d.status === 'upcoming' && (
+                        <button onClick={() => addToCalendar(d, d.grantTitle)} title="Add both dates to Google Calendar"
+                          className="p-1.5 text-stone-400 hover:text-[#76B900] hover:bg-[#76B900]/10 rounded-lg transition-colors">
+                          <CalendarPlus className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {(d.status === 'upcoming' || d.status === 'drafted') && (
+                        <button onClick={() => handleDraftReport(d.grant, d)}
+                          className="text-xs font-bold px-2.5 py-1 bg-stone-900 text-white rounded-lg hover:bg-stone-700">
+                          Draft
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Empty state */}
       {!loadingGrants && grants.length === 0 && (
@@ -388,9 +629,15 @@ export default function AwardedTab({ profile }: Props) {
                 )}
 
                 {/* Compliance calendar */}
-                <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3 flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5" /> Compliance Calendar
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5" /> Compliance Calendar
+                  </h4>
+                  <button onClick={() => setShowAddDeadline(grant.id || null)}
+                    className="flex items-center gap-1 text-xs font-bold text-[#76B900] hover:bg-[#76B900]/10 px-2.5 py-1 rounded-lg transition-colors">
+                    <Plus className="w-3 h-3" /> Add Deadline
+                  </button>
+                </div>
                 <div className="space-y-2">
                   {grant.deadlines.length === 0 && (
                     <p className="text-sm text-stone-400 text-center py-4">No deadlines extracted. Re-upload the letter.</p>
@@ -418,6 +665,13 @@ export default function AwardedTab({ profile }: Props) {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`text-[10px] font-black px-2 py-1 rounded-full ${badge.cls}`}>{badge.label}</span>
+                          {deadline.status === 'upcoming' && (
+                            <button onClick={() => addToCalendar(deadline, grant.grantTitle)}
+                              title="Add both deadline + review date to Google Calendar"
+                              className="p-1.5 text-stone-400 hover:text-[#76B900] hover:bg-[#76B900]/10 rounded-lg transition-colors">
+                              <CalendarPlus className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           {(deadline.status === 'upcoming' || deadline.status === 'drafted') && (
                             <button
                               onClick={() => handleDraftReport(grant, deadline)}
@@ -426,13 +680,17 @@ export default function AwardedTab({ profile }: Props) {
                               {deadline.status === 'drafted' ? <><RotateCcw className="w-3 h-3" /> Re-draft</> : <><FileText className="w-3 h-3" /> Draft Report</>}
                             </button>
                           )}
-                          {(deadline.status === 'approved') && (
-                            <button
-                              onClick={() => handleDraftReport(grant, deadline)}
-                              className="flex items-center gap-1 px-2.5 py-1.5 border border-stone-200 text-stone-500 text-xs font-bold rounded-lg hover:bg-stone-50"
-                            >
-                              <Eye className="w-3 h-3" /> View
-                            </button>
+                          {deadline.status === 'approved' && (
+                            <>
+                              <button onClick={() => { setReportGrant(grant); setReportDeadline(deadline); setShowSubmitModal(true); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600">
+                                <Send className="w-3 h-3" /> Submit
+                              </button>
+                              <button onClick={() => handleDraftReport(grant, deadline)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 border border-stone-200 text-stone-500 text-xs font-bold rounded-lg hover:bg-stone-50">
+                                <Eye className="w-3 h-3" /> View
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -551,24 +809,52 @@ export default function AwardedTab({ profile }: Props) {
 
               {!drafting && draft && (
                 <>
-                  {/* Hard Blocks */}
-                  {draft.hardBlocks.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                        <span className="font-bold text-red-800 text-sm">⛔ Hard Blocks — Resolve before approving</span>
+                  {/* Hard Blocks with Fix Now links (Gap 4) */}
+                  {draft.hardBlocks.length > 0 && (() => {
+                    const fixMap: Record<string, string> = {
+                      'EIN': 'EIN',
+                      'Tax ID': 'EIN',
+                      'mission': 'missionStatement',
+                      'impact metrics': 'impactMetrics',
+                      'background': 'backgroundInfo',
+                      'budget': 'annualBudget',
+                      'team': 'teamSize',
+                    };
+                    const getAnchor = (block: string) => {
+                      for (const [key, anchor] of Object.entries(fixMap)) {
+                        if (block.toLowerCase().includes(key.toLowerCase())) return anchor;
+                      }
+                      return null;
+                    };
+                    return (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                          <span className="font-bold text-red-800 text-sm">⛔ Hard Blocks — Resolve before approving</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {draft.hardBlocks.map((block, i) => {
+                            getAnchor(block);
+                            return (
+                              <li key={i} className="flex items-start justify-between gap-2 text-sm text-red-700">
+                                <div className="flex items-start gap-2">
+                                  <span className="shrink-0 mt-0.5 font-bold">{i + 1}.</span>
+                                  <span>{block}</span>
+                                </div>
+                                {onGoToProfile && (
+                                  <button onClick={onGoToProfile}
+                                    className="shrink-0 text-[10px] font-black text-white bg-red-500 hover:bg-red-600 px-2 py-0.5 rounded-full transition-colors whitespace-nowrap">
+                                    Fix Now →
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        <p className="text-xs text-red-500 mt-3">Click “Fix Now” to jump to your Profile and fill in the missing data, then re-draft.</p>
                       </div>
-                      <ul className="space-y-1.5">
-                        {draft.hardBlocks.map((block, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-red-700">
-                            <span className="shrink-0 mt-0.5 font-bold">{i + 1}.</span>
-                            <span>{block}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-xs text-red-500 mt-3">Fix these in your Profile tab, then re-draft for a complete report.</p>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Report text */}
                   <div className="bg-stone-50 border border-stone-200 rounded-xl p-5">
@@ -587,22 +873,129 @@ export default function AwardedTab({ profile }: Props) {
             </div>
 
             {!drafting && draft && (
-              <div className="px-6 py-4 border-t border-stone-100 flex gap-3 shrink-0">
-                <button
-                  onClick={() => reportGrant && reportDeadline && handleDraftReport(reportGrant, reportDeadline)}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 text-sm"
-                >
-                  <RotateCcw className="w-4 h-4" /> Re-draft
-                </button>
-                <button
-                  onClick={handleApprove}
-                  disabled={approving}
-                  className="flex-1 py-2.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                >
+              <div className="px-6 py-4 border-t border-stone-100 shrink-0 space-y-2">
+                {/* Export row (Gap 1) */}
+                <div className="flex gap-2">
+                  <button onClick={() => reportGrant && reportDeadline && downloadReportPDF(draft.reportText, reportDeadline.title, reportGrant.grantTitle, profile.companyName)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 text-xs">
+                    <Download className="w-3.5 h-3.5" /> PDF
+                  </button>
+                  <button onClick={() => reportGrant && reportDeadline && downloadReportDOCX(draft.reportText, reportDeadline.title, reportGrant.grantTitle, profile.companyName)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 text-xs">
+                    <Download className="w-3.5 h-3.5" /> DOCX
+                  </button>
+                  <div className="flex-1" />
+                  <button onClick={() => reportGrant && reportDeadline && handleDraftReport(reportGrant, reportDeadline)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-50 text-xs">
+                    <RotateCcw className="w-3.5 h-3.5" /> Re-draft
+                  </button>
+                </div>
+                {/* Approve row */}
+                <button onClick={handleApprove} disabled={approving}
+                  className="w-full py-2.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-60">
                   {approving ? <><Loader2 className="w-4 h-4 animate-spin" />Approving...</> : <><CheckCircle2 className="w-4 h-4" /> Approve Report — Mark as Reviewed</>}
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* ── Mark as Submitted Modal (Gap 5) ── */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-stone-200 p-6">
+            <h3 className="font-bold text-stone-900 mb-1 flex items-center gap-2">
+              <Send className="w-4 h-4 text-blue-500" /> Mark as Submitted to Funder
+            </h3>
+            <p className="text-xs text-stone-500 mb-5">
+              {reportDeadline?.title} — {reportGrant?.grantTitle}
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-stone-600 block mb-1">Submission Date *</label>
+                <input type="date" value={submitDate} onChange={e => setSubmitDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-blue-300 outline-none text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-600 block mb-1">Submission Method</label>
+                <select value={submitMethod} onChange={e => setSubmitMethod(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-blue-300 outline-none text-sm">
+                  <option value="email">Email to Program Officer</option>
+                  <option value="portal">Grant Portal Submission</option>
+                  <option value="mail">Physical Mail</option>
+                  <option value="online">Online System (e.g. Fluxx, Submittable)</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setShowSubmitModal(false)}
+                className="flex-1 py-2.5 border border-stone-200 text-stone-500 font-bold rounded-xl hover:bg-stone-50 text-sm">Not yet</button>
+              <button onClick={handleMarkSubmitted} disabled={submitting}
+                className="flex-1 py-2.5 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Mark Submitted
+              </button>
+            </div>
+            <p className="text-[10px] text-stone-400 text-center mt-3">This will be recorded in the Sovereign Audit Trail with timestamp.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Deadline Modal (Gap 2) ── */}
+      {showAddDeadline && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+              <h3 className="font-bold text-stone-900">Add Compliance Deadline</h3>
+              <button onClick={() => setShowAddDeadline(null)} className="p-2 hover:bg-stone-100 rounded-full">
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-stone-600 block mb-1">Deadline Name *</label>
+                <input type="text" placeholder="e.g. Q3 Progress Report, Site Visit"
+                  value={newDeadline.title} onChange={e => setNewDeadline(p => ({...p, title: e.target.value}))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-stone-600 block mb-1">Official Due Date *</label>
+                  <input type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline(p => ({...p, dueDate: e.target.value}))}
+                    className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-stone-600 block mb-1">Type</label>
+                  <select value={newDeadline.type} onChange={e => setNewDeadline(p => ({...p, type: e.target.value as ReportDeadline['type']}))}
+                    className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm">
+                    <option value="progress">Progress Report</option>
+                    <option value="financial">Financial Report</option>
+                    <option value="narrative">Narrative Report</option>
+                    <option value="interim">Interim Report</option>
+                    <option value="final">Final Report</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-600 block mb-1">Reporting Period (optional)</label>
+                <input type="text" placeholder="e.g. Q3 2026, Year 2, Mid-Project"
+                  value={newDeadline.period} onChange={e => setNewDeadline(p => ({...p, period: e.target.value}))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm" />
+              </div>
+              <p className="text-xs text-stone-400">Internal review reminder will be set to 7 days before the official due date automatically.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowAddDeadline(null)}
+                  className="flex-1 py-3 border border-stone-200 text-stone-500 font-bold rounded-xl hover:bg-stone-50 text-sm">Cancel</button>
+                <button onClick={() => handleAddDeadline(showAddDeadline)}
+                  disabled={savingDeadline || !newDeadline.title || !newDeadline.dueDate}
+                  className="flex-1 py-3 bg-[#76B900] text-[#111] font-bold rounded-xl hover:bg-[#689900] disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+                  {savingDeadline ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Add to Compliance Calendar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -56,7 +56,7 @@ export default function SharePage() {
             </div>
 
             <p className="text-stone-500 text-sm">
-              6 AI agents found, scored, and drafted a grant proposal — automatically.
+              7 AI agents found, scored, and drafted a grant proposal — automatically.
             </p>
           </div>
 
@@ -77,7 +77,7 @@ export default function SharePage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-stone-400">Powered by CivicPath · 6 AI agents · Gemini 2.0 Flash · Google Cloud ADK Finalist 2026</p>
+        <p className="text-center text-xs text-stone-400">Powered by CivicPath · 7 AI agents · Gemini 2.0 Flash · Google Cloud ADK Finalist 2026</p>
       </div>
     </div>
   );

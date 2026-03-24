@@ -72,7 +72,7 @@ export default function LandingPage() {
           <span className="text-[#76B900]">That Gets You.</span>
         </h1>
         <p className="mt-4 text-base sm:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
-          6 AI agents find, score, draft, and submit grants for your org — automatically. First match in 60 seconds.
+          7 AI agents find, score, draft, comply, and submit grants for your org — automatically. First match in 60 seconds.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">Find My Grants →</Link>
@@ -122,7 +122,7 @@ export default function LandingPage() {
       <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-t border-stone-100">
         <div className="text-center mb-10 sm:mb-12">
           <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-3">THE ENGINE</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Six AI agents. One click.</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Seven AI agents. One click.</h2>
           <p className="text-stone-400 max-w-md mx-auto mt-3 text-sm">From live grant discovery to proposal delivery — your AI team runs 24/7.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
@@ -167,7 +167,7 @@ export default function LandingPage() {
               <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </div>
             <h3 className="text-lg font-bold text-white mt-4">Agents do everything</h3>
-            <p className="text-stone-500 text-sm mt-2">Your 6-agent team runs automatically:</p>
+            <p className="text-stone-500 text-sm mt-2">Your 7-agent team runs automatically:</p>
             <div className="mt-3 space-y-1.5">
               {['Hunter scans Grants.gov + SBA live','Matchmaker scores every grant 0–100','Drafter writes your proposal via Gemini','Controller checks all compliance','Submitter queues for your approval','Watcher monitors 24/7 for new grants'].map((a,i) => (
                 <div key={i} className="text-xs text-stone-500 flex items-center gap-2">

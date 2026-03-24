@@ -23,7 +23,7 @@ Help users with:
 - Pricing (free to start, Pro plan for full pipeline automation)
 - Grant sources (Grants.gov, SBA SBIR, NSF, NIH, Florida grants)
 - How to set up their profile
-- How the 6 agents work
+- How the 7 agents work
 - How to get their first grant match
 - Technical issues or questions
 
@@ -62,7 +62,7 @@ export default function OmninorChat() {
   };
 
   const starters = [
-    'How do the 6 agents work?',
+    'How do the 7 agents work?',
     'How do I get my first grant match?',
     'What does the free plan include?',
     'Which grants are available in Florida?',

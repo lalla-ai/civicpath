@@ -165,6 +165,8 @@ export interface ReportDeadline {
   period: string;        // e.g. 'Q1 2026', 'Year 1'
   status: 'upcoming' | 'drafted' | 'approved' | 'submitted' | 'overdue';
   reportDraftId?: string;
+  submittedAt?: string;         // ISO date when marked submitted
+  submissionMethod?: string;    // 'email' | 'portal' | 'mail' | 'other'
 }
 
 export interface AwardedGrantDoc {
