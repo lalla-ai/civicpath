@@ -21,7 +21,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { rateLimit, getClientIp } from '../lib/rateLimiter';
+import { rateLimit, getClientIp } from './rateLimiter.js';
 // ethers imported dynamically below to avoid ESM bundling issues with Vercel
 
 // ── 0G Labs testnet constants

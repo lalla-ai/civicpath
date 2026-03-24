@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { rateLimit, getClientIp } from '../lib/rateLimiter';
+import { rateLimit, getClientIp } from './rateLimiter.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
