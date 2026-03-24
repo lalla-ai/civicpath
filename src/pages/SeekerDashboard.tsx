@@ -218,6 +218,32 @@ export default function SeekerDashboard() {
   // Viral share
   const [showShareBanner, setShowShareBanner] = useState(false);
 
+  // ── Plan gating ───────────────────────────────────────────
+  const FREE_RUN_LIMIT = 5;
+  const monthKey = `civicpath_runs_${new Date().toISOString().slice(0, 7)}`; // e.g. 'civicpath_runs_2026-03'
+  const [monthlyRuns, setMonthlyRuns] = useState<number>(() => {
+    return parseInt(localStorage.getItem(monthKey) || '0', 10);
+  });
+  const [userPlan, setUserPlan] = useState<string>(() =>
+    localStorage.getItem('civicpath_plan') || 'free'
+  );
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const isPaidPlan = userPlan === 'pro' || userPlan === 'funder';
+  const runsRemaining = Math.max(0, FREE_RUN_LIMIT - monthlyRuns);
+
+  // Sync plan from Firestore when user logs in
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    loadUserData(uid).then(data => {
+      if (data?.plan) {
+        setUserPlan(data.plan);
+        localStorage.setItem('civicpath_plan', data.plan);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // ── Firestore: load cloud data when user logs in ────────────────────────
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -1089,6 +1115,18 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
   const handleExecute = async () => {
     if (isRunning) return;
+
+    // ── Plan gate: free users capped at FREE_RUN_LIMIT runs/month ──
+    if (!isPaidPlan && monthlyRuns >= FREE_RUN_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    // Increment run counter
+    const newCount = monthlyRuns + 1;
+    setMonthlyRuns(newCount);
+    localStorage.setItem(monthKey, String(newCount));
+    const uid = auth.currentUser?.uid;
+    if (uid) saveUserData(uid, { [`runs_${new Date().toISOString().slice(0, 7)}`]: newCount } as any).catch(() => {});
     
     setIsRunning(true);
     setAwaitingApproval(false);
@@ -1817,6 +1855,30 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         </div>
       </header>
 
+      {/* ── Upgrade modal ── */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-stone-200 p-8 text-center">
+            <div className="text-4xl mb-3">🚀</div>
+            <h2 className="text-xl font-black text-stone-900 mb-2">Free limit reached</h2>
+            <p className="text-stone-500 text-sm mb-1">You’ve used all <strong>{FREE_RUN_LIMIT} free pipeline runs</strong> this month.</p>
+            <p className="text-stone-400 text-xs mb-6">Upgrade to Pro for unlimited runs, unlimited proposals, and priority support.</p>
+            <a
+              href="/pricing"
+              className="block w-full py-3 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors mb-3"
+            >
+              Upgrade to Pro — $49/mo →
+            </a>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="w-full py-2.5 border border-stone-200 text-stone-500 font-medium rounded-xl hover:bg-stone-50 text-sm"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Agent Status Sidebar */}
       {showAgentSidebar && (
         <AgentStatus
@@ -1884,10 +1946,22 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         {activeTab === 'billing' && (() => {
-          const currentPlan = localStorage.getItem('civicpath_plan') || 'free';
+          const currentPlan = userPlan;
           const isPro = currentPlan === 'pro';
           const isFunder = currentPlan === 'funder';
           const isPaid = isPro || isFunder;
+
+          const handleManageBilling = async () => {
+            try {
+              const res = await fetch('/api/create-portal-session', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user?.email || '' }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+              else alert(data.error || 'Could not open billing portal. Please try again.');
+            } catch { alert('Network error. Please try again.'); }
+          };
 
           const handleUpgrade = async (plan: string) => {
             try {
@@ -1935,9 +2009,24 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     </button>
                   </div>
                 )}
+                {!isPaid && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-stone-500">
+                    <span className="font-semibold text-stone-700">{runsRemaining}</span> of {FREE_RUN_LIMIT} free pipeline runs remaining this month
+                    <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#76B900] rounded-full transition-all" style={{width: `${(monthlyRuns / FREE_RUN_LIMIT) * 100}%`}} />
+                    </div>
+                  </div>
+                )}
                 {isPaid && (
-                  <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl">
-                    <p className="text-sm text-stone-600">To manage your subscription, update payment method, or cancel: <a href="mailto:hello@civicpath.ai?subject=Billing%20Management" className="text-[#76B900] font-bold hover:underline">email hello@civicpath.ai</a> or visit <a href="https://civicpath.ai/pricing" className="text-[#76B900] font-bold hover:underline">civicpath.ai/pricing</a>.</p>
+                  <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-stone-800">Manage your subscription</p>
+                      <p className="text-xs text-stone-500">Update payment method, view invoices, or cancel anytime.</p>
+                    </div>
+                    <button onClick={handleManageBilling}
+                      className="shrink-0 px-4 py-2 border border-stone-200 text-stone-700 font-bold rounded-xl hover:bg-stone-50 text-sm transition-colors">
+                      Open Portal →
+                    </button>
                   </div>
                 )}
               </div>

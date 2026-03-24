@@ -37,6 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           photo: firebaseUser.photoURL || undefined,
           role: savedRole || undefined,
         });
+        // Always persist email to Firestore so Stripe webhook can look up the user
+        saveUserData(firebaseUser.uid, {
+          profile: {
+            email: firebaseUser.email || '',
+            name: firebaseUser.displayName || 'User',
+          },
+        }).catch(() => {});
       } else {
         setUser(null);
       }

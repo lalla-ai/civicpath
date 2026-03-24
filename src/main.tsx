@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
+import ErrorBoundary from './components/ErrorBoundary'
 import LoginPage from './LoginPage.tsx'
 import { AuthProvider, useAuth } from './AuthContext.tsx'
 import LandingPage from './pages/LandingPage.tsx'
@@ -30,6 +31,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
@@ -50,5 +52,6 @@ createRoot(document.getElementById('root')!).render(
         <SovereignTerminal />
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 )

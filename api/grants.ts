@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { rateLimit, getClientIp } from './_rateLimit';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -6,7 +7,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { keyword = 'technology', location = 'florida', rows = 8 } = req.body || {};
+  // Rate limit: 30 requests per minute per IP
+  const ip = getClientIp(req.headers as any);
+  if (!rateLimit(`grants:${ip}`, 30)) {
+    return res.status(429).json({ error: 'Rate limit exceeded. Please wait a moment.' });
+  }
+
+  const { keyword
   const searchTerm = `${keyword} ${location}`.trim();
 
   const liveResults: any[] = [];
