@@ -135,7 +135,14 @@ export default function MyLallaPricing() {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        {/* Dual-product disclosure */}
+        <div style={{margin:'32px auto', maxWidth:'560px', padding:'14px 20px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'12px', textAlign:'center'}}>
+          <p style={{fontSize:'12px', color:'rgba(232,227,220,0.45)', lineHeight:1.6}}>
+            MyLalla is a standalone AI grant advisor. <a href="https://civicpath.ai" style={{color:'#76B900'}}>CivicPath</a> is the 8-agent full pipeline tool (separate product, separate subscription).
+          </p>
+        </div>
+
+        <div className="mt-6 text-center">
           <p className="text-white/20 text-xs mb-4">14-day free trial · No credit card required · Cancel anytime</p>
           <div className="flex flex-wrap justify-center gap-4 text-[10px] text-white/20">
             {['Nemotron-3-Super-120B','Live Grants.gov','0G Labs Blockchain','GDPR Art.17 Purge','NVIDIA Inception'].map(b => (

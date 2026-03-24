@@ -21,8 +21,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { ethers } from 'ethers';
 import { rateLimit, getClientIp } from './_rateLimit';
+// ethers imported dynamically below to avoid ESM bundling issues with Vercel
+
+export const config = { maxDuration: 60 }; // extend timeout for NIM + 0G calls
 
 // ── 0G Labs testnet constants ─────────────────────────────────────────────
 // Hardcoded testnet values — override via env vars for mainnet.
@@ -63,6 +65,8 @@ async function real0GAnchor(
   metadata?: Record<string, string>
 ) {
   try {
+    // Dynamic import to avoid ESM/CJS bundling issues on Vercel
+    const { ethers } = await import('ethers');
     const provider = new ethers.JsonRpcProvider(ZG_EVM_RPC);
     const wallet = new ethers.Wallet(privateKey, provider);
 
@@ -119,6 +123,7 @@ async function real0GAnchor(
 // Verify a TX on-chain via ethers provider
 async function verify0GTransaction(txHash: string): Promise<{ verified: boolean; blockHeight: number; blockExplorerUrl: string }> {
   try {
+    const { ethers } = await import('ethers');
     const provider = new ethers.JsonRpcProvider(ZG_EVM_RPC);
     const receipt = await provider.getTransactionReceipt(txHash);
     if (receipt && receipt.status === 1) {
@@ -374,12 +379,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (!responseText && geminiKey) {
-          const { GoogleGenerativeAI } = await import('@google/generative-ai');
-          const genAI = new GoogleGenerativeAI(geminiKey);
-          const gmodel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', tools: [{ googleSearch: {} } as any] });
-          const result = await gmodel.generateContent(`${systemPrompt}\n\nUser: ${mlQuery}`);
-          responseText = result.response.text();
-          modelTierUsed = 'Gemini 2.0 Flash';
+          try {
+            // Dynamic import to avoid bundling issues
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            const genAI = new GoogleGenerativeAI(geminiKey);
+            const gmodel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+            const result = await gmodel.generateContent(`${systemPrompt}\n\nUser: ${mlQuery}`);
+            responseText = result.response.text();
+            modelTierUsed = 'Gemini 2.0 Flash';
+          } catch (gErr: any) {
+            console.warn('[MyLalla] Gemini fallback failed:', gErr.message);
+            responseText = 'I am temporarily unavailable. Please try again in a moment.';
+            modelTierUsed = 'offline';
+          }
         }
 
         // Step 5: Generate follow-up questions

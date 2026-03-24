@@ -32,13 +32,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Detect if running on mylalla.ai domain
+const isMyLallaDomain = typeof window !== 'undefined' &&
+  (window.location.hostname === 'mylalla.ai' || window.location.hostname === 'www.mylalla.ai');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          {/* If on mylalla.ai domain, serve MyLalla as root */}
+          <Route path="/" element={isMyLallaDomain ? <MyLallaPage /> : <LandingPage />} />
+          <Route path="/pricing" element={isMyLallaDomain ? <MyLallaPricing /> : <Pricing />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/seeker" element={<SeekerDashboard />} />
           <Route path="/find-my-grant" element={<SeekerDashboard />} />

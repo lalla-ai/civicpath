@@ -173,7 +173,7 @@ export default function MyLallaPage() {
             )}
             <span style={{fontSize:'10px', color:'#76B900', background:'rgba(118,185,0,0.1)', border:'1px solid rgba(118,185,0,0.2)', padding:'3px 8px', borderRadius:'6px'}} className="hidden sm:flex items-center gap-1.5 font-bold">
               <span style={{width:5,height:5,borderRadius:'50%',background:'#76B900',display:'inline-block',animation:'pulse 2s infinite'}} />
-              Nemotron-3-Super
+              Nemotron-3-Super-120B
             </span>
             <Link to="/mylalla/pricing" style={{fontSize:'12px', color:'rgba(232,227,220,0.5)', border:'1px solid rgba(255,255,255,0.1)', padding:'5px 12px', borderRadius:'7px'}} className="hover:opacity-80 transition-opacity hidden sm:block font-medium">Pricing</Link>
             <Link to="/seeker" style={{fontSize:'12px', color:'rgba(232,227,220,0.5)', border:'1px solid rgba(255,255,255,0.1)', padding:'5px 12px', borderRadius:'7px'}} className="hover:opacity-80 transition-opacity hidden sm:block font-medium">CivicPath →</Link>
@@ -197,9 +197,14 @@ export default function MyLallaPage() {
               <h1 style={{fontSize:'28px', fontWeight:600, letterSpacing:'-0.5px', color:'#E8E3DC', marginBottom:'8px'}}>
                 How can I help you today?
               </h1>
-              <p style={{fontSize:'14px', color:'rgba(232,227,220,0.45)', maxWidth:'380px', margin:'0 auto', lineHeight:1.6}}>
-                AI grant advisor powered by Nemotron-3-Super · Live Grants.gov data
+            <p style={{fontSize:'14px', color:'rgba(232,227,220,0.45)', maxWidth:'440px', margin:'0 auto', lineHeight:1.6}}>
+                AI grant advisor powered by Nemotron-3-Super-120B · Live Grants.gov data · Sovereign AI
               </p>
+              <div style={{display:'flex', flexWrap:'wrap', gap:'6px', justifyContent:'center', marginTop:'12px'}}>
+                {['🏆 Google ADK Finalist 2026', '🔐 FedRAMP-Aligned', '🏙️ Miami-Dade Pilot'].map((b,i) => (
+                  <span key={i} style={{fontSize:'10px', color:'rgba(118,185,0,0.7)', background:'rgba(118,185,0,0.08)', border:'1px solid rgba(118,185,0,0.15)', padding:'2px 8px', borderRadius:'20px'}}>{b}</span>
+                ))}
+              </div>
             </div>
 
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', width:'100%', maxWidth:'580px'}}>

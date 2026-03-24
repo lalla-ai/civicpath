@@ -233,7 +233,13 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="flex gap-2 justify-center mt-8 flex-wrap">
-            {['Google Cloud ADK Finalist 2026','Patent Pending','Miami-Dade Pilot Partner'].map((b,i) => (
+            {[
+              '🏆 Google Cloud ADK Hackathon 2026 Finalist',
+              '🔐 FedRAMP-Aligned Architecture',
+              '🔒 E2E Encrypted · GDPR Art.17',
+              '🏙️ Miami-Dade Pilot Partner',
+              '📄 Patent Pending · THINKVERSE-001',
+            ].map((b,i) => (
               <span key={i} className="bg-[#76B90015] text-[#5a9000] rounded-full px-3 py-1 text-xs font-medium">{b}</span>
             ))}
           </div>

@@ -17,6 +17,10 @@ const PLANS: Record<string, any[]> = {
       desc:'14-day free trial included',
       features:['Post unlimited grants','AI applicant matching','Full applicant dashboard','Analytics & reporting','Approve / reject workflow','Ask MyLalla advisor','Dedicated support'],
       cta:'Start Free Trial', stripe:'funder', role:'funder', highlight:false },
+    { name:'Enterprise', price:'Custom', period:'', annualNote:'',
+      desc:'For large organizations',
+      features:['Everything in Funder + Pro','Unlimited team seats','Private GKE deployment','Custom model fine-tuning','SSO / SAML','SLA guarantee','Dedicated success manager'],
+      cta:'Contact Us', stripe:null, role:'seeker', highlight:false, href:'mailto:hello@civicpath.ai' },
   ],
   annual: [
     { name:'Free', price:'$0', period:'forever', annualNote:'', desc:'Perfect for getting started',
@@ -32,6 +36,10 @@ const PLANS: Record<string, any[]> = {
       desc:'Save $398 vs monthly billing',
       features:['Post unlimited grants','AI applicant matching','Full applicant dashboard','Analytics & reporting','Approve / reject workflow','Ask MyLalla advisor','Dedicated support'],
       cta:'Start Free Trial', stripe:'funder_annual', role:'funder', highlight:false },
+    { name:'Enterprise', price:'Custom', period:'', annualNote:'',
+      desc:'For large organizations',
+      features:['Everything in Funder + Pro','Unlimited team seats','Private GKE deployment','Custom model fine-tuning','SSO / SAML','SLA guarantee','Dedicated success manager'],
+      cta:'Contact Us', stripe:null, role:'seeker', highlight:false, href:'mailto:hello@civicpath.ai' },
   ],
 };
 
@@ -177,8 +185,15 @@ export default function Pricing() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PLANS[billing].map((p, i) => (
+        {/* Dual-product disclosure */}
+        <div className="mb-6 p-4 bg-stone-50 border border-stone-200 rounded-xl text-center">
+          <p className="text-sm text-stone-600">
+            CivicPath Pro includes the 8-agent pipeline. <a href="https://mylalla.ai" className="text-[#76B900] font-bold hover:underline">MyLalla.ai</a> is a separate standalone grant advisor — <a href="/mylalla/pricing" className="text-[#76B900] font-bold hover:underline">see MyLalla pricing</a>.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {PLANS[billing].map((p: any, i: number) => (
             <div key={i} className={`rounded-2xl p-8 flex flex-col ${
               p.highlight ? 'bg-[#1A1A1A] text-white border-2 border-[#76B900]' : 'bg-white border border-stone-200'
             }`}>
@@ -200,7 +215,11 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              {p.stripe ? (
+              {(p as any).href ? (
+                <a href={(p as any).href} className="w-full py-3 text-center font-bold rounded-xl transition-colors text-sm block border border-stone-200 text-stone-700 hover:border-[#76B900] hover:text-[#76B900]">
+                  {p.cta}
+                </a>
+              ) : p.stripe ? (
                 <div>
                   <button
                     onClick={() => handleCheckout(p.stripe!, p.role)}
