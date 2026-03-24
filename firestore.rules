@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── User data: profile, tracker grants, role ────────────────────────────
+    // Only the authenticated owner can read or write their own document.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Proposals sub-collection — same owner-only rule
+      match /proposals/{proposalId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ── Funder grants: authenticated users can read, only the poster can write ─
+    match /funder_grants/{grantId} {
+      // Any logged-in seeker can read active funder grants
+      allow read: if request.auth != null;
+
+      // Only the funder who posted it can create/update/delete
+      allow create: if request.auth != null
+        && request.resource.data.funderUid == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && resource.data.funderUid == request.auth.uid;
+    }
+
+    // ── Deny everything else ────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

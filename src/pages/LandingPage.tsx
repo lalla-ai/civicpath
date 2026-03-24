@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { generateText } from '../gemini';
 import { Hexagon, ArrowUpRight } from 'lucide-react';
 
 const Logo = () => (
@@ -23,10 +22,16 @@ export default function LandingPage() {
     setHeroLoading(true);
     setHeroAnswer('');
     try {
-      const answer = await generateText(
-        `You are MyLalla, a grant advisor for CivicPath. A visitor asked: "${q}"\n\nGive a warm, helpful 2-3 sentence answer about grants that might be relevant. Be specific and encouraging. End with a call to action to sign up on CivicPath.`
-      );
-      setHeroAnswer(answer);
+      const res = await fetch('/api/gemini-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `You are MyLalla, a grant advisor for CivicPath. A visitor asked: "${q}"\n\nGive a warm, helpful 2-3 sentence answer about grants that might be relevant. Be specific and encouraging. End with a call to action to sign up on CivicPath.`,
+          useSearch: true,
+        }),
+      });
+      const data = await res.json();
+      setHeroAnswer(data.text || 'Sign up to get your personalized grant matches in under 60 seconds!');
     } catch {
       setHeroAnswer("I'd love to help! Sign up for free to get your personalized grant match list — we'll find the best funding for your organization in under 60 seconds.");
     } finally {

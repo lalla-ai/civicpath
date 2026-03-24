@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
+import { saveUserData } from './lib/db';
 
 interface User {
   email: string;
@@ -51,6 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setRole = (role: 'seeker' | 'funder') => {
     localStorage.setItem('civicpath_role', role);
     setUser(prev => prev ? { ...prev, role } : prev);
+    // Persist role to Firestore so it survives device switches
+    const uid = auth.currentUser?.uid;
+    if (uid) saveUserData(uid, { role } as any).catch(() => {});
   };
 
   const loginWithGoogle = async (role?: string) => {
@@ -67,6 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveRole(role);
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
+    // Seed the user document in Firestore with email + role on signup
+    await saveUserData(cred.user.uid, {
+      role: (role || 'seeker') as any,
+      profile: { email, name } as any,
+    }).catch(() => {});
   };
 
   const logout = () => {

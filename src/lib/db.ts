@@ -27,6 +27,9 @@ import { db } from '../firebase';
 export interface UserData {
   profile?: Record<string, any>;
   trackerGrants?: any[];
+  role?: string;
+  plan?: string;
+  planActivatedAt?: string | null;
   updatedAt?: any;
 }
 
