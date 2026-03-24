@@ -7,6 +7,10 @@
     {
       "path": "/api/cron-watcher",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron-report-check",
+      "schedule": "0 8 * * *"
     }
   ]
 }

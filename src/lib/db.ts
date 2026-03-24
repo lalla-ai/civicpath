@@ -148,6 +148,133 @@ export async function loadApplications(maxResults = 100): Promise<GrantApplicati
   }
 }
 
+// ── Post-Award Compliance ─────────────────────────────────────────────
+
+export interface AuditEntry {
+  event: string;
+  timestamp: string;
+  note?: string;
+}
+
+export interface ReportDeadline {
+  id: string;
+  type: 'interim' | 'progress' | 'financial' | 'narrative' | 'final' | 'other';
+  title: string;
+  dueDate: string;       // ISO date string
+  softDueDate: string;   // 7 days before dueDate
+  period: string;        // e.g. 'Q1 2026', 'Year 1'
+  status: 'upcoming' | 'drafted' | 'approved' | 'submitted' | 'overdue';
+  reportDraftId?: string;
+}
+
+export interface AwardedGrantDoc {
+  id?: string;
+  uid: string;
+  orgName: string;
+  grantTitle: string;
+  agency: string;
+  awardAmount: string;
+  awardDate: string;
+  fundingPeriod: string;
+  programOfficer?: string;
+  specialRequirements?: string[];
+  deadlines: ReportDeadline[];
+  fileName: string;
+  status: 'active' | 'completed' | 'at-risk';
+  auditTrail: AuditEntry[];
+  extractedAt?: any;
+}
+
+export interface ReportDraftDoc {
+  id?: string;
+  awardedGrantId: string;
+  deadlineId: string;
+  uid: string;
+  reportType: string;
+  reportText: string;
+  hardBlocks: string[];
+  status: 'draft' | 'approved' | 'submitted';
+  auditTrail: AuditEntry[];
+  generatedAt?: any;
+  approvedAt?: any;
+}
+
+/** Save (upsert) an awarded grant. Pass existingId to update. */
+export async function saveAwardedGrant(
+  uid: string,
+  grant: Omit<AwardedGrantDoc, 'id' | 'extractedAt'>,
+  existingId?: string
+): Promise<string | null> {
+  try {
+    if (existingId) {
+      await setDoc(
+        doc(db, 'users', uid, 'awarded_grants', existingId),
+        { ...grant, extractedAt: serverTimestamp() },
+        { merge: true }
+      );
+      return existingId;
+    } else {
+      const ref = await addDoc(
+        collection(db, 'users', uid, 'awarded_grants'),
+        { ...grant, extractedAt: serverTimestamp() }
+      );
+      return ref.id;
+    }
+  } catch (err) {
+    console.warn('[CivicPath] saveAwardedGrant failed:', err);
+    return null;
+  }
+}
+
+/** Load all awarded grants for a user, newest first. */
+export async function loadAwardedGrants(uid: string): Promise<AwardedGrantDoc[]> {
+  try {
+    const q = query(
+      collection(db, 'users', uid, 'awarded_grants'),
+      orderBy('extractedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as AwardedGrantDoc));
+  } catch (err) {
+    console.warn('[CivicPath] loadAwardedGrants failed:', err);
+    return [];
+  }
+}
+
+/** Save a report draft for a user. */
+export async function saveReportDraft(
+  uid: string,
+  draft: Omit<ReportDraftDoc, 'id' | 'generatedAt'>
+): Promise<string | null> {
+  try {
+    const ref = await addDoc(
+      collection(db, 'users', uid, 'report_drafts'),
+      { ...draft, generatedAt: serverTimestamp() }
+    );
+    return ref.id;
+  } catch (err) {
+    console.warn('[CivicPath] saveReportDraft failed:', err);
+    return null;
+  }
+}
+
+/** Update the status of a report draft (approved / submitted). */
+export async function updateReportDraftStatus(
+  uid: string,
+  draftId: string,
+  status: ReportDraftDoc['status']
+): Promise<void> {
+  try {
+    await setDoc(
+      doc(db, 'users', uid, 'report_drafts', draftId),
+      { status, approvedAt: status === 'approved' ? serverTimestamp() : null },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('[CivicPath] updateReportDraftStatus failed:', err);
+  }
+}
+
 /** Update the status of an application (funder approve / reject). */
 export async function updateApplicationStatus(
   id: string,

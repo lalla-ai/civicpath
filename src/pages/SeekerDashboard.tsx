@@ -15,6 +15,7 @@ import SovereignHeader from '../components/SovereignHeader';
 import { PurgeController } from '../lib/sovereign/PurgeController';
 import type { PurgePhase } from '../lib/sovereign/PurgeController';
 import RevokeAccess from '../components/RevokeAccess';
+import AwardedTab from '../components/AwardedTab';
 import { 
   Search, 
   BrainCircuit, 
@@ -65,11 +66,12 @@ import {
   CreditCard,
   Zap,
   ShieldOff,
+  Trophy,
 } from 'lucide-react';
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile' | 'billing' | 'security';
+type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile' | 'billing' | 'security' | 'awarded';
 
 interface TrackerGrant {
   id: string;
@@ -1877,6 +1879,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             >
               <ShieldOff className="w-4 h-4 mr-1.5" /> Security
             </button>
+            <button 
+              onClick={() => setActiveTab('awarded')}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'awarded' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <Trophy className="w-4 h-4 mr-1.5" /> Awarded
+            </button>
           </div>
         </div>
       </header>
@@ -3141,6 +3151,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <p className="text-[10px] text-stone-400 mt-2 text-center">MyLalla knows your profile and pipeline context. Responses powered by Gemini 2.0 Flash.</p>
             </div>
           </div>
+        )}
+
+        {/* ── AWARDED TAB — Post-Award Compliance Manager ── */}
+        {activeTab === 'awarded' && (
+          <AwardedTab profile={profile} user={user} />
         )}
 
         {/* ── SECURITY TAB ── */}
