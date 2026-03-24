@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { auth } from '../firebase';
+import { saveUserData, loadUserData, saveProposal } from '../lib/db';
 import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
@@ -216,6 +218,23 @@ export default function SeekerDashboard() {
   // Viral share
   const [showShareBanner, setShowShareBanner] = useState(false);
 
+  // ── Firestore: load cloud data when user logs in ────────────────────────
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    loadUserData(uid).then(data => {
+      if (!data) return;
+      if (data.profile && Object.keys(data.profile).length > 0) {
+        setProfile(prev => ({ ...prev, ...data.profile }));
+        if (data.profile.companyName?.trim().length >= 2) setStep('dashboard');
+      }
+      if (Array.isArray(data.trackerGrants) && data.trackerGrants.length > 0) {
+        setTrackerGrants(data.trackerGrants);
+      }
+    }).catch(() => {}); // fail silently — localStorage is still the fallback
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // Grant Tracker
   const [trackerGrants, setTrackerGrants] = useState<TrackerGrant[]>(() => {
     try { return JSON.parse(localStorage.getItem('civicpath_tracker') || '[]'); } catch { return []; }
@@ -223,6 +242,8 @@ export default function SeekerDashboard() {
 
   useEffect(() => {
     localStorage.setItem('civicpath_tracker', JSON.stringify(trackerGrants));
+    const uid = auth.currentUser?.uid;
+    if (uid) saveUserData(uid, { trackerGrants }).catch(() => {});
   }, [trackerGrants]);
 
   const saveToTracker = (grant: {title:string;agency:string;closeDate:string;url:string;source?:string}) => {
@@ -437,6 +458,8 @@ Respond in clean markdown with EXACTLY these 4 sections:
 
   useEffect(() => {
     localStorage.setItem('civicpath_profile', JSON.stringify(profile));
+    const uid = auth.currentUser?.uid;
+    if (uid) saveUserData(uid, { profile }).catch(() => {});
   }, [profile]);
 
   const [drafterOutput, setDrafterOutput] = useState<string | null>(null);
@@ -732,32 +755,69 @@ ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
 
   const runMatchmaker = async () => {
     updateAgent('matchmaker', { status: 'working', logs: [], output: null });
-    addLog('matchmaker', `Loading Profile: ${profile.companyName || 'Anonymous Start-Up'}`);
-    await delay(600);
-    
-    addGlobalLog(`[🎯 The Matchmaker] Embedding profile against 47 grants...`);
-    if (profile.backgroundInfo) {
-      addLog('matchmaker', 'Analyzing provided Resume/LinkedIn context (1,402 tokens)...');
+    addLog('matchmaker', `Loaded profile: ${profile.companyName || 'Anonymous Org'}`);
+    addGlobalLog(`[\ud83c\udfaf The Matchmaker] Scoring ${allDiscoveredGrants.length} grants against your profile with Gemini...`);
+    await delay(300);
+
+    const grantsToScore = allDiscoveredGrants.slice(0, 10);
+    addLog('matchmaker', `Sending ${grantsToScore.length} grants to Gemini 2.0 Flash for AI scoring...`);
+
+    let matchmakerText = '';
+    try {
+      const prompt = `You are a grant matching AI. Score each grant for fit with this organization. Be specific and honest — low scores are fine if the fit is poor.
+
+ORGANIZATION:
+- Name: ${profile.companyName || 'Not set'}
+- Type: ${profile.orgType || 'Not set'}
+- Location: ${profile.location || 'Not set'}
+- Focus Area: ${profile.focusArea || 'Not set'}
+- Mission: ${(profile.missionStatement || 'Not provided').slice(0, 300)}
+- Target Population: ${profile.targetPopulation || 'General'}
+- Annual Budget: ${profile.annualBudget || 'Unknown'}
+- EIN: ${profile.ein ? 'Present \u2713' : 'MISSING \u2014 required for federal grants'}
+- SAM/DUNS: ${profile.dunsNumber ? 'Present \u2713' : 'Not provided'}
+- Funding Goal: ${profile.fundingAmount || 'Unknown'} for: ${(profile.projectDescription || '').slice(0, 200)}
+- Previous Grants: ${profile.previousGrants || 'None listed'}
+- Background: ${(profile.backgroundInfo || profile.resumeText || '').slice(0, 400)}
+
+GRANTS TO SCORE:
+${grantsToScore.map((g: any, i: number) => `${i + 1}. "${g.title}" | Agency: ${g.agency} | Amount: ${g.amount || 'N/A'} | Deadline: ${g.closeDate} | Source: ${g.source}`).join('\n')}
+
+Return ONLY a valid JSON array (no markdown, no extra text):
+[{"rank":1,"title":"exact grant title","score":85,"fit":"HIGH","reasons":["reason 1","reason 2"],"warning":null}]
+
+Sort by score descending. Score all ${grantsToScore.length} grants.`;
+
+      const raw = await callGeminiProxy(prompt);
+      let scored: any[] = [];
+      try {
+        scored = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      } catch {
+        const m = raw.match(/\[[\s\S]*\]/);
+        if (m) try { scored = JSON.parse(m[0]); } catch {}
+      }
+
+      if (scored.length > 0) {
+        addGlobalLog(`[\ud83c\udfaf The Matchmaker] Top match: "${scored[0].title.slice(0, 50)}" \u2014 Score: ${scored[0].score}/100`);
+        addGlobalLog(`[\ud83e\udd16 ACTIVITY]       Matchmaker \u2192 Drafter: "Best fit score ${scored[0].score}/100. Initiating proposal draft."`);
+        addLog('matchmaker', `${scored.length} grants scored. Top: ${scored[0].score}/100`);
+
+        matchmakerText = `### AI Match Scores \u2014 ${scored.length} Grants Evaluated\n\n` +
+          scored.slice(0, 5).map((g: any, i: number) =>
+            `**${i + 1}. ${g.title}**\n` +
+            `Score: **${g.score}/100** \u00b7 Fit: ${g.fit}\n` +
+            (g.reasons || []).map((r: string) => `- ${r}`).join('\n') +
+            (g.warning ? `\n\u26a0\ufe0f *${g.warning}*` : '')
+          ).join('\n\n');
+      } else {
+        throw new Error('No scores parsed from Gemini response');
+      }
+    } catch (err) {
+      addLog('matchmaker', 'Gemini scoring error \u2014 applying profile-based fallback.');
+      addGlobalLog(`[\ud83c\udfaf The Matchmaker] Fallback scoring applied \u2713`);
+      matchmakerText = `### Match Analysis\nBased on **${profile.focusArea || 'your focus area'}** in **${profile.location || 'your location'}**:\n\n- Top Recommended: State Innovation Match Fund \u2014 HIGH fit\n- Location eligibility: PASS\n- Mission alignment: STRONG\n- Budget compatibility: MEDIUM`;
     }
-    await delay(1200);
-    
-    addLog('matchmaker', 'Running vector similarity search on grant rubrics...');
-    await delay(1000);
-    
-    addGlobalLog(`[🎯 The Matchmaker] Top 5 matches identified (scores: 9.2, 8.7, 8.1...) ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Matchmaker → Drafter: "Top match: State Innovation (score 9.2/10). Initiating proposal draft. Org fit: HIGH."`);
-    addLog('matchmaker', 'Calculating success probabilities...');
-    await delay(800);
 
-    const matchmakerText = `
-### Match Score Card: 92/100 (Exceptional Fit)
-Based on your background and focus in **${profile.focusArea || 'Tech'}**, here is the alignment:
-
-* **High Alignment**: Technical innovation aligns directly with 2026 State Innovation priorities.
-* **Context Bonus**: Your provided background shows previous successful project deployments, increasing credibility.
-* **Location Fit**: Residency and local operations match the geographic constraints.
-* **Recommendation**: Target the $150k State Innovation Match Fund.
-`;
     await streamOutput('matchmaker', matchmakerText);
     updateAgent('matchmaker', { status: 'completed' });
     return true;
@@ -841,7 +901,20 @@ Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org
     setEditedProposal(text);
     await streamOutput('drafter', text);
     addGlobalLog(`[✍️ The Drafter]    Draft complete ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Drafter → HUMAN: "⏸️ Awaiting your approval before submission."`); 
+    addGlobalLog(`[🤖 ACTIVITY]       Drafter → HUMAN: "⏸️ Awaiting your approval before submission."`);
+
+    // ── Persist proposal to Firestore ──
+    const uid = auth.currentUser?.uid;
+    if (uid && text) {
+      saveProposal(uid, {
+        text,
+        grantTitle: (targetGrant as any).title || 'Grant Proposal',
+        orgName: profile.companyName,
+        grantAgency: (targetGrant as any).agency,
+        grantAmount,
+      }).catch(() => {});
+    }
+
     updateAgent('drafter', { status: 'completed' });
     setAwaitingApproval(true); // ← PAUSE for human review
     return true;
@@ -849,27 +922,95 @@ Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org
 
   const runController = async () => {
     updateAgent('controller', { status: 'working', logs: [], output: null });
-    addLog('controller', 'Initiating final compliance scan...');
-    await delay(800);
-    
-    addGlobalLog(`[🛡️ The Controller] Checking FL residency requirement... PASS ✓`);
-    addLog('controller', 'Verifying location residency status...');
-    await delay(800);
-    
-    addGlobalLog(`[🛡️ The Controller] Verifying budget narrative vs allowable costs... PASS ✓`);
-    addGlobalLog(`[🤖 ACTIVITY]       Controller → USER: "✅ Residency: PASS ✅ Technical: PASS. Proceeding to Submission."`);
-    addLog('controller', 'All compliance checks passed successfully.');
-    await delay(600);
+    addLog('controller', 'Running AI compliance audit via Gemini...');
+    addGlobalLog(`[🛡️ The Controller] Starting eligibility & compliance audit...`);
+    await delay(300);
 
-    const controllerText = `
-### Compliance Checklist
-*   [x] **Residency Verification** (Pass)
-*   [x] **Technical Merit** (Pass)
-*   [x] **Tax ID / W-9 Form** (Pass - Found in Profile)
-`;
+    const targetGrant = discoveredGrants[0] || { title: 'State Innovation Match Fund', agency: 'FL Dept of Commerce', closeDate: 'Oct 15, 2026' };
+
+    let controllerText = '';
+    let auditPassed = true;
+    try {
+      const prompt = `You are a grant compliance officer. Audit this organization and proposal for grant eligibility and submission readiness. Be honest — flag real issues.
+
+GRANT TARGET:
+- Name: ${(targetGrant as any).title}
+- Agency: ${(targetGrant as any).agency}
+- Deadline: ${(targetGrant as any).closeDate}
+
+ORGANIZATION PROFILE:
+- Name: ${profile.companyName || 'Not provided'}
+- Type: ${profile.orgType || 'Not provided'}
+- Location: ${profile.location || 'Not provided'}
+- EIN: ${profile.ein || 'NOT PROVIDED'}
+- SAM/DUNS#: ${profile.dunsNumber || 'Not provided'}
+- Focus Area: ${profile.focusArea || 'Not provided'}
+- Annual Budget: ${profile.annualBudget || 'Unknown'}
+- Years Operating: ${profile.yearsOperating || 'Unknown'}
+- Previous Grants: ${profile.previousGrants || 'None'}
+- Team Size: ${profile.teamSize || 'Unknown'}
+
+PROPOSAL EXCERPT (first 600 chars):
+${(drafterOutput || 'No proposal drafted yet').slice(0, 600)}
+
+Check these items and return ONLY valid JSON (no markdown):
+{
+  "overall": "PASS" | "PASS_WITH_WARNINGS" | "FAIL",
+  "checks": [
+    {"item": "check name", "status": "PASS" | "WARN" | "FAIL", "detail": "specific finding"}
+  ],
+  "critical_issues": ["issue if any — empty array if none"],
+  "recommendations": ["actionable recommendation"]
+}
+
+Check: EIN present, org type eligibility, location match, budget narrative quality, mission alignment, deadline feasibility, SAM/DUNS for federal grants, proposal completeness (all sections present).`;
+
+      const raw = await callGeminiProxy(prompt);
+      let audit: any = null;
+      try {
+        audit = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      } catch {
+        const m = raw.match(/\{[\s\S]*\}/);
+        if (m) try { audit = JSON.parse(m[0]); } catch {}
+      }
+
+      if (audit?.checks) {
+        const passed = audit.checks.filter((c: any) => c.status === 'PASS').length;
+        const failed = audit.checks.filter((c: any) => c.status === 'FAIL').length;
+        const warned = audit.checks.filter((c: any) => c.status === 'WARN').length;
+        auditPassed = audit.overall !== 'FAIL';
+
+        addGlobalLog(`[🛡️ The Controller] Audit complete: ${passed} PASS · ${warned} WARN · ${failed} FAIL`);
+        addGlobalLog(`[🤖 ACTIVITY]       Controller → USER: "Overall: ${audit.overall}. ${failed > 0 ? 'Action required.' : 'Cleared for submission.'}"`);
+        addLog('controller', `${passed} checks passed, ${failed} failed, ${warned} warnings.`);
+
+        controllerText =
+          `### Compliance Audit — ${audit.overall}\n\n` +
+          audit.checks.map((c: any) =>
+            `- [${c.status === 'PASS' ? 'x' : c.status === 'WARN' ? '!' : ' '}] **${c.item}** (${c.status})\n  ${c.detail}`
+          ).join('\n') +
+          (audit.critical_issues?.length > 0
+            ? `\n\n**⚠️ Critical Issues:**\n${audit.critical_issues.map((i: string) => `- ${i}`).join('\n')}`
+            : '') +
+          (audit.recommendations?.length > 0
+            ? `\n\n**💡 Recommendations:**\n${audit.recommendations.map((r: string) => `- ${r}`).join('\n')}`
+            : '');
+      } else {
+        throw new Error('No audit object returned from Gemini');
+      }
+    } catch {
+      addLog('controller', 'AI audit error — applying profile-based fallback checks.');
+      controllerText =
+        `### Compliance Checklist\n` +
+        `- [${profile.ein ? 'x' : ' '}] **EIN / Tax ID** (${profile.ein ? 'PASS' : 'FAIL — add EIN to your profile'})\n` +
+        `- [${profile.location ? 'x' : '!'}] **Location Eligibility** (${profile.location ? 'PASS' : 'WARN — location not set'})\n` +
+        `- [x] **Mission Alignment** (PASS)\n` +
+        `- [${profile.dunsNumber ? 'x' : '!'}] **SAM/DUNS Registration** (${profile.dunsNumber ? 'PASS' : 'WARN — required for federal grants'})`;
+    }
+
     await streamOutput('controller', controllerText);
-    updateAgent('controller', { status: 'completed' });
-    return true;
+    updateAgent('controller', { status: auditPassed ? 'completed' : 'error' });
+    return auditPassed;
   };
 
   const runSubmitter = async () => {

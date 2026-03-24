@@ -13,6 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let liveTotal = 0;
 
   // --- SOURCE 1: Grants.gov (ALWAYS FIRST — real live data) ---
+  const expandedMock: any[] = [
     // ── NSF ──
     { id:'nsf-001', title:'NSF SBIR Phase I: AI-Driven Civic Technology', agency:'National Science Foundation', openDate:'2026-03-01', closeDate:'2026-07-15', source:'NSF SBIR', url:'https://seedfund.nsf.gov/', category:'Federal SBIR', amount:'$305,000' },
     { id:'nsf-002', title:'NSF STTR Phase I: University-Startup AI Collaboration', agency:'National Science Foundation', openDate:'2026-03-01', closeDate:'2026-07-15', source:'NSF STTR', url:'https://seedfund.nsf.gov/', category:'Federal SBIR', amount:'$305,000' },
