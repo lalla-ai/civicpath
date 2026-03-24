@@ -126,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     </td></tr>
   </table>
 </body></html>`,
-          reply_to: 'noreply@civicpath.ai',
+          replyTo: 'noreply@civicpath.ai',
         });
         alerted++;
       } catch (err) {

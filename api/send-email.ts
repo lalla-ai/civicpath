@@ -228,7 +228,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       to,
       subject: emailData.subject,
       html: emailData.html,
-      reply_to: 'noreply@civicpath.ai',
+      replyTo: 'noreply@civicpath.ai',
     });
 
     return res.status(200).json({ ok: true });

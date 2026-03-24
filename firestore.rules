@@ -13,10 +13,10 @@ service cloud.firestore {
       }
     }
 
-    // ── Funder grants: authenticated users can read, only the poster can write ─
+    // ── Funder grants: anyone can read (seeker route is public), only poster can write ─
     match /funder_grants/{grantId} {
-      // Any logged-in seeker can read active funder grants
-      allow read: if request.auth != null;
+      // Public read — seeker dashboard is open without login
+      allow read: if true;
 
       // Only the funder who posted it can create/update/delete
       allow create: if request.auth != null
