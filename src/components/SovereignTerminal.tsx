@@ -26,6 +26,19 @@ export default function SovereignTerminal() {
     setDisplayedLogs(logs);
   }, [logs]);
 
+  // Listen for external sovereign log events (e.g. RevokeAccess kill switch)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent<string>).detail;
+      if (msg) {
+        setDisplayedLogs(prev => [...prev, msg]);
+        setMinimized(false); // auto-expand terminal when events arrive
+      }
+    };
+    window.addEventListener('civicpath:sovereign-log', handler);
+    return () => window.removeEventListener('civicpath:sovereign-log', handler);
+  }, []);
+
   // After attestation is valid, start heartbeat lines
   useEffect(() => {
     if (report.status !== 'valid') return;

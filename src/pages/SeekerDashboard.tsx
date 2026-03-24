@@ -11,6 +11,7 @@ import type { AgentItem } from '../components/AgentStatus';
 import SovereignHeader from '../components/SovereignHeader';
 import { PurgeController } from '../lib/sovereign/PurgeController';
 import type { PurgePhase } from '../lib/sovereign/PurgeController';
+import RevokeAccess from '../components/RevokeAccess';
 import { 
   Search, 
   BrainCircuit, 
@@ -65,7 +66,7 @@ import {
 
 type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 type AppStep = 'onboarding' | 'dashboard';
-type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile' | 'billing';
+type ActiveTab = 'dashboard' | 'grants' | 'tracker' | 'scheduler' | 'meetings' | 'integrations' | 'lalla' | 'profile' | 'billing' | 'security';
 
 interface TrackerGrant {
   id: string;
@@ -1641,6 +1642,14 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             >
               <CreditCard className="w-4 h-4 mr-1.5" /> Billing
             </button>
+            <button 
+              onClick={() => setActiveTab('security')}
+              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === 'security' ? 'border-red-500 text-red-500' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <ShieldOff className="w-4 h-4 mr-1.5" /> Security
+            </button>
           </div>
         </div>
       </header>
@@ -2852,6 +2861,22 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </form>
               <p className="text-[10px] text-stone-400 mt-2 text-center">MyLalla knows your profile and pipeline context. Responses powered by Gemini 2.0 Flash.</p>
             </div>
+          </div>
+        )}
+
+        {/* ── SECURITY TAB ── */}
+        {activeTab === 'security' && (
+          <div className="max-w-2xl mx-auto animate-in fade-in space-y-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl">
+                <ShieldOff className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-stone-900">Sovereign Security</h2>
+                <p className="text-sm text-stone-500">Cryptographic controls, data revocation, and GDPR compliance tools.</p>
+              </div>
+            </div>
+            <RevokeAccess onWipeData={handleSecureWipe} />
           </div>
         )}
 
