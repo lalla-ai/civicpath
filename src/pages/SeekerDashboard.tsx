@@ -373,10 +373,11 @@ Respond in clean markdown with EXACTLY these 4 sections:
     setDigestLoading(true);
     setDigestMsg('');
     try {
-      const res = await fetch('/api/send-digest', {
+      const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
+          type: 'digest',
           email: user.email,
           name: user.name || 'there',
           profile: { companyName: profile.companyName, location: profile.location, focusArea: profile.focusArea, missionStatement: profile.missionStatement }
@@ -1080,15 +1081,16 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
 
     // Send real confirmation email via Resend
     if (user?.email) {
-      fetch('/api/send-submission-confirmation', {
+      fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          type: 'confirmation',
           email: user.email,
           name: user.name || 'there',
           orgName: profile.companyName || 'Your Organization',
-          grantName: 'State Innovation Match Fund',
-          amount: '$150,000',
+          grantName: (appGrant as any).title || 'Grant Application',
+          amount: appAmount,
         }),
       }).catch(() => {});
     }

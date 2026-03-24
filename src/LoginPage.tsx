@@ -78,10 +78,10 @@ export default function LoginPage() {
 
   const sendWelcomeEmail = (userName: string, userEmail: string, userRole: string) => {
     // Fire-and-forget — never blocks signup
-    fetch('/api/send-welcome-email', {
+    fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: userName, email: userEmail, role: userRole }),
+      body: JSON.stringify({ type: 'welcome', name: userName, email: userEmail, role: userRole }),
     }).catch(() => {}); // silently ignore errors
   };
 

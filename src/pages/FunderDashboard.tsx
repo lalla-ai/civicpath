@@ -146,10 +146,11 @@ export default function FunderDashboard() {
     if (applicant?.isLive) {
       updateApplicationStatus(id, 'approved').catch(() => {});
       if (applicant.seekerEmail) {
-        fetch('/api/notify-approval', {
+        fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'approval',
             seekerEmail: applicant.seekerEmail,
             seekerName: applicant.seekerName || applicant.org,
             orgName: applicant.org,
