@@ -171,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         to: profile.email,
         subject: `👁️ ${grants.length} new ${profile.focusArea} grants found for ${profile.companyName}`,
         html,
-        reply_to: 'hello@civicpath.ai',
+        replyTo: 'hello@civicpath.ai',
       });
       sent++;
     } catch (err) {
