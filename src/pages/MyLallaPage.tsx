@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import {
-  Send, Loader2, Sparkles, ExternalLink,
-  Search, BookOpen, ShieldCheck, Copy, Check,
-  ArrowRight, Zap, Upload, FileText, X, User,
+  Search, BookOpen, Copy, Check,
+  Zap, Upload, FileText, X, User, Download,
+  Sparkles, ArrowRight, ExternalLink, Loader2, ShieldCheck, Send,
 } from 'lucide-react';
 import { myLallaQuery, analyzeDocument, getCivicPathProfile } from '../lib/mylallaClient';
+import { downloadReportPDF } from '../components/AwardedTab';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -174,6 +175,9 @@ export default function MyLallaPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               Nemotron-3-Super
             </span>
+            <Link to="/mylalla/pricing" className="text-xs font-bold text-white/50 hover:text-[#76B900] transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-[#76B900]/30">
+              Pricing
+            </Link>
             <Link
               to="/seeker"
               className="text-xs font-bold text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20"
@@ -295,11 +299,20 @@ export default function MyLallaPage() {
                           ⬡ {msg.modelTier}
                         </span>
                       )}
-                      <button onClick={() => handleCopy(msg.content, msg.id)}
-                        className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 transition-colors ml-auto">
-                        {copied === msg.id ? <Check className="w-3 h-3 text-[#76B900]" /> : <Copy className="w-3 h-3" />}
-                        {copied === msg.id ? 'Copied' : 'Copy'}
-                      </button>
+                      <div className="ml-auto flex items-center gap-2">
+                        <button onClick={() => {
+                          const title = `MyLalla Research — ${new Date().toLocaleDateString()}`;
+                          downloadReportPDF(msg.content, title, 'Grant Research', 'MyLalla.ai');
+                        }} className="flex items-center gap-1 text-[10px] text-white/25 hover:text-[#76B900] transition-colors">
+                          <Download className="w-3 h-3" />
+                          <span>Export</span>
+                        </button>
+                        <button onClick={() => handleCopy(msg.content, msg.id)}
+                          className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 transition-colors">
+                          {copied === msg.id ? <Check className="w-3 h-3 text-[#76B900]" /> : <Copy className="w-3 h-3" />}
+                          {copied === msg.id ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

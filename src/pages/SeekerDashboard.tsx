@@ -1908,6 +1908,9 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             <div className="flex items-center gap-3">
               <span className="text-sm text-stone-500 hidden sm:block">Hi, {user?.name}</span>
               <div className="hidden sm:block"><SovereignHeader /></div>
+              <a href="/mylalla" className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors border border-purple-200">
+                <Sparkles className="w-3 h-3" /> Ask MyLalla
+              </a>
               <a href="/pricing" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Pricing</a>
               <a href="/privacy" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Privacy</a>
               <a href="/terms" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Terms</a>

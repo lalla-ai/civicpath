@@ -224,11 +224,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const resend = new Resend(resendKey);
     await resend.emails.send({
-      from: 'CivicPath <hello@civicpath.ai>',
+      from: 'CivicPath <noreply@civicpath.ai>',
       to,
       subject: emailData.subject,
       html: emailData.html,
-      reply_to: 'hello@civicpath.ai',
+      reply_to: 'noreply@civicpath.ai',
     });
 
     return res.status(200).json({ ok: true });

@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       try {
         await resend.emails.send({
-          from: 'CivicPath Compliance <hello@civicpath.ai>',
+          from: 'CivicPath Compliance <noreply@civicpath.ai>',
           to: userEmail,
           subject: `⚠️ Action required: ${upcoming.length} report${upcoming.length > 1 ? 's' : ''} due soon — ${grant.grantTitle}`,
           html: `
@@ -126,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     </td></tr>
   </table>
 </body></html>`,
-          reply_to: 'hello@civicpath.ai',
+          reply_to: 'noreply@civicpath.ai',
         });
         alerted++;
       } catch (err) {

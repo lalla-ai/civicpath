@@ -5,6 +5,7 @@ import './index.css'
 import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './pages/NotFound'
 import MyLallaPage from './pages/MyLallaPage'
+import MyLallaPricing from './pages/MyLallaPricing'
 import LoginPage from './LoginPage.tsx'
 import { AuthProvider, useAuth } from './AuthContext.tsx'
 import LandingPage from './pages/LandingPage.tsx'
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/mylalla" element={<MyLallaPage />} />
+          <Route path="/mylalla/pricing" element={<MyLallaPricing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <OmninorChat />

@@ -167,11 +167,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 </body></html>`;
 
       await resend.emails.send({
-        from: 'CivicPath Watcher <hello@civicpath.ai>',
+        from: 'CivicPath Watcher <noreply@civicpath.ai>',
         to: profile.email,
         subject: `👁️ ${grants.length} new ${profile.focusArea} grants found for ${profile.companyName}`,
         html,
-        replyTo: 'hello@civicpath.ai',
+        replyTo: 'noreply@civicpath.ai',
       });
       sent++;
     } catch (err) {
