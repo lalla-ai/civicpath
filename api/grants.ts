@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Rate limit exceeded. Please wait a moment.' });
   }
 
-  const { keyword
+  const { keyword = '', location = 'United States', rows = 20 } = req.body || {};
   const searchTerm = `${keyword} ${location}`.trim();
 
   const liveResults: any[] = [];

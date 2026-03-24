@@ -24,9 +24,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { rateLimit, getClientIp } from './_rateLimit';
 // ethers imported dynamically below to avoid ESM bundling issues with Vercel
 
-export const config = { maxDuration: 60 }; // extend timeout for NIM + 0G calls
-
-// ── 0G Labs testnet constants ─────────────────────────────────────────────
+// ── 0G Labs testnet constants
 // Hardcoded testnet values — override via env vars for mainnet.
 const ZG_EVM_RPC      = process.env.ZG_RPC_URL        || 'https://evmrpc-testnet.0g.ai';
 const ZG_STORAGE_RPC  = process.env.ZG_STORAGE_URL    || 'https://rpc-storage-testnet.0g.ai';

@@ -1,13 +1,5 @@
 {
-  "functions": {
-    "api/sovereign.ts": { "maxDuration": 60 },
-    "api/gemini-proxy.ts": { "maxDuration": 60 },
-    "api/extract-award-letter.ts": { "maxDuration": 30 },
-    "api/draft-report.ts": { "maxDuration": 45 },
-    "api/cron-watcher.ts": { "maxDuration": 300 },
-    "api/cron-report-check.ts": { "maxDuration": 300 }
-  },
-  "rewrites": [
+  "rewrites":
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
