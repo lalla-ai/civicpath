@@ -193,6 +193,69 @@ async function performKMSDisable(keyName: string, keyVersion = '1') {
   };
 }
 
+function extractAnthropicMessageText(data: any): string {
+  return (data?.content || [])
+    .filter((item: any) => item?.type === 'text')
+    .map((item: any) => item.text)
+    .join('\n')
+    .trim();
+}
+
+async function askClaude(prompt: string, system?: string) {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) return null;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest',
+      max_tokens: 2048,
+      system: system || undefined,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  const data = await res.json();
+  const text = extractAnthropicMessageText(data);
+  if (!res.ok || !text) throw new Error(data?.error?.message || data?.error?.type || 'Claude response missing content');
+  return {
+    text,
+    model: data.model || process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest',
+  };
+}
+
+async function askGroq(prompt: string, system?: string, maxTokens = 2048) {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) return null;
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${groqKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      messages: [
+        ...(system ? [{ role: 'system', content: system }] : []),
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.6,
+      max_tokens: maxTokens,
+      stream: false,
+    }),
+  });
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if (!res.ok || !text) throw new Error(data?.error?.message || 'Groq response missing content');
+  return {
+    text,
+    model: data.model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  };
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -308,8 +371,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!mlQuery) return res.status(400).json({ error: 'query required' });
 
         const nimKey = process.env.NVIDIA_API_KEY;
+        const anthropicKey = process.env.ANTHROPIC_API_KEY;
+        const groqKey = process.env.GROQ_API_KEY;
         const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-        if (!nimKey && !geminiKey) return res.status(500).json({ error: 'No inference API configured' });
+        if (!anthropicKey && !groqKey && !nimKey && !geminiKey) return res.status(500).json({ error: 'No inference API configured' });
 
         // Step 1: Classify query type
         const queryLower = mlQuery.toLowerCase();
@@ -350,7 +415,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let responseText = '';
         let modelTierUsed = 'gemini-fallback';
 
-        if (nimKey) {
+        if (anthropicKey) {
+          try {
+            const claude = await askClaude(mlQuery, systemPrompt);
+            if (claude?.text) {
+              responseText = claude.text;
+              modelTierUsed = 'Claude';
+            }
+          } catch (e: any) {
+            console.warn('[MyLalla] Claude failed:', e.message);
+          }
+        }
+
+        if (!responseText && groqKey) {
+          try {
+            const groq = await askGroq(mlQuery, systemPrompt, 2048);
+            if (groq?.text) {
+              responseText = groq.text;
+              modelTierUsed = 'Groq';
+            }
+          } catch (e: any) {
+            console.warn('[MyLalla] Groq failed:', e.message);
+          }
+        }
+
+        if (!responseText && nimKey) {
           try {
             const model = process.env.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-super-120b-instruct';
             const nr = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
@@ -396,15 +485,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let followUps: string[] = [];
         try {
           const fuPrompt = `Given this grant research question: "${mlQuery}"\nAnd this response summary: "${responseText.slice(0, 500)}"\nGenerate 3 specific follow-up questions the user should ask next. Return ONLY a JSON array of strings.`;
-          const fuRes = nimKey
-            ? await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${nimKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: fuPrompt }], max_tokens: 200, temperature: 0.8 }),
-                signal: AbortSignal.timeout(15_000),
-              })
-            : null;
-          if (fuRes) {
+          if (groqKey) {
+            const groq = await askGroq(fuPrompt, 'Return only a JSON array of strings.', 256);
+            followUps = JSON.parse((groq?.text || '[]').replace(/```json|```/g, '').trim());
+          } else if (anthropicKey) {
+            const claude = await askClaude(fuPrompt, 'Return only a JSON array of strings.');
+            followUps = JSON.parse((claude?.text || '[]').replace(/```json|```/g, '').trim());
+          } else if (nimKey) {
+            const fuRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${nimKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: fuPrompt }], max_tokens: 200, temperature: 0.8 }),
+              signal: AbortSignal.timeout(15_000),
+            });
             const fuData = await fuRes.json();
             const fuText = fuData.choices?.[0]?.message?.content || '[]';
             followUps = JSON.parse(fuText.replace(/```json|```/g, '').trim());

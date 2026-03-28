@@ -34,7 +34,7 @@ export interface OrchestratorError {
 
 export interface InferenceResult {
   text: string;
-  provider: 'nvidia-nim' | 'gemini-fallback' | 'cached';
+  provider: 'anthropic-claude' | 'groq' | 'nvidia-nim' | 'gemini-fallback' | 'cached';
   rateLimited: boolean;
   retryAfterMs?: number;
 }
@@ -178,7 +178,7 @@ export async function getSovereignLayerStatus(): Promise<SovereignLayerStatus> {
       nim: data.provider === 'nvidia-nim' ? 'active' : 'pending-connection',
       zeroG: 'pending-connection',  // activates when ZG_RPC_URL is set
       kms: 'pending-connection',    // activates when GOOGLE_KMS_KEY_NAME is set
-      gemini: data.provider?.includes('gemini') ? 'active' : 'offline',
+      gemini: data.provider?.includes('gemini') || data.provider === 'anthropic-claude' || data.provider === 'groq' ? 'active' : 'offline',
     };
   } catch {
     return { nim: 'pending-connection', zeroG: 'pending-connection', kms: 'pending-connection', gemini: 'active' };

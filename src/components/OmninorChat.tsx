@@ -158,7 +158,7 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
                 ↑
               </button>
             </form>
-            <p className="text-[9px] text-stone-600 text-center mt-1.5">Powered by CivicPath × Gemini</p>
+            <p className="text-[9px] text-stone-600 text-center mt-1.5">Powered by CivicPath × Claude / Groq</p>
           </div>
         </div>
       )}
