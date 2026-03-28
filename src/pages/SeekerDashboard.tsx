@@ -390,6 +390,9 @@ export default function SeekerDashboard() {
   const [digestMsg, setDigestMsg] = useState('');
   const [linkedinMsg, setLinkedinMsg] = useState('');
   const [linkedinSyncing, setLinkedinSyncing] = useState(false);
+  const [showLinkedinModal, setShowLinkedinModal] = useState(false);
+  const [linkedinPasteText, setLinkedinPasteText] = useState('');
+  const [linkedinExtractLoading, setLinkedinExtractLoading] = useState(false);
 
   // Meeting transcript analysis
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
@@ -455,12 +458,63 @@ Respond in clean markdown with EXACTLY these 4 sections:
     return () => clearTimeout(timer);
   }, []);
 
-  const startLinkedInConnect = () => {
-    const state = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    sessionStorage.setItem('civicpath_linkedin_state', state);
-    sessionStorage.setItem('civicpath_linkedin_return_to', '/seeker');
+  // Extract profile fields from pasted LinkedIn About / bio text
+  const handleLinkedInPasteExtract = async () => {
+    const text = linkedinPasteText.trim();
+    if (!text) return;
+    setLinkedinExtractLoading(true);
+    try {
+      const prompt = `Extract a grant-seeking organizational profile from this LinkedIn content.\n\n${text.slice(0, 3000)}\n\nReturn ONLY valid JSON (no markdown):\n{"companyName":"","focusArea":"","targetPopulation":"","missionStatement":"","backgroundInfo":"","linkedinProfileName":"","impactMetrics":""}`;
+      const raw = await callGeminiProxy(prompt);
+      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      setProfile(prev => ({
+        ...prev,
+        ...(parsed.companyName?.trim() && { companyName: parsed.companyName }),
+        ...(parsed.focusArea?.trim() && { focusArea: parsed.focusArea }),
+        ...(parsed.targetPopulation?.trim() && { targetPopulation: parsed.targetPopulation }),
+        ...(parsed.missionStatement?.trim() && { missionStatement: parsed.missionStatement }),
+        ...(parsed.backgroundInfo?.trim() && { backgroundInfo: parsed.backgroundInfo }),
+        ...(parsed.linkedinProfileName?.trim() && { linkedinProfileName: parsed.linkedinProfileName }),
+        ...(parsed.impactMetrics?.trim() && { impactMetrics: parsed.impactMetrics }),
+        linkedinConnectedAt: new Date().toISOString(),
+      }));
+      setLinkedinMsg('\u2713 LinkedIn profile extracted and synced successfully!');
+      setShowLinkedinModal(false);
+      setLinkedinPasteText('');
+    } catch {
+      // If JSON parse fails, save as background info
+      setProfile(prev => ({ ...prev, backgroundInfo: prev.backgroundInfo || text.slice(0, 800), linkedinConnectedAt: new Date().toISOString() }));
+      setLinkedinMsg('\u2713 LinkedIn content saved to background info.');
+      setShowLinkedinModal(false);
+    } finally {
+      setLinkedinExtractLoading(false);
+      setTimeout(() => setLinkedinMsg(''), 6000);
+    }
+  };
+
+  const startLinkedInConnect = async () => {
     setLinkedinSyncing(true);
-    window.location.href = `/api/linkedin?action=authorize&state=${encodeURIComponent(state)}`;
+    try {
+      // Preflight: check if LinkedIn OAuth credentials are configured
+      const check = await fetch('/api/linkedin?action=check', { method: 'GET' });
+      const data = await check.json().catch(() => ({}));
+      const configured = check.status !== 500 && !data.error?.includes('LINKEDIN_CLIENT_ID');
+
+      if (configured) {
+        // Full OAuth flow
+        const state = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        sessionStorage.setItem('civicpath_linkedin_state', state);
+        sessionStorage.setItem('civicpath_linkedin_return_to', '/seeker');
+        window.location.href = `/api/linkedin?action=authorize&state=${encodeURIComponent(state)}`;
+      } else {
+        // OAuth not configured — show AI-powered alternative
+        setLinkedinSyncing(false);
+        setShowLinkedinModal(true);
+      }
+    } catch {
+      setLinkedinSyncing(false);
+      setShowLinkedinModal(true);
+    }
   };
 
   // Profile completeness — with content quality validation (min chars required)
@@ -1611,18 +1665,31 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         type="button"
                         onClick={startLinkedInConnect}
                         disabled={linkedinSyncing}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition-colors disabled:opacity-60"
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-colors disabled:opacity-60 ${
+                          profile.linkedinConnectedAt
+                            ? 'border-[#76B900]/30 bg-[#76B900]/5 text-[#5a9000] hover:bg-[#76B900]/10'
+                            : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
                       >
-                        {linkedinSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Linkedin className="w-3.5 h-3.5" />}
-                        {profile.linkedinMemberId ? 'Refresh from LinkedIn' : 'Connect LinkedIn'}
+                        {linkedinSyncing
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : profile.linkedinConnectedAt
+                          ? <CheckCircle2 className="w-3.5 h-3.5" />
+                          : <Linkedin className="w-3.5 h-3.5" />}
+                        {profile.linkedinConnectedAt ? 'LinkedIn Synced ✔ — Sync again' : 'Connect LinkedIn'}
                       </button>
                       {profile.linkedinConnectedAt && (
-                        <span className="text-[11px] text-stone-500">
+                        <span className="text-[11px] text-[#76B900] font-medium">
                           Last synced {new Date(profile.linkedinConnectedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-stone-400">Imports your LinkedIn name, photo, and email into CivicPath. LinkedIn does not expose full org profile data in the standard sign-in flow.</p>
+                    {linkedinMsg && (
+                      <p className="text-xs font-semibold text-[#76B900] flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> {linkedinMsg}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-stone-400">Links your LinkedIn profile to CivicPath — AI extracts your name, org, mission, and impact metrics automatically.</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Twitter className="w-4 h-4 mr-2 text-sky-400" />Twitter / X Handle</label>
@@ -1961,6 +2028,70 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   // DASHBOARD STEP
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-stone-900 font-sans selection:bg-[#76B900]/20 flex flex-col">
+
+      {/* ── LinkedIn AI-Paste Modal ── */}
+      {showLinkedinModal && (
+        <div className="fixed inset-0 z-[200] bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-lg flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Linkedin className="w-5 h-5 text-blue-600" />
+                <h3 className="font-bold text-stone-900">Link LinkedIn to Your Profile</h3>
+              </div>
+              <button onClick={() => setShowLinkedinModal(false)} className="text-stone-400 hover:text-stone-700 text-xl">&times;</button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Method 1: URL + AI auto-fill */}
+              {profile.linkedinUrl && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-sm font-bold text-blue-800 mb-1">Option 1 — AI Auto-fill from your URL</p>
+                  <p className="text-xs text-blue-600 mb-3">We'll use AI to analyze your LinkedIn URL ({profile.linkedinUrl}) and pre-fill your org profile.</p>
+                  <button
+                    onClick={() => { setShowLinkedinModal(false); handleAIFillFromUrl(); }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-colors"
+                  >
+                    <Sparkles className="w-4 h-4" /> Auto-fill from LinkedIn URL
+                  </button>
+                </div>
+              )}
+
+              {/* Method 2: Paste About section */}
+              <div>
+                <p className="text-sm font-bold text-stone-800 mb-1">
+                  {profile.linkedinUrl ? 'Option 2 — ' : ''}Paste your LinkedIn About section
+                </p>
+                <p className="text-xs text-stone-500 mb-2">
+                  Go to your LinkedIn profile → About section → copy the text and paste it below.
+                  AI will extract your org name, mission, focus area, and impact metrics.
+                </p>
+                <textarea
+                  rows={6}
+                  value={linkedinPasteText}
+                  onChange={e => setLinkedinPasteText(e.target.value)}
+                  placeholder="Paste your LinkedIn About / bio text here..."
+                  className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none text-stone-900 text-sm resize-none"
+                />
+                <button
+                  onClick={handleLinkedInPasteExtract}
+                  disabled={!linkedinPasteText.trim() || linkedinExtractLoading}
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 bg-[#76B900] text-[#111] font-bold rounded-xl hover:bg-[#689900] transition-colors disabled:opacity-40 text-sm"
+                >
+                  {linkedinExtractLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Extracting...</> : <><Sparkles className="w-4 h-4" /> Extract &amp; Sync Profile</>}
+                </button>
+              </div>
+
+              {/* Info about full OAuth */}
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+                <span className="font-bold">Full OAuth sync</span> (imports name, photo, email automatically) requires LinkedIn API credentials.
+                Contact <a href="mailto:hello@civicpath.ai" className="underline font-bold">hello@civicpath.ai</a> to enable it for your account.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header & Nav Tabs */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
