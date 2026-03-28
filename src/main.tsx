@@ -17,6 +17,7 @@ import Privacy from './pages/Privacy.tsx'
 import Terms from './pages/Terms.tsx'
 import DemoPage from './pages/DemoPage.tsx'
 import SharePage from './pages/SharePage.tsx'
+import LinkedInCallback from './pages/LinkedInCallback.tsx'
 import OmninorChat from './components/OmninorChat.tsx'
 import SovereignTerminal from './components/SovereignTerminal.tsx'
 
@@ -53,6 +54,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/demo" element={<DemoPage />} />
           <Route path="/workspace" element={<DemoPage />} />
           <Route path="/share" element={<SharePage />} />
+          <Route path="/linkedin/callback" element={<LinkedInCallback />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

@@ -99,6 +99,11 @@ interface Profile {
   location: string;
   website: string;
   linkedinUrl: string;
+  linkedinProfileName: string;
+  linkedinEmail: string;
+  linkedinMemberId: string;
+  linkedinPicture: string;
+  linkedinConnectedAt: string;
   twitterUrl: string;
   tagline: string;           // e.g. "AI grant pipeline for Florida communities"
   yearFounded: string;       // e.g. "2019"
@@ -186,7 +191,7 @@ export default function SeekerDashboard() {
       const saved = localStorage.getItem('civicpath_profile');
       const defaults = {
         companyName: '', orgType: '', location: '', website: '',
-        linkedinUrl: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
+        linkedinUrl: '', linkedinProfileName: '', linkedinEmail: '', linkedinMemberId: '', linkedinPicture: '', linkedinConnectedAt: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
         focusArea: '', missionStatement: '', targetPopulation: '',
         geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
         impactMetrics: '', teamMembersText: '',
@@ -196,7 +201,7 @@ export default function SeekerDashboard() {
       return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
     } catch { return {
       companyName: '', orgType: '', location: '', website: '',
-      linkedinUrl: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
+      linkedinUrl: '', linkedinProfileName: '', linkedinEmail: '', linkedinMemberId: '', linkedinPicture: '', linkedinConnectedAt: '', twitterUrl: '', tagline: '', yearFounded: '', logoDataUrl: '',
       focusArea: '', missionStatement: '', targetPopulation: '',
       geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
       impactMetrics: '', teamMembersText: '',
@@ -383,6 +388,8 @@ export default function SeekerDashboard() {
   // Email digest
   const [digestLoading, setDigestLoading] = useState(false);
   const [digestMsg, setDigestMsg] = useState('');
+  const [linkedinMsg, setLinkedinMsg] = useState('');
+  const [linkedinSyncing, setLinkedinSyncing] = useState(false);
 
   // Meeting transcript analysis
   const [showTranscriptModal, setShowTranscriptModal] = useState(false);
@@ -437,6 +444,23 @@ Respond in clean markdown with EXACTLY these 4 sections:
       setDigestMsg(data.ok ? '\u2713 Digest sent to ' + user.email : 'Error: ' + (data.error || 'Try again'));
     } catch { setDigestMsg('Network error. Try again.'); }
     finally { setDigestLoading(false); setTimeout(() => setDigestMsg(''), 5000); }
+  };
+
+  useEffect(() => {
+    const flash = localStorage.getItem('civicpath_linkedin_flash');
+    if (!flash) return;
+    setLinkedinMsg(flash);
+    localStorage.removeItem('civicpath_linkedin_flash');
+    const timer = setTimeout(() => setLinkedinMsg(''), 6000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const startLinkedInConnect = () => {
+    const state = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem('civicpath_linkedin_state', state);
+    sessionStorage.setItem('civicpath_linkedin_return_to', '/seeker');
+    setLinkedinSyncing(true);
+    window.location.href = `/api/linkedin?action=authorize&state=${encodeURIComponent(state)}`;
   };
 
   // Profile completeness — with content quality validation (min chars required)
@@ -1582,6 +1606,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <input type="text" placeholder="linkedin.com/in/yourname or /company/yourorg"
                       value={profile.linkedinUrl} onChange={e => setProfile({...profile, linkedinUrl: e.target.value})}
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={startLinkedInConnect}
+                        disabled={linkedinSyncing}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition-colors disabled:opacity-60"
+                      >
+                        {linkedinSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Linkedin className="w-3.5 h-3.5" />}
+                        {profile.linkedinMemberId ? 'Refresh from LinkedIn' : 'Connect LinkedIn'}
+                      </button>
+                      {profile.linkedinConnectedAt && (
+                        <span className="text-[11px] text-stone-500">
+                          Last synced {new Date(profile.linkedinConnectedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-400">Imports your LinkedIn name, photo, and email into CivicPath. LinkedIn does not expose full org profile data in the standard sign-in flow.</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-stone-700 flex items-center"><Twitter className="w-4 h-4 mr-2 text-sky-400" />Twitter / X Handle</label>
@@ -2717,6 +2758,42 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-stone-800 flex items-center gap-2">
+                    <Linkedin className="w-4 h-4 text-blue-600" /> LinkedIn Sync
+                  </h3>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Connect your LinkedIn account to keep your CivicPath member identity fresh with your latest LinkedIn name, photo, and email.
+                  </p>
+                  {profile.linkedinProfileName && (
+                    <div className="mt-3 text-sm text-stone-700 space-y-1">
+                      <p><span className="font-semibold">LinkedIn member:</span> {profile.linkedinProfileName}</p>
+                      {profile.linkedinEmail && <p><span className="font-semibold">Email:</span> {profile.linkedinEmail}</p>}
+                      {profile.linkedinConnectedAt && (
+                        <p className="text-xs text-stone-500">Last synced {new Date(profile.linkedinConnectedAt).toLocaleString()}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={startLinkedInConnect}
+                  disabled={linkedinSyncing}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-60"
+                >
+                  {linkedinSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Linkedin className="w-4 h-4" />}
+                  {profile.linkedinMemberId ? 'Refresh LinkedIn' : 'Connect LinkedIn'}
+                </button>
+              </div>
+              {linkedinMsg && (
+                <div className="mt-4 rounded-xl border border-[#76B900]/20 bg-[#76B900]/10 px-3 py-2 text-sm text-[#4f7200] font-medium">
+                  {linkedinMsg}
+                </div>
+              )}
             </div>
 
             {/* Profile Strength */}
