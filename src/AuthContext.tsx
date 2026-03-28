@@ -23,14 +23,6 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-function shouldUseRedirectAuth() {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isAndroid = /Android/i.test(ua);
-  return isIOS || isAndroid;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,20 +62,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setRole = (role: 'seeker' | 'funder') => {
     localStorage.setItem('civicpath_role', role);
     setUser(prev => prev ? { ...prev, role } : prev);
-    // Persist role to Firestore so it survives device switches
     const uid = auth.currentUser?.uid;
     if (uid) saveUserData(uid, { role } as any).catch(() => {});
   };
 
   const loginWithGoogle = async (role?: string) => {
+    // 1. Sync save (No awaits here to prevent Mobile Safari from blocking the popup)
     saveRole(role);
-    if (shouldUseRedirectAuth()) {
-      sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
-      await signInWithRedirect(auth, googleProvider);
-      return 'redirect';
+    
+    try {
+      // 2. Try popup first. This works on 95% of devices, including iOS Safari if called synchronously.
+      await signInWithPopup(auth, googleProvider);
+      return 'popup';
+    } catch (err: any) {
+      console.warn('[Auth] Popup failed or blocked:', err.code);
+      // 3. Only if it's explicitly blocked (e.g. Instagram in-app browser) do we use the messy redirect flow.
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
+        sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
+        await signInWithRedirect(auth, googleProvider);
+        return 'redirect';
+      }
+      throw err;
     }
-    await signInWithPopup(auth, googleProvider);
-    return 'popup';
   };
 
   const loginWithEmail = async (email: string, password: string, role?: string) => {

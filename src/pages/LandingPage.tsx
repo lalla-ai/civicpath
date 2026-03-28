@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Hexagon, ArrowUpRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Logo = () => (
   <div className="relative inline-flex items-center justify-center w-8 h-8 text-[#76B900]">
@@ -10,6 +12,7 @@ const Logo = () => (
 );
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,15 +54,17 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Logo />
-            <span className="text-stone-900 font-bold text-lg">CivicPath</span>
+            <span className="text-stone-900 font-bold text-lg">{t('app.title')}</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
+            <LanguageSwitcher />
             <a href="#how" className="hover:text-stone-900 transition-colors">How It Works</a>
             <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">Find Grants</Link>
             <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">Give Grants</Link>
             <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
           </div>
           <div className="flex items-center gap-3">
+            <div className="md:hidden"><LanguageSwitcher /></div>
             <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">Log in</Link>
             <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-sm">Find Grants →</Link>
           </div>

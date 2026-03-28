@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Loader2, Mail, Lock, User, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { useAuth } from './AuthContext';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from './firebase';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const { user, loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
 
   // Unique page title
@@ -142,12 +145,13 @@ export default function LoginPage() {
     <div className="min-h-dvh bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-6" style={{fontFamily:'Inter,sans-serif'}}>
       <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="border-b border-stone-100 p-8 text-center">
+        <div className="border-b border-stone-100 p-8 text-center relative">
+          <div className="absolute top-4 right-4"><LanguageSwitcher /></div>
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="w-2 h-2 bg-[#76B900] rounded-full" />
-            <span className="font-bold text-stone-900 text-xl">CivicPath</span>
+            <span className="font-bold text-stone-900 text-xl">{t('app.title')}</span>
           </div>
-          <p className="text-stone-500 text-sm">Your community. Funded.</p>
+          <p className="text-stone-500 text-sm">{t('app.tagline')}</p>
         </div>
 
         {/* Role selector */}
