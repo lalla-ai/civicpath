@@ -191,6 +191,33 @@ function buildCloseout(data: any): { subject: string; html: string } {
   };
 }
 
+function buildFunderSubmission(data: any): { subject: string; html: string } {
+  const { orgName = 'An Organization', grantName = 'Your Grant', amount, proposalText = '', funderName = 'Funder' } = data;
+  return {
+    subject: `New Application Received: ${grantName} from ${orgName}`,
+    html: wrap(`
+      ${HEADER('New Application')}
+      <tr><td style="padding:32px;">
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#1A1A1A;">New Application for ${grantName}</h1>
+        <p style="margin:0 0 24px;font-size:14px;color:#6B6860;line-height:1.6;">You have received a new grant application via CivicPath.</p>
+        <div style="background:#F9F7F2;border-radius:12px;padding:20px;margin-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:6px 0;border-bottom:1px solid #E8E5DE;"><span style="font-size:11px;color:#9CA3AF;font-weight:700;text-transform:uppercase;">Applicant</span><br/><span style="font-size:14px;color:#1A1A1A;font-weight:700;">${orgName}</span></td></tr>
+            ${amount ? `<tr><td style="padding:6px 0;border-bottom:1px solid #E8E5DE;"><span style="font-size:11px;color:#9CA3AF;font-weight:700;text-transform:uppercase;">Amount Requested</span><br/><span style="font-size:14px;color:#76B900;font-weight:800;">${amount}</span></td></tr>` : ''}
+          </table>
+        </div>
+        <div style="background:#fff;border:1px solid #E8E5DE;border-radius:12px;padding:20px;margin-bottom:24px;">
+          <h2 style="font-size:14px;font-weight:700;margin:0 0 12px;color:#1A1A1A;">Executive Summary</h2>
+          <p style="margin:0;font-size:13px;color:#6B6860;line-height:1.6;white-space:pre-wrap;">${proposalText.slice(0, 500)}...</p>
+        </div>
+        <div style="text-align:center;">
+          <a href="https://civicpath.ai/funder" style="display:inline-block;background:#76B900;color:#111;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">Review Application →</a>
+        </div>
+      </td></tr>
+      ${FOOTER}`),
+  };
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -217,6 +244,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'welcome':      emailData = buildWelcome(data); break;
       case 'digest':       emailData = await buildDigest(data, geminiKey); break;
       case 'confirmation': emailData = buildConfirmation(data); break;
+      case 'funder-submission': emailData = buildFunderSubmission(data); break;
       case 'approval':     emailData = buildApproval(data); break;
       case 'closeout':     emailData = buildCloseout(data); break;
       default: return res.status(400).json({ error: `Unknown email type: ${type}` });

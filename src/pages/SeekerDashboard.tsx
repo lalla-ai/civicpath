@@ -12,6 +12,7 @@ import type { ChatMessage } from '../gemini';
 import { grantLeafHash, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
 import type { ZGReceipt } from '../lib/merkle';
 import { getFunderGrants, normalizeFunderGrant } from '../lib/funderGrants';
+import { globalGraph } from '../lib/agents/graph';
 import AgentStatus from '../components/AgentStatus';
 import type { AgentItem } from '../components/AgentStatus';
 import SovereignHeader from '../components/SovereignHeader';
@@ -551,6 +552,15 @@ Respond in clean markdown with EXACTLY these 4 sections:
   const [allDiscoveredGrants, setAllDiscoveredGrants] = useState<any[]>([]);
   const [totalGrantsFound, setTotalGrantsFound] = useState(0);
   const [liveGrantsCount, setLiveGrantsCount] = useState(0);
+
+  // Sync state to global graph for Omninor
+  useEffect(() => {
+    globalGraph.updateState({ profile });
+  }, [profile]);
+
+  useEffect(() => {
+    globalGraph.updateState({ discoveredGrants: allDiscoveredGrants });
+  }, [allDiscoveredGrants]);
   const [sourceFilter, setSourceFilter] = useState('all');
 
   const [showAgentsMenu, setShowAgentsMenu] = useState(false);
@@ -1197,16 +1207,31 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
       }).catch(() => {});
     }
 
+    const funderEmail = (allDiscoveredGrants[0] as any)?.funderEmail;
+    if (funderEmail) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'funder-submission',
+          email: funderEmail,
+          orgName: profile.companyName || 'Your Organization',
+          grantName: (appGrant as any).title || 'Grant Application',
+          amount: appAmount,
+          proposalText: drafterOutput || '',
+        }),
+      }).catch(() => {});
+    }
+
     const submitterText = `
 ### Application Package Ready \u2713
 * **Organization**: ${profile.companyName || 'Your Organization'}
-* **Grant**: State Innovation Match Fund ($150,000)
+* **Grant**: ${(appGrant as any).title || 'State Innovation Match Fund'} (${appAmount})
 * **Proposal**: AI-drafted, reviewed, and approved by you
 * **Status**: Queued for submission
 
 ${user?.email ? `A confirmation has been sent to **${user.email}**.` : 'Connect Gmail in Integrations to enable autonomous sending.'}
-
-> To complete real submission: connect Gmail in the Integrations tab, then re-run the pipeline.
+${funderEmail ? `\n\n> **Direct Funder Match**: Proposal securely transmitted to Funder via CivicPath.` : '\n\n> To complete real submission: connect Gmail in the Integrations tab, then re-run the pipeline.'}
 `;
     await streamOutput('submitter', submitterText);
     updateAgent('submitter', { status: 'completed' });

@@ -8,7 +8,7 @@
  * The frontend never needs to know which backend is active.
  */
 
-const GKE_API = import.meta.env.VITE_MYLALLA_API_URL || null;
+const GKE_API = import.meta.env.VITE_MYLALLA_API_URL || 'http://34.66.125.36/api';
 
 export interface MyLallaRequest {
   query: string;

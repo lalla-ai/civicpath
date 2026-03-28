@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { globalGraph } from '../lib/agents/graph';
 
 async function askOmninor(prompt: string): Promise<string> {
   const res = await fetch('/api/gemini-proxy', {
@@ -51,7 +52,15 @@ export default function OmninorChat() {
       const history = next.slice(0, -1).map(m =>
         `${m.role === 'user' ? 'User' : 'Omninor'}: ${m.content}`
       ).join('\n');
-      const prompt = `${SYSTEM}\n\n${history ? `Conversation:\n${history}\n\n` : ''}User: ${text}\nOmninor:`;
+      const state = globalGraph.getState();
+      const profile = state.profile;
+      const grants = state.discoveredGrants;
+      const userContext = Object.keys(profile).length || grants?.length ? `
+Context:
+${Object.keys(profile).length ? `User Organization: ${profile.companyName || 'Unknown'} - ${profile.focusArea || ''}` : ''}
+${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(', ')}` : ''}
+` : '';
+      const prompt = `${SYSTEM}\n${userContext}\n${history ? `Conversation:\n${history}\n\n` : ''}User: ${text}\nOmninor:`;
       const reply = await askOmninor(prompt);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {

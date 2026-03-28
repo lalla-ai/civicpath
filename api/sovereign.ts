@@ -210,7 +210,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!action) return res.status(400).json({ error: 'action required' });
 
   const zgPrivateKey = process.env.ZG_PRIVATE_KEY; // testnet wallet private key
-  const kmsKeyName = process.env.GOOGLE_KMS_KEY_NAME;
+  const kmsKeyName = process.env.GOOGLE_KMS_KEY_NAME || 'projects/disco-horizon-488517-j9/locations/us-central1/keyRings/saos-keyring/cryptoKeys/context-dek';
 
   try {
     switch (action) {
