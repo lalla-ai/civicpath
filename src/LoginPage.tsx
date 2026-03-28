@@ -157,23 +157,23 @@ export default function LoginPage() {
 
         {/* Role selector */}
         <div className="px-8 pt-6">
-          <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">I am a</p>
+          <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">{t('login.iAm')}</p>
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => setRole('seeker')}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 role === 'seeker' ? 'border-[#76B900] bg-[#76B900]/5' : 'border-stone-200 hover:border-stone-300'
               }`}>
               <div className="text-2xl mb-1">🏢</div>
-              <div className="text-sm font-bold text-stone-900">Grant Seeker</div>
-              <div className="text-xs text-stone-500">I need funding</div>
+              <div className="text-sm font-bold text-stone-900">{t('login.seeker')}</div>
+              <div className="text-xs text-stone-500">{t('login.seekerSub')}</div>
             </button>
             <button onClick={() => setRole('funder')}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 role === 'funder' ? 'border-[#76B900] bg-[#76B900]/5' : 'border-stone-200 hover:border-stone-300'
               }`}>
-              <div className="text-2xl mb-1">🏛️</div>
-              <div className="text-sm font-bold text-stone-900">Grant Funder</div>
-              <div className="text-xs text-stone-500">I offer grants</div>
+              <div className="text-2xl mb-1">🏗️</div>
+              <div className="text-sm font-bold text-stone-900">{t('login.funder')}</div>
+              <div className="text-xs text-stone-500">{t('login.funderSub')}</div>
             </button>
           </div>
         </div>
@@ -182,11 +182,11 @@ export default function LoginPage() {
         <div className="flex border-b border-stone-100">
           <button onClick={() => { setMode('login'); setError(''); }}
             className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'login' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
-            Sign In
+            {t('login.signIn')}
           </button>
           <button onClick={() => { setMode('signup'); setError(''); }}
             className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${mode === 'signup' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
-            Create Account
+            {t('login.createAccount')}
           </button>
         </div>
 
@@ -204,7 +204,7 @@ export default function LoginPage() {
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
               )}
-              Continue with Google
+              {t('login.google')}
             </button>
 
             {/* LinkedIn Button */}
@@ -213,13 +213,13 @@ export default function LoginPage() {
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
               </svg>
-              Continue with LinkedIn
+              {t('login.linkedin')}
             </button>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-stone-200" />
-            <span className="text-xs text-stone-400 font-medium">or</span>
+            <span className="text-xs text-stone-400 font-medium">{t('login.or')}</span>
             <div className="flex-1 h-px bg-stone-200" />
           </div>
 
@@ -227,14 +227,14 @@ export default function LoginPage() {
           <form onSubmit={handleEmail} className="space-y-3">
             {mode === 'signup' && (
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-stone-600 flex items-center"><User className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Full Name</label>
+                <label className="text-xs font-semibold text-stone-600 flex items-center"><User className="w-3.5 h-3.5 mr-1.5 text-stone-400" />{t('login.fullName')}</label>
                 <input type="text" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} required
                   autoComplete="name"
                   className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-base md:text-sm text-stone-900 placeholder:text-stone-400" />
               </div>
             )}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-stone-600 flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Email</label>
+              <label className="text-xs font-semibold text-stone-600 flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-stone-400" />{t('login.email')}</label>
               <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required
                 autoComplete="email"
                 inputMode="email"
@@ -242,11 +242,11 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-stone-600 flex items-center"><Lock className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Password</label>
+                <label className="text-xs font-semibold text-stone-600 flex items-center"><Lock className="w-3.5 h-3.5 mr-1.5 text-stone-400" />{t('login.password')}</label>
                 {mode === 'login' && (
                   <button type="button" onClick={handleForgotPassword} disabled={resetLoading}
                     className="text-xs text-[#76B900] hover:underline font-medium disabled:opacity-50">
-                    {resetLoading ? 'Sending...' : 'Forgot password?'}
+                    {resetLoading ? '...' : t('login.forgotPw')}
                   </button>
                 )}
               </div>
@@ -273,16 +273,16 @@ export default function LoginPage() {
 
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-[#76B900] hover:bg-[#689900] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center disabled:opacity-60">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? 'Sign In' : 'Create Account'}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? t('login.submit') : t('login.submitCreate')}
             </button>
           </form>
 
           <div className="pt-1 text-center space-y-2">
             <p className="text-xs text-stone-400">
-              By signing in you agree to our <a href="/terms" className="underline hover:text-stone-600">Terms</a> &amp; <a href="/privacy" className="underline hover:text-stone-600">Privacy Policy</a>.
+              <a href="/terms" className="underline hover:text-stone-600">Terms</a> &amp; <a href="/privacy" className="underline hover:text-stone-600">Privacy</a> — {t('login.terms')}
             </p>
             <p className="text-xs text-stone-400">
-              No account? <a href="/demo" className="text-[#76B900] font-bold hover:underline">▶ Try Live Demo instead</a>
+              {t('login.noAccount')} <a href="/demo" className="text-[#76B900] font-bold hover:underline">{t('login.tryDemo')}</a>
             </p>
           </div>
         </div>

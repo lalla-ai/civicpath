@@ -57,16 +57,15 @@ export default function LandingPage() {
             <span className="text-stone-900 font-bold text-lg">{t('app.title')}</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
-            <LanguageSwitcher />
-            <a href="#how" className="hover:text-stone-900 transition-colors">How It Works</a>
-            <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">Find Grants</Link>
-            <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">Give Grants</Link>
-            <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
+            <a href="#how" className="hover:text-stone-900 transition-colors">{t('nav.howItWorks')}</a>
+            <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">{t('nav.findGrants')}</Link>
+            <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">{t('nav.giveGrants')}</Link>
+            <Link to="/pricing" className="hover:text-stone-900 transition-colors">{t('nav.pricing')}</Link>
           </div>
           <div className="flex items-center gap-3">
-            <div className="md:hidden"><LanguageSwitcher /></div>
-            <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">Log in</Link>
-            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-sm">Find Grants →</Link>
+            <LanguageSwitcher />
+            <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">{t('nav.logIn')}</Link>
+            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-sm">{t('nav.findGrantsCta')}</Link>
           </div>
         </div>
       </nav>
@@ -74,20 +73,20 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="pt-16 sm:pt-24 pb-14 sm:pb-20 text-center px-5 sm:px-6">
         <div className="inline-flex items-center gap-2 bg-[#76B90015] text-[#5a9000] rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide">
-          🏆 Google Cloud ADK Hackathon 2026 · Finalist
+          {t('hero.badge')}
         </div>
         <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-stone-900 leading-[1.08] max-w-3xl mx-auto">
-          Find The Grant<br />
-          <span className="text-[#76B900]">That Gets You.</span>
+          {t('hero.h1')}<br />
+          <span className="text-[#76B900]">{t('hero.h2')}</span>
         </h1>
         <p className="mt-4 text-base sm:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
-          8 AI agents find, score, draft, comply, submit, and manage compliance grants for your org — automatically. First match in 60 seconds.
+          {t('hero.sub')}
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">Find My Grants →</Link>
-          <Link to="/login?role=funder" className="border border-stone-300 text-stone-700 font-semibold px-6 py-3 rounded-lg hover:border-stone-500 hover:text-stone-900 transition-colors bg-white">Give Grants</Link>
+          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">{t('hero.ctaFind')}</Link>
+          <Link to="/login?role=funder" className="border border-stone-300 text-stone-700 font-semibold px-6 py-3 rounded-lg hover:border-stone-500 hover:text-stone-900 transition-colors bg-white">{t('hero.ctaGive')}</Link>
           <Link to="/mylalla" className="bg-stone-900 text-white font-semibold px-6 py-3 rounded-lg hover:bg-stone-800 transition-colors flex items-center gap-2">
-            <span className="text-sm">✨</span> Ask MyLalla
+            <span className="text-sm">✨</span> {t('hero.ctaAsk')}
           </Link>
         </div>
         {/* MyLalla Hero Chat Bar */}
@@ -99,7 +98,7 @@ export default function LandingPage() {
                 type="text"
                 value={heroQuery}
                 onChange={e => setHeroQuery(e.target.value)}
-                placeholder="Ask MyLalla: What grants does my nonprofit qualify for?"
+                placeholder={t('hero.chatPlaceholder')}
                 className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-white border-2 border-stone-200 focus:border-[#76B900] focus:ring-2 focus:ring-[#76B900]/10 outline-none text-stone-900 text-sm shadow-sm transition-all"
               />
             </div>
@@ -108,7 +107,7 @@ export default function LandingPage() {
               disabled={!heroQuery.trim() || heroLoading}
               className="px-5 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors disabled:opacity-40 text-sm shadow-sm whitespace-nowrap"
             >
-              {heroLoading ? '...' : 'Ask →'}
+              {heroLoading ? '...' : t('hero.chatBtn')}
             </button>
           </form>
           {heroAnswer && (
@@ -119,7 +118,7 @@ export default function LandingPage() {
                   <span className="font-bold text-[#5a9000]">MyLalla: </span>
                   {heroAnswer}
                   <div className="mt-3">
-                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-[#76B900] hover:text-[#5a9000] underline">Get your full personalized match →</button>
+                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-[#76B900] hover:text-[#5a9000] underline">{t('hero.chatCta')}</button>
                   </div>
                 </div>
               </div>
@@ -127,7 +126,7 @@ export default function LandingPage() {
           )}
         </div>
 
-        <p className="mt-5 text-xs text-stone-400 tracking-wide">Free · No credit card · Sovereign data</p>
+        <p className="mt-5 text-xs text-stone-400 tracking-wide">{t('hero.trust')}</p>
       </section>
 
       {/* 8 AGENTS */}
