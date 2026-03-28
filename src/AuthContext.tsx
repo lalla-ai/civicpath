@@ -67,23 +67,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithGoogle = async (role?: string) => {
-    // 1. Sync save (No awaits here to prevent Mobile Safari from blocking the popup)
     saveRole(role);
+    // Proactive Mobile Strategy: Use redirect for ALL mobile devices to bypass Safari ITP/Popup blockers.
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
+    if (isMobile) {
+      sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
+      await signInWithRedirect(auth, googleProvider);
+      return 'redirect';
+    }
+
     try {
-      // 2. Try popup first. This works on 95% of devices, including iOS Safari if called synchronously.
       await signInWithPopup(auth, googleProvider);
       return 'popup';
     } catch (err: any) {
-      console.warn('[Auth] Popup failed or blocked:', err.code);
-      // 3. Only if it's explicitly blocked (e.g. Instagram in-app browser) do we use the messy redirect flow.
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-        sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
-        await signInWithRedirect(auth, googleProvider);
-        return 'redirect';
-      }
-      throw err;
+      console.warn('[Auth] Popup blocked, falling back to redirect:', err.code);
+      sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
+      await signInWithRedirect(auth, googleProvider);
+      return 'redirect';
     }
+  };
+
+  const loginWithLinkedIn = async (role?: string) => {
+    saveRole(role);
+    const state = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem('civicpath_linkedin_state', state);
+    sessionStorage.setItem('civicpath_linkedin_return_to', role === 'funder' ? '/funder' : '/seeker');
+    // LinkedIn always uses a full window redirect for maximum compatibility
+    window.location.href = `/api/linkedin?action=authorize&state=${encodeURIComponent(state)}`;
+    return 'redirect';
   };
 
   const loginWithEmail = async (email: string, password: string, role?: string) => {
