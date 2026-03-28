@@ -498,7 +498,7 @@ Respond in clean markdown with EXACTLY these 4 sections:
       // Preflight: check if LinkedIn OAuth credentials are configured
       const check = await fetch('/api/linkedin?action=check', { method: 'GET' });
       const data = await check.json().catch(() => ({}));
-      const configured = check.status !== 500 && !data.error?.includes('LINKEDIN_CLIENT_ID');
+      const configured = check.ok && data.configured === true;
 
       if (configured) {
         // Full OAuth flow

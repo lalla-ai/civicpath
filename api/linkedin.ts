@@ -24,6 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const action = req.query.action;
     const state = typeof req.query.state === 'string' ? req.query.state : '';
+
+    // Config probe — used by the frontend to decide OAuth vs paste fallback
+    if (action === 'check') {
+      return res.status(200).json({ configured: Boolean(clientId && clientSecret) });
+    }
+
     if (action !== 'authorize') return res.status(400).json({ error: 'Unknown LinkedIn action' });
     if (!clientId) return res.status(500).json({ error: 'LINKEDIN_CLIENT_ID not configured' });
     if (!state) return res.status(400).json({ error: 'state required' });
