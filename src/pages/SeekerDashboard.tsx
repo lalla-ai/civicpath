@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../AuthContext';
 import { auth } from '../firebase';
 import { saveUserData, loadUserData, saveProposal, saveApplication } from '../lib/db';
@@ -20,6 +21,7 @@ import { PurgeController } from '../lib/sovereign/PurgeController';
 import type { PurgePhase } from '../lib/sovereign/PurgeController';
 import RevokeAccess from '../components/RevokeAccess';
 import AwardedTab from '../components/AwardedTab';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { 
   Search, 
   BrainCircuit, 
@@ -143,6 +145,7 @@ const Logo = () => (
 );
 
 export default function SeekerDashboard() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   // Session persistence — restore dashboard state on return visit
@@ -1931,7 +1934,8 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-stone-500 hidden sm:block">Hi, {user?.name}</span>
+              <LanguageSwitcher />
+              <span className="text-sm text-stone-500 hidden sm:block">{t('dashboard.welcome')}, {user?.name}</span>
               <div className="hidden sm:block"><SovereignHeader /></div>
               <a href="/mylalla" className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors border border-purple-200">
                 <Sparkles className="w-3 h-3" /> Ask MyLalla
@@ -1940,7 +1944,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <a href="/privacy" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Privacy</a>
               <a href="/terms" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Terms</a>
               <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
+                <LogOut className="w-3.5 h-3.5" /> {t('nav.signout')}
               </button>
             </div>
           </div>
@@ -1951,7 +1955,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               onClick={() => setActiveTab('dashboard')}
               className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'}`}
             >
-              <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
+              <BarChart3 className="w-4 h-4 mr-2" /> {t('nav.dashboard')}
             </button>
             <button 
               onClick={() => setActiveTab('scheduler')}
@@ -1985,7 +1989,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 activeTab === 'grants' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <Search className="w-4 h-4 mr-1.5" /> Grants
+              <Search className="w-4 h-4 mr-1.5" /> {t('nav.grants')}
               {allDiscoveredGrants.length > 0 && <span className="ml-1.5 bg-[#76B900] text-[#111111] text-[10px] font-black px-1.5 py-0.5 rounded-full">{allDiscoveredGrants.length}</span>}
             </button>
             <button 
@@ -1994,7 +1998,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 activeTab === 'tracker' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <Kanban className="w-4 h-4 mr-1.5" /> Tracker
+              <Kanban className="w-4 h-4 mr-1.5" /> {t('nav.tracker')}
               {trackerGrants.length > 0 && <span className="ml-1.5 bg-[#76B900] text-[#111111] text-[10px] font-black px-1.5 py-0.5 rounded-full">{trackerGrants.length}</span>}
             </button>
             <button 
@@ -2003,7 +2007,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <UserCircle className="w-4 h-4 mr-1.5" /> Profile
+              <UserCircle className="w-4 h-4 mr-1.5" /> {t('nav.profile')}
             </button>
             <button 
               onClick={() => setActiveTab('billing')}
@@ -2027,7 +2031,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 activeTab === 'awarded' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
               }`}
             >
-              <Trophy className="w-4 h-4 mr-1.5" /> Awarded
+              <Trophy className="w-4 h-4 mr-1.5" /> {t('nav.awarded')}
             </button>
           </div>
         </div>
