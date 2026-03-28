@@ -21,10 +21,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('civicpath_auth_redirect_pending') === 'true') {
+      setGoogleLoading(true);
+      setInfo('Finishing Google sign-in…');
+    }
+  }, []);
 
   const handleForgotPassword = async () => {
     if (!email.trim()) { setError('Enter your email above first.'); return; }
@@ -44,6 +52,7 @@ export default function LoginPage() {
   // When Firebase auth state updates: redirect + send welcome email
   useEffect(() => {
     if (user) {
+      sessionStorage.removeItem('civicpath_auth_redirect_pending');
       const urlRole = searchParams.get('role') as 'seeker' | 'funder' | null;
       const savedRole = localStorage.getItem('civicpath_role') as 'seeker' | 'funder' | null;
       // Priority: URL param > saved localStorage role > user.role from Firebase > 'seeker' default
@@ -62,9 +71,14 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setError('');
+    setInfo('');
     setGoogleLoading(true);
     try {
-      await loginWithGoogle(role);
+      const method = await loginWithGoogle(role);
+      if (method === 'redirect') {
+        setInfo('Redirecting to Google…');
+        return;
+      }
       // Welcome email is sent in useEffect below when user state resolves
     } catch (err: any) {
       const msg = err?.code || err?.message || '';
@@ -72,6 +86,8 @@ export default function LoginPage() {
         setError('Sign-in popup was closed. Please try again.');
       } else if (msg.includes('popup-blocked')) {
         setError('Popup was blocked. Please allow popups for this site in your browser settings.');
+      } else if (msg.includes('redirect')) {
+        setError('Google sign-in redirect failed. Please try again.');
       } else if (msg.includes('network')) {
         setError('Network error. Check your connection and try again.');
       } else {
@@ -123,7 +139,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center p-4" style={{fontFamily:'Inter,sans-serif'}}>
+    <div className="min-h-dvh bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-6" style={{fontFamily:'Inter,sans-serif'}}>
       <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
         {/* Header */}
         <div className="border-b border-stone-100 p-8 text-center">
@@ -197,13 +213,16 @@ export default function LoginPage() {
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-stone-600 flex items-center"><User className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Full Name</label>
                 <input type="text" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} required
-                  className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+                  autoComplete="name"
+                  className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-base md:text-sm text-stone-900 placeholder:text-stone-400" />
               </div>
             )}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-stone-600 flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-stone-400" />Email</label>
               <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+                autoComplete="email"
+                inputMode="email"
+                className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-base md:text-sm text-stone-900 placeholder:text-stone-400" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -215,14 +234,20 @@ export default function LoginPage() {
                   </button>
                 )}
               </div>
-              <input type="password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400" />
+              <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-base md:text-sm text-stone-900 placeholder:text-stone-400" />
               {resetSent && (
                 <div className="flex items-center gap-2 text-xs text-[#76B900] font-medium mt-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Password reset email sent — check your inbox.
                 </div>
               )}
             </div>
+            {info && !error && (
+              <div className="flex items-center space-x-2 p-3 bg-[#76B900]/10 border border-[#76B900]/20 rounded-xl text-sm text-[#4f7200]">
+                <Loader2 className="w-4 h-4 shrink-0 animate-spin" /><span>{info}</span>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

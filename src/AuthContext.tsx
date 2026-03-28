@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 import { saveUserData } from './lib/db';
 
@@ -14,7 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: (role?: string) => Promise<void>;
+  loginWithGoogle: (role?: string) => Promise<'popup' | 'redirect'>;
   loginWithEmail: (email: string, password: string, role?: string) => Promise<void>;
   signupWithEmail: (name: string, email: string, password: string, role?: string) => Promise<void>;
   setRole: (role: 'seeker' | 'funder') => void;
@@ -23,11 +23,22 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+function shouldUseRedirectAuth() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  return isIOS || isAndroid;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      console.warn('[Auth] Redirect sign-in failed:', err?.code || err?.message || err);
+    });
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const savedRole = localStorage.getItem('civicpath_role') as 'seeker' | 'funder' | null;
@@ -66,7 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = async (role?: string) => {
     saveRole(role);
+    if (shouldUseRedirectAuth()) {
+      sessionStorage.setItem('civicpath_auth_redirect_pending', 'true');
+      await signInWithRedirect(auth, googleProvider);
+      return 'redirect';
+    }
     await signInWithPopup(auth, googleProvider);
+    return 'popup';
   };
 
   const loginWithEmail = async (email: string, password: string, role?: string) => {

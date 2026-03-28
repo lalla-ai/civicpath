@@ -50,7 +50,7 @@ export default function DemoPage() {
     <AuthContext.Provider value={{
       user: DEMO_USER,
       loading: false,
-      loginWithGoogle: async () => {},
+      loginWithGoogle: async () => 'popup',
       loginWithEmail: async () => {},
       signupWithEmail: async () => {},
       setRole: () => {},
