@@ -180,7 +180,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const genAI = new GoogleGenerativeAI(geminiKey);
 
     // Enable Google Search grounding when requested (e.g. MyLalla live search)
-    const modelConfig: any = { model: 'gemini-2.0-flash' };
+    const modelConfig: any = { model: GEMINI_MODEL };
     if (useSearch) {
       modelConfig.tools = [{ googleSearch: {} }];
     }

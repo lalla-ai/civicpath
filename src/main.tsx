@@ -51,8 +51,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={isMyLallaDomain ? <MyLallaPage /> : <LandingPage />} />
             <Route path="/pricing" element={isMyLallaDomain ? <MyLallaPricing /> : <Pricing />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/seeker" element={<SeekerDashboard />} />
-            <Route path="/find-my-grant" element={<SeekerDashboard />} />
+            <Route path="/seeker" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
+            <Route path="/find-my-grant" element={<ProtectedRoute><SeekerDashboard /></ProtectedRoute>} />
             <Route path="/funder" element={<ProtectedRoute><FunderDashboard /></ProtectedRoute>} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/workspace" element={<DemoPage />} />

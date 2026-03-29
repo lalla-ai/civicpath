@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
+import { GEMINI_MODEL } from './_config.js';
+import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!deadline || !grant) return res.status(400).json({ error: 'deadline and grant required' });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
   const prompt = `You are a professional grant writer drafting a compliance report for a funder. Be precise, data-driven, and professional.
 
@@ -78,7 +80,7 @@ List every specific piece of missing data as Hard Blocks. Be specific (e.g., "Q1
       const parts = text.split('===HARD_BLOCKS===');
       reportText = parts[0].trim();
       try {
-        hardBlocks = JSON.parse(parts[1].trim());
+        hardBlocks = safeParseAIJSON(parts[1].trim());
       } catch {}
     }
 

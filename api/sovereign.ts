@@ -22,6 +22,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { rateLimit, getClientIp } from './rateLimiter.js';
+import { GEMINI_MODEL } from './_config.js';
+import { safeParseAIJSON } from './_utils.js';
 // ethers imported dynamically below to avoid ESM bundling issues with Vercel
 
 // ── 0G Labs testnet constants
@@ -470,10 +472,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Dynamic import to avoid bundling issues
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
             const genAI = new GoogleGenerativeAI(geminiKey);
-            const gmodel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+            const gmodel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
             const result = await gmodel.generateContent(`${systemPrompt}\n\nUser: ${mlQuery}`);
             responseText = result.response.text();
-            modelTierUsed = 'Gemini 2.0 Flash';
+            modelTierUsed = `Gemini (${GEMINI_MODEL})`;
           } catch (gErr: any) {
             console.warn('[MyLalla] Gemini fallback failed:', gErr.message);
             responseText = 'I am temporarily unavailable. Please try again in a moment.';
@@ -487,10 +489,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const fuPrompt = `Given this grant research question: "${mlQuery}"\nAnd this response summary: "${responseText.slice(0, 500)}"\nGenerate 3 specific follow-up questions the user should ask next. Return ONLY a JSON array of strings.`;
           if (groqKey) {
             const groq = await askGroq(fuPrompt, 'Return only a JSON array of strings.', 256);
-            followUps = JSON.parse((groq?.text || '[]').replace(/```json|```/g, '').trim());
+            followUps = safeParseAIJSON(groq?.text || '[]');
           } else if (anthropicKey) {
             const claude = await askClaude(fuPrompt, 'Return only a JSON array of strings.');
-            followUps = JSON.parse((claude?.text || '[]').replace(/```json|```/g, '').trim());
+            followUps = safeParseAIJSON(claude?.text || '[]');
           } else if (nimKey) {
             const fuRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
               method: 'POST',
@@ -500,7 +502,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
             const fuData = await fuRes.json();
             const fuText = fuData.choices?.[0]?.message?.content || '[]';
-            followUps = JSON.parse(fuText.replace(/```json|```/g, '').trim());
+            followUps = safeParseAIJSON(fuText);
           }
         } catch { followUps = []; }
 

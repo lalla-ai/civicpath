@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
+import { GEMINI_MODEL } from './_config.js';
+import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!content) return res.status(400).json({ error: 'content (base64) required' });
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
   const extractionPrompt = `You are a grant compliance expert. Extract ALL reporting requirements, deadlines, and milestones from this grant award letter.
 
@@ -57,8 +59,7 @@ CRITICAL: Extract EVERY single reporting obligation mentioned. If relative dates
       { inlineData: { data: content, mimeType } },
       extractionPrompt,
     ]);
-    const raw = result.response.text().replace(/```json|```/g, '').trim();
-    const data = JSON.parse(raw);
+    const data = safeParseAIJSON(result.response.text());
     return res.status(200).json(data);
   } catch {
     // Fallback: decode base64 to text and send as plain text
@@ -67,8 +68,7 @@ CRITICAL: Extract EVERY single reporting obligation mentioned. If relative dates
       const result = await model.generateContent(
         `${extractionPrompt}\n\nDOCUMENT CONTENT:\n${textContent.slice(0, 10000)}`
       );
-      const raw = result.response.text().replace(/```json|```/g, '').trim();
-      const data = JSON.parse(raw);
+      const data = safeParseAIJSON(result.response.text());
       return res.status(200).json(data);
     } catch (err: any) {
       return res.status(500).json({ error: `Extraction failed: ${err.message}` });

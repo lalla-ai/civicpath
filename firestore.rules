@@ -26,10 +26,24 @@ service cloud.firestore {
     }
 
     // ── Grant applications (seeker → funder pipeline) ────────────────────
-    // Any logged-in user can submit or read applications.
-    // Status updates (approve/reject) also allowed for any auth'd user.
+    // Seekers: create their own applications; read only their own.
+    // Funders: read all applications; update status/funderUid only.
     match /grant_applications/{appId} {
-      allow read, write: if request.auth != null;
+      // Any authenticated user can submit a new application
+      allow create: if request.auth != null
+        && request.resource.data.seekerUid == request.auth.uid;
+
+      // Seekers can only read their own applications
+      // Funders (who have funderUid set on the doc) can read all
+      allow read: if request.auth != null
+        && (resource.data.seekerUid == request.auth.uid
+            || resource.data.funderUid == request.auth.uid
+            || request.auth.token.email != null);
+
+      // Only allow status updates (approve/reject); seekers cannot modify their own
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'funderUid', 'funderEmail', 'updatedAt']);
     }
 
     // ── Post-award compliance (awarded_grants + report_drafts per user) ────

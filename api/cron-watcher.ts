@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GEMINI_MODEL } from './_config.js';
 
 /**
  * cron-watcher.ts — The Watcher Agent (real backend)
@@ -55,7 +56,7 @@ async function scoreAndSummarize(
   if (grants.length === 0) return 'No new grants found this week.';
   try {
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
     const prompt = `You are a grant advisor. Briefly describe why each of these grants is a good match for this org.
 
 Org: ${profile.companyName}, focus: ${profile.focusArea}, location: ${profile.location}

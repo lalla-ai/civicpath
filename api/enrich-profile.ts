@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
+import { GEMINI_MODEL } from './_config.js';
+import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,9 +27,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-      tools: [{ googleSearch: {} }] 
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      tools: [{ googleSearch: {} }],
     });
 
     const prompt = `You are a professional grant profile researcher.
@@ -52,10 +54,7 @@ Respond ONLY with a valid JSON object matching this schema (no markdown, no back
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    // Clean up potential markdown formatting if Gemini hallucinates it
-    const jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const data = JSON.parse(jsonStr);
+    const data = safeParseAIJSON(responseText);
 
     return res.status(200).json(data);
   } catch (err: any) {

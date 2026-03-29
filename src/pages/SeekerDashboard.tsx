@@ -13,6 +13,7 @@ import type { ChatMessage } from '../gemini';
 import { grantLeafHash, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
 import type { ZGReceipt } from '../lib/merkle';
 import { getFunderGrants, normalizeFunderGrant } from '../lib/funderGrants';
+import { safeParseAIJSON } from '../lib/aiUtils';
 import { globalGraph } from '../lib/agents/graph';
 import AgentStatus from '../components/AgentStatus';
 import type { AgentItem } from '../components/AgentStatus';
@@ -242,6 +243,7 @@ export default function SeekerDashboard() {
     localStorage.getItem('civicpath_plan') || 'free'
   );
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const isPaidPlan = userPlan === 'pro' || userPlan === 'funder';
   const runsRemaining = Math.max(0, FREE_RUN_LIMIT - monthlyRuns);
 
@@ -1035,10 +1037,9 @@ Order by score descending. Score ALL ${grantsToScore.length} grants.`;
       const raw = await callGeminiProxy(prompt);
       let scored: any[] = [];
       try {
-        scored = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        scored = safeParseAIJSON(raw);
       } catch {
-        const m = raw.match(/\[[\s\S]*\]/);
-        if (m) try { scored = JSON.parse(m[0]); } catch {}
+        scored = [];
       }
 
       if (scored.length > 0) {
@@ -1212,10 +1213,9 @@ Check these items and return ONLY valid JSON:
       const raw = await callGeminiProxy(prompt);
       let audit: any = null;
       try {
-        audit = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        audit = safeParseAIJSON(raw);
       } catch {
-        const m = raw.match(/\{[\s\S]*\}/);
-        if (m) try { audit = JSON.parse(m[0]); } catch {}
+        audit = null;
       }
 
       if (audit?.checks) {
@@ -2111,33 +2111,52 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
 
       {/* Header & Nav Tabs */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
               <Logo />
               <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-[800] tracking-tight text-stone-900">
+                <h1 className="text-xl font-[800] tracking-tight text-stone-900">
                   CivicPath
                 </h1>
                 <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#76B900] text-[#111111] rounded">Hub</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <LanguageSwitcher />
-              <span className="text-sm text-stone-500 hidden sm:block">{t('dashboard.welcome')}, {user?.name}</span>
-              <div className="hidden sm:block"><SovereignHeader /></div>
-              <a href="/mylalla" className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors border border-purple-200">
-                <Sparkles className="w-3 h-3" /> Ask MyLalla
-              </a>
-              <a href="/pricing" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Pricing</a>
-              <a href="/privacy" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Privacy</a>
-              <a href="/terms" className="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1.5 transition-colors hidden sm:block">Terms</a>
-              <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">
-                <LogOut className="w-3.5 h-3.5" /> {t('nav.signout')}
-              </button>
+              <div className="hidden lg:block"><SovereignHeader /></div>
+
+              <div className="relative z-50">
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)} 
+                  className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 font-medium px-2 py-1.5 rounded-lg hover:bg-stone-50 transition-colors border border-transparent hover:border-stone-200"
+                >
+                  <UserCircle className="w-5 h-5 text-stone-400" />
+                  <span className="hidden sm:block">{user?.name}</span>
+                  <svg className={`w-4 h-4 text-stone-400 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-stone-200 rounded-xl shadow-lg py-1.5">
+                    <div className="px-4 py-2 border-b border-stone-100 flex justify-between items-center">
+                      <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Language</span>
+                      <LanguageSwitcher />
+                    </div>
+                    <button onClick={() => { setActiveTab('profile'); setShowUserMenu(false); }} className="w-full text-left px-4 py-2 mt-1 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"><UserCircle className="w-4 h-4 text-stone-400"/> {t('nav.profile')}</button>
+                    <button onClick={() => { setActiveTab('billing'); setShowUserMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"><CreditCard className="w-4 h-4 text-stone-400"/> Billing</button>
+                    <button onClick={() => { setActiveTab('security'); setShowUserMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"><ShieldOff className="w-4 h-4 text-stone-400"/> Security</button>
+                    <button onClick={() => { setActiveTab('awarded'); setShowUserMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"><Trophy className="w-4 h-4 text-stone-400"/> Awarded</button>
+                    <div className="h-px bg-stone-100 my-1.5"></div>
+                    <a href="/pricing" className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">Pricing</a>
+                    <a href="/privacy" className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">Privacy</a>
+                    <a href="/terms" className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">Terms</a>
+                    <div className="h-px bg-stone-100 my-1.5"></div>
+                    <button onClick={() => { logout(); navigate('/'); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"><LogOut className="w-4 h-4" /> {t('nav.signout')}</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          
+
           {/* Tabs — scrollable on mobile */}
           <div className="flex gap-1 border-b border-stone-200 overflow-x-auto scrollbar-none -mb-px">
             <button 
@@ -2190,42 +2209,21 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <Kanban className="w-4 h-4 mr-1.5" /> {t('nav.tracker')}
               {trackerGrants.length > 0 && <span className="ml-1.5 bg-[#76B900] text-[#111111] text-[10px] font-black px-1.5 py-0.5 rounded-full">{trackerGrants.length}</span>}
             </button>
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <UserCircle className="w-4 h-4 mr-1.5" /> {t('nav.profile')}
-            </button>
-            <button 
-              onClick={() => setActiveTab('billing')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === 'billing' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <CreditCard className="w-4 h-4 mr-1.5" /> Billing
-            </button>
-            <button 
-              onClick={() => setActiveTab('security')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === 'security' ? 'border-red-500 text-red-500' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <ShieldOff className="w-4 h-4 mr-1.5" /> Security
-            </button>
-            <button 
-              onClick={() => setActiveTab('awarded')}
-              className={`pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === 'awarded' ? 'border-[#76B900] text-[#76B900]' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <Trophy className="w-4 h-4 mr-1.5" /> {t('nav.awarded')}
-            </button>
+            {['profile', 'billing', 'security', 'awarded'].includes(activeTab) && (
+              <button 
+                className="pb-3 px-1 text-sm font-bold flex items-center whitespace-nowrap transition-colors border-b-2 border-[#76B900] text-[#76B900]"
+              >
+                <div className="flex items-center gap-1.5">
+                  {activeTab === 'profile' && <><UserCircle className="w-4 h-4" /> {t('nav.profile')}</>}
+                  {activeTab === 'billing' && <><CreditCard className="w-4 h-4" /> Billing</>}
+                  {activeTab === 'security' && <><ShieldOff className="w-4 h-4" /> Security</>}
+                  {activeTab === 'awarded' && <><Trophy className="w-4 h-4" /> {t('nav.awarded')}</>}
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </header>
-
       {/* ── Upgrade modal ── */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
