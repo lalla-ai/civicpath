@@ -364,7 +364,7 @@ export default function MyLallaPage() {
               {/* Claude-style Model Selector */}
               <div className="relative">
                 <button onClick={() => setModelSelectorOpen(!modelSelectorOpen)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${c.hover} transition-colors font-medium text-[15px]`}>
-                  Nemotron-3-Super
+                  GrantClaw Engine
                   <ChevronDown className="w-4 h-4 opacity-50" />
                 </button>
                 {modelSelectorOpen && (
@@ -372,7 +372,7 @@ export default function MyLallaPage() {
                     <div className={`px-4 py-2 flex items-center gap-3 ${isDark ? 'bg-white/5' : 'bg-stone-50'}`}>
                       <Check className="w-4 h-4 text-[#76B900]" />
                       <div>
-                        <p className="text-sm font-bold">Nemotron-3-Super</p>
+                        <p className="text-sm font-bold">GrantClaw Engine</p>
                         <p className={`text-[10px] ${c.textMuted}`}>Fastest, recommended</p>
                       </div>
                     </div>

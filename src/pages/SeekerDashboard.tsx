@@ -710,6 +710,68 @@ Respond in clean markdown with EXACTLY these 4 sections:
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedProposal, setEditedProposal] = useState('');
+  const [loiOutput, setLoiOutput] = useState<string | null>(null);
+  const [loiLoading, setLoiLoading] = useState(false);
+  const [budgetOutput, setBudgetOutput] = useState<string | null>(null);
+  const [budgetLoading, setBudgetLoading] = useState(false);
+
+  const handleGenerateLOI = async () => {
+    setLoiLoading(true);
+    setLoiOutput(null);
+    try {
+      const prompt = `Write a professional Letter of Intent (LOI) for a grant application.
+
+Organization: ${profile.companyName || 'Our Organization'}
+Mission: ${profile.missionStatement || profile.backgroundInfo || 'Community impact'}
+Focus Area: ${profile.focusArea || 'technology'}
+Target Population: ${profile.targetPopulation || 'the community'}
+Funding Request: ${profile.fundingAmount || '$100,000-$500,000'}
+Project: ${(profile.projectDescription || '').slice(0, 300)}
+
+Write a 2-paragraph LOI:
+- Paragraph 1: Who we are, the problem we solve, and why we are uniquely positioned.
+- Paragraph 2: What funding we request, how we will use it, and projected impact.
+
+Be specific, funder-focused, no placeholders. 150-200 words total.`;
+      const text = await callGeminiProxy(prompt);
+      setLoiOutput(text);
+    } catch {
+      setLoiOutput('Could not generate LOI. Please try again.');
+    } finally {
+      setLoiLoading(false);
+    }
+  };
+
+  const handleGenerateBudget = async () => {
+    setBudgetLoading(true);
+    setBudgetOutput(null);
+    const targetGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Agency' };
+    const amount = allDiscoveredGrants[0]?.amount || profile.fundingAmount || '$150,000';
+    try {
+      const prompt = `Create a detailed line-item budget narrative for a grant proposal.
+
+Organization: ${profile.companyName || 'Our Organization'}
+Grant: ${(targetGrant as any).title || 'Target Grant'}
+Total Request: ${amount}
+Project: ${(profile.projectDescription || 'Community impact project').slice(0, 300)}
+Team Size: ${profile.teamSize || '2-5 people'}
+
+Generate a professional budget with these sections:
+### Personnel (50-60% of budget)
+### Equipment & Supplies (10-15%)
+### Program Activities (15-20%)
+### Indirect/Overhead (10-15%)
+
+For each line item include: item name, unit cost, quantity, total, and 1-sentence justification.
+Use realistic numbers that add up to the total requested. Format as markdown table where appropriate.`;
+      const text = await callGeminiProxy(prompt);
+      setBudgetOutput(text);
+    } catch {
+      setBudgetOutput('Could not generate budget. Please try again.');
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
   const [discoveredGrants, setDiscoveredGrants] = useState<Array<{title:string;agency:string;closeDate:string;url:string}>>([]);
   const [allDiscoveredGrants, setAllDiscoveredGrants] = useState<any[]>([]);
   const [totalGrantsFound, setTotalGrantsFound] = useState(0);
@@ -3410,6 +3472,60 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 </div>
               </div>
 
+              {/* Telegram Bot */}
+              <div className="border-2 border-[#76B900]/30 rounded-xl p-5 flex flex-col justify-between bg-[#76B900]/5 hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="p-3 bg-sky-100 rounded-lg text-sky-600">
+                      <Send className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-stone-800 text-base">Telegram Bot</h3>
+                      <p className="text-xs text-[#76B900] font-semibold">GrantClaw AI employee — NEW</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-stone-600 mb-3">Message the bot: <em>"find me AI startup grants in Florida"</em> and get back top matches instantly. Draft proposals, generate LOIs — all from chat.</p>
+                  <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs text-green-400 space-y-1 mb-3">
+                    <p>1. Create bot → @BotFather on Telegram</p>
+                    <p>2. Add <span className="text-yellow-300">TELEGRAM_BOT_TOKEN</span> to Vercel</p>
+                    <p>3. Register webhook:</p>
+                    <p className="text-stone-400 break-all">curl -X POST https://api.telegram.org/bot&#123;TOKEN&#125;/setWebhook -d url=https://civicpath.ai/api/messaging</p>
+                  </div>
+                </div>
+                <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer"
+                  className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-sky-500 text-white hover:bg-sky-600 transition-colors">
+                  <Send className="w-4 h-4" /> Create Telegram Bot ↗
+                </a>
+              </div>
+
+              {/* WhatsApp Bot */}
+              <div className="border-2 border-[#76B900]/30 rounded-xl p-5 flex flex-col justify-between bg-[#76B900]/5 hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="p-3 bg-green-100 rounded-lg text-green-600">
+                      <Send className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-stone-800 text-base">WhatsApp Bot</h3>
+                      <p className="text-xs text-[#76B900] font-semibold">GrantClaw via WhatsApp — NEW</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-stone-600 mb-3">Same GrantClaw power on WhatsApp. Message <em>"best health grants today"</em> and get curated results with deadlines and amounts.</p>
+                  <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs text-green-400 space-y-1 mb-3">
+                    <p>1. Create Twilio account → WhatsApp Sandbox</p>
+                    <p>2. Add to Vercel:</p>
+                    <p className="text-yellow-300">TWILIO_ACCOUNT_SID</p>
+                    <p className="text-yellow-300">TWILIO_AUTH_TOKEN</p>
+                    <p className="text-yellow-300">TWILIO_WHATSAPP_NUMBER</p>
+                    <p>3. Webhook → https://civicpath.ai/api/messaging</p>
+                  </div>
+                </div>
+                <a href="https://www.twilio.com/try-twilio" target="_blank" rel="noopener noreferrer"
+                  className="w-full py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600 transition-colors">
+                  Set Up WhatsApp Sandbox ↗
+                </a>
+              </div>
+
               {/* Zoom Integration */}
               <div className="border border-stone-200 rounded-xl p-5 flex flex-col justify-between bg-stone-50/50 hover:shadow-md transition-shadow">
                 <div>
@@ -4075,11 +4191,61 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       className="flex items-center gap-2 px-5 py-3 border-2 border-stone-300 text-stone-700 font-bold rounded-xl hover:border-stone-500 transition-colors">
                       <FileText className="w-4 h-4" /> {editMode ? 'Preview' : 'Edit First'}
                     </button>
+                    <button onClick={handleGenerateLOI} disabled={loiLoading}
+                      className="flex items-center gap-2 px-5 py-3 border-2 border-blue-200 text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-colors disabled:opacity-50">
+                      {loiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                      {loiLoading ? 'Generating…' : 'Generate LOI'}
+                    </button>
+                    <button onClick={handleGenerateBudget} disabled={budgetLoading}
+                      className="flex items-center gap-2 px-5 py-3 border-2 border-purple-200 text-purple-700 font-bold rounded-xl hover:bg-purple-50 transition-colors disabled:opacity-50">
+                      {budgetLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
+                      {budgetLoading ? 'Generating…' : 'Generate Budget'}
+                    </button>
                     <button onClick={() => { setAwaitingApproval(false); setIsRunning(false); }}
                       className="px-4 py-3 text-stone-400 hover:text-stone-600 text-sm font-medium transition-colors">
                       Cancel
                     </button>
                   </div>
+
+                  {/* LOI Output */}
+                  {loiOutput && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">📋 Letter of Intent</p>
+                        <button
+                          onClick={() => {
+                            const el = document.createElement('a');
+                            el.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(loiOutput);
+                            el.download = `${profile.companyName || 'LOI'}_civicpath.txt`;
+                            el.click();
+                          }}
+                          className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
+                          <Download className="w-3 h-3" /> Download
+                        </button>
+                      </div>
+                      <div className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{loiOutput}</div>
+                    </div>
+                  )}
+
+                  {/* Budget Output */}
+                  {budgetOutput && (
+                    <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-purple-700 uppercase tracking-wider">💰 Budget Narrative</p>
+                        <button
+                          onClick={() => {
+                            const el = document.createElement('a');
+                            el.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(budgetOutput);
+                            el.download = `${profile.companyName || 'Budget'}_civicpath.txt`;
+                            el.click();
+                          }}
+                          className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          <Download className="w-3 h-3" /> Download
+                        </button>
+                      </div>
+                      <div className="text-sm text-stone-700 leading-relaxed max-h-64 overflow-y-auto whitespace-pre-wrap">{budgetOutput}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

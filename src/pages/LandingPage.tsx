@@ -245,7 +245,6 @@ export default function LandingPage() {
               '🏆 Google Cloud ADK Hackathon 2026 Finalist',
               '🔐 FedRAMP-Aligned Architecture',
               '🔒 E2E Encrypted · GDPR Art.17',
-              '🏙️ Miami-Dade Pilot Partner',
               '📄 Patent Pending · THINKVERSE-001',
             ].map((b,i) => (
               <span key={i} className="bg-[#76B90015] text-[#5a9000] rounded-full px-3 py-1.5 text-sm font-medium">{b}</span>
