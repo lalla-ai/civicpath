@@ -811,7 +811,7 @@ Use realistic numbers that add up to the total requested. Format as markdown tab
 
   const handleSecureWipe = () => {
     purgeControllerRef.current?.trigger(() => {
-      // Wipe all grant enclave state
+      // ── Wipe all grant enclave state (React) ──
       setAgents(prev => prev.map(a => ({ ...a, status: 'idle', logs: [], output: null })));
       setDiscoveredGrants([]);
       setAllDiscoveredGrants([]);
@@ -823,7 +823,20 @@ Use realistic numbers that add up to the total requested. Format as markdown tab
       setAwaitingApproval(false);
       setNextAction(null);
       setIsRunning(false);
-      localStorage.removeItem('civicpath_pipeline_run');
+
+      // ── P05: Wipe localStorage pipeline keys (profile preserved) ──
+      const PIPELINE_KEYS = [
+        'civicpath_pipeline_run',
+        'civicpath_tracker',
+        'civicpath_lalla_sessions',
+        'civicpath_amai_session',
+        `civicpath_runs_${new Date().toISOString().slice(0, 7)}`,
+      ];
+      PIPELINE_KEYS.forEach(k => localStorage.removeItem(k));
+
+      // ── Wipe all sessionStorage (OAuth state, LinkedIn state) ──
+      sessionStorage.clear();
+
       setTimeout(() => setPurgeVisible(false), 2000);
     });
   };

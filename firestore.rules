@@ -34,11 +34,10 @@ service cloud.firestore {
         && request.resource.data.seekerUid == request.auth.uid;
 
       // Seekers can only read their own applications
-      // Funders (who have funderUid set on the doc) can read all
+      // Funders (who posted the grant) can read applications for their grants
       allow read: if request.auth != null
         && (resource.data.seekerUid == request.auth.uid
-            || resource.data.funderUid == request.auth.uid
-            || request.auth.token.email != null);
+            || resource.data.funderUid == request.auth.uid);
 
       // Only allow status updates (approve/reject); seekers cannot modify their own
       allow update: if request.auth != null
