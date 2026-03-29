@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 
 /**
  * cron-watcher.ts — The Watcher Agent (real backend)
@@ -81,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+  const geminiKey = getGeminiKey() || '';
   const resendKey = process.env.RESEND_API_KEY;
 
   if (!resendKey) {

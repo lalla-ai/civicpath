@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,13 +15,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many enrichment requests. Please wait a minute.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = getGeminiKey();
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
   const { companyName, website, linkedinUrl, twitterUrl } = req.body || {};
-  
-  const urls = [website, linkedinUrl, twitterUrl].filter(Boolean).join(', ');
-  if (!urls && !companyName) {
+
+  // Input length caps — prevent prompt injection and cost DoS
+  const safeName = String(companyName || '').slice(0, 200);
+  const safeUrls = [website, linkedinUrl, twitterUrl]
+    .filter(Boolean)
+    .map((u: string) => String(u).slice(0, 500))
+    .join(', ');
+
+  if (!safeUrls && !safeName) {
     return res.status(400).json({ error: 'Company name or at least one URL required for enrichment' });
   }
 
@@ -33,8 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const prompt = `You are a professional grant profile researcher.
-Research the organization: ${companyName || 'Unknown'} 
-Associated URLs: ${urls}
+Research the organization: ${safeName || 'Unknown'}
+Associated URLs: ${safeUrls}
 
 Perform a Google Search to find their latest mission, impact metrics, team size, and founding year.
 

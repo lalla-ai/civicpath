@@ -1,7 +1,57 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
+
+const FREE_MONTHLY_LIMIT = 50; // ~10 full pipeline runs
+
+/**
+ * Verify the Firebase ID token and enforce the free-tier call limit.
+ * Returns { allowed: true } on success or when plan check can't run.
+ * Returns { allowed: false, reason } when the limit is exceeded.
+ * Never throws — always fails open so a misconfigured Admin SDK never blocks users.
+ */
+async function checkUsage(authHeader: string | undefined): Promise<{ allowed: boolean; reason?: string; upgradeRequired?: boolean }> {
+  if (!authHeader?.startsWith('Bearer ')) return { allowed: true };
+  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!sa) return { allowed: true }; // Admin SDK not configured — skip check
+
+  try {
+    const [{ initializeApp, getApps, cert }, { getFirestore }, { getAuth }] = await Promise.all([
+      import('firebase-admin/app'),
+      import('firebase-admin/firestore'),
+      import('firebase-admin/auth'),
+    ]);
+    if (getApps().length === 0) initializeApp({ credential: cert(JSON.parse(sa)) });
+
+    const token = authHeader.slice(7);
+    const decoded = await getAuth().verifyIdToken(token);
+    const db = getFirestore();
+    const userRef = db.doc(`users/${decoded.uid}`);
+    const monthKey = new Date().toISOString().slice(0, 7).replace('-', '_');
+    const field = `aiCalls_${monthKey}`;
+
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(userRef);
+      const data = snap.data() || {};
+      if ((data.plan || 'free') !== 'free') return { allowed: true }; // Pro = unlimited
+      const count: number = data[field] || 0;
+      if (count >= FREE_MONTHLY_LIMIT) {
+        return {
+          allowed: false,
+          reason: `Free plan limit reached (${FREE_MONTHLY_LIMIT} AI requests/month). Upgrade to Pro for unlimited access.`,
+          upgradeRequired: true,
+        };
+      }
+      tx.set(userRef, { [field]: count + 1 }, { merge: true });
+      return { allowed: true };
+    });
+    return result;
+  } catch (err: any) {
+    console.warn('[Plan] Usage check failed — allowing:', err.message);
+    return { allowed: true }; // Always fail open
+  }
+}
 
 function extractAnthropicText(data: any): string {
   return (data?.content || [])
@@ -42,12 +92,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
 
-  const { prompt, messages, systemContext, useSearch, useNIM, nimModel } = req.body || {};
-  if (!prompt && !messages) return res.status(400).json({ error: 'prompt or messages required' });
+  const { prompt: rawPrompt, messages: rawMessages, systemContext, useSearch, useNIM, nimModel } = req.body || {};
+  if (!rawPrompt && !rawMessages) return res.status(400).json({ error: 'prompt or messages required' });
+
+  // Input length caps
+  const MAX_PROMPT = 8_000;
+  const MAX_MSG = 2_000;
+  const prompt = typeof rawPrompt === 'string' ? rawPrompt.slice(0, MAX_PROMPT) : rawPrompt;
+  const messages = Array.isArray(rawMessages)
+    ? rawMessages.map((m: any) => ({ ...m, content: String(m.content || '').slice(0, MAX_MSG) }))
+    : rawMessages;
+
+  // Server-side plan enforcement
+  const usage = await checkUsage(req.headers['authorization'] as string | undefined);
+  if (!usage.allowed) {
+    return res.status(402).json({ error: usage.reason, upgradeRequired: usage.upgradeRequired });
+  }
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
-  const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const geminiKey = getGeminiKey();
   const nimApiKey = process.env.NVIDIA_API_KEY;
   const plainPrompt = toPlainPrompt(prompt, messages);
   const chatMessages = toChatMessages(prompt, messages);
@@ -185,6 +249,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (useSearch) {
       modelConfig.tools = [{ googleSearch: {} }];
     }
+    if (expectJson) {
+      modelConfig.generationConfig = { responseMimeType: "application/json" };
+    }
     const model = genAI.getGenerativeModel(modelConfig);
 
     if (messages && Array.isArray(messages) && messages.length > 0) {
@@ -193,17 +260,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         role: m.role === 'user' ? 'user' as const : 'model' as const,
         parts: [{ text: m.content }],
       }));
-      const chat = model.startChat({ history, systemInstruction: systemContext });
+      const chat = model.startChat({ history, systemInstruction: enhancedSystemContext });
       const last = messages[messages.length - 1];
       const result = await chat.sendMessage(last.content);
     return res.status(200).json({ text: result.response.text(), provider: 'gemini-fallback' });
     } else {
       // Single prompt
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...(enhancedSystemContext ? { systemInstruction: enhancedSystemContext } : {})
+      });
       return res.status(200).json({ text: result.response.text(), provider: 'gemini-fallback' });
     }
   } catch (err: any) {
     console.error('Gemini proxy error:', err);
     return res.status(500).json({ error: err.message });
   }
+}
 }

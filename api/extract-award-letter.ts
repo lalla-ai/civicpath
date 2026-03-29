@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,11 +15,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many requests. Please wait.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = getGeminiKey();
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
   const { content, mimeType = 'text/plain', fileName = 'award-letter', orgName } = req.body || {};
   if (!content) return res.status(400).json({ error: 'content (base64) required' });
+  // Reject oversized payloads (~3 MB base64 limit)
+  if (typeof content === 'string' && content.length > 4_000_000) {
+    return res.status(413).json({ error: 'File too large. Maximum size is 3 MB.' });
+  }
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });

@@ -84,11 +84,19 @@ export async function orchestratedInference(
 ): Promise<InferenceResult> {
   let lastError: OrchestratorError | null = null;
 
+  // Attach Firebase ID token so the backend can enforce the plan limit
+  let authHeader: Record<string, string> = {};
+  try {
+    const { auth } = await import('../../firebase');
+    const token = await auth.currentUser?.getIdToken();
+    if (token) authHeader = { Authorization: `Bearer ${token}` };
+  } catch { /* no-op if Firebase is unavailable */ }
+
   for (let attempt = 0; attempt < BACKOFF_DELAYS.length; attempt++) {
     try {
       const res = await fetch('/api/gemini-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           prompt,
           systemContext: options.systemContext,
@@ -96,6 +104,12 @@ export async function orchestratedInference(
           useNIM: options.useNIM ?? false,
         }),
       });
+
+      // Handle plan limit (402) — surface upgrade prompt immediately, no retry
+      if (res.status === 402) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Monthly AI limit reached. Upgrade to Pro for unlimited access.');
+      }
 
       // Handle 429 explicitly — do NOT silently swallow
       if (res.status === 429) {

@@ -22,7 +22,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { rateLimit, getClientIp } from './rateLimiter.js';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 import { safeParseAIJSON } from './_utils.js';
 // ethers imported dynamically below to avoid ESM bundling issues with Vercel
 
@@ -369,13 +369,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // ── MyLalla Research Engine (Nemotron-3-Super + live grants) ─────────────
       case 'mylalla-research': {
-        const { query: mlQuery, sessionId: mlSession, orgProfile } = req.body;
-        if (!mlQuery) return res.status(400).json({ error: 'query required' });
+        const { query: mlQueryRaw, sessionId: mlSession, orgProfile } = req.body;
+        if (!mlQueryRaw) return res.status(400).json({ error: 'query required' });
+        const mlQuery = String(mlQueryRaw).slice(0, 2_000);
 
         const nimKey = process.env.NVIDIA_API_KEY;
         const anthropicKey = process.env.ANTHROPIC_API_KEY;
         const groqKey = process.env.GROQ_API_KEY;
-        const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+        const geminiKey = getGeminiKey();
         if (!anthropicKey && !groqKey && !nimKey && !geminiKey) return res.status(500).json({ error: 'No inference API configured' });
 
         // Step 1: Classify query type

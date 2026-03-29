@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 import { safeParseAIJSON } from './_utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many requests. Please wait.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = getGeminiKey();
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
   const { deadline, grant, profile } = req.body || {};

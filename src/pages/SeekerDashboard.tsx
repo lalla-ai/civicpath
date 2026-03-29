@@ -1034,7 +1034,7 @@ Return ONLY a valid JSON array of objects:
 
 Order by score descending. Score ALL ${grantsToScore.length} grants.`;
 
-      const raw = await callGeminiProxy(prompt);
+      const raw = await callGeminiProxy(prompt, false);
       let scored: any[] = [];
       try {
         scored = safeParseAIJSON(raw);
@@ -1082,12 +1082,14 @@ Order by score descending. Score ALL ${grantsToScore.length} grants.`;
 
     let text = '';
     try {
-      const fullPrompt = `You are a professional grant writer. Your task is to write a highly accurate and compelling grant proposal based ONLY on the provided organization profile.
+      const fullPrompt = `You are a world-class, elite grant writer. Your task is to write a highly persuasive, professional, and data-driven grant proposal based ONLY on the provided organization profile. 
+
+Your goal is to win funding by demonstrating clear ROI (Return on Investment) for the funder, showing organizational competence, and maintaining a tone that is authoritative, urgent, and deeply respectful of the funder's goals.
 
 ### CRITICAL RULES:
-1. NO HALLUCINATIONS: Do NOT invent names, dates, numbers, or achievements that are not in the profile below.
-2. NO PLACEHOLDERS: Do NOT use brackets like "[Organization Name]". If information is missing, omit that detail or use a professional generic term that does not guess (e.g., "The applicant").
-3. FACTUAL INTEGRITY: If the organization mission or project description is "NOT PROVIDED", your draft should reflect that the organization is in the early stages of project definition.
+1. NO HALLUCINATIONS: Do NOT invent names, dates, metrics, budgets, or achievements that are not explicitly provided below.
+2. NO PLACEHOLDERS: Do NOT use brackets like "[Organization Name]". If information is missing, elegantly write around it or use professional generic terms (e.g., "our organization", "the proposed initiative").
+3. FACTUAL INTEGRITY: If the mission or project description is "NOT PROVIDED", your draft should reflect that the organization is in the early stages of strategic definition.
 
 ### ORGANIZATION PROFILE
 - Name: ${profile.companyName || 'NOT PROVIDED'}
@@ -1109,14 +1111,15 @@ Order by score descending. Score ALL ${grantsToScore.length} grants.`;
 - Amount: ${grantAmount}
 - Deadline: ${(targetGrant as any).closeDate || 'Upcoming'}
 
-Write a 500-700 word proposal with EXACTLY these sections. Be specific, professional, and stick strictly to the facts above:
+Write a 600-800 word proposal with EXACTLY these sections. Use bolding for emphasis, maintain a confident active voice, and ensure it reads as a highly competitive application:
 
 ### Executive Summary
-### Problem Statement
-### Project Description & Implementation Plan
+### Statement of Need (The Problem)
+### Project Description & Implementation Plan (The Solution)
 ### Organizational Capacity & Track Record
-### Budget Narrative
-### Evaluation & Success Metrics`;
+### Evaluation & Success Metrics
+### Sustainability & Future Funding (How the impact continues after the grant)
+### Budget Narrative`;
 
       text = await callGeminiProxy(fullPrompt);
       addLog('drafter', 'Personalized proposal generated. Streaming...');
@@ -1203,7 +1206,7 @@ Check these items and return ONLY valid JSON:
     {"item": "EIN/Tax ID", "status": "PASS" | "FAIL", "detail": "finding"},
     {"item": "Entity Type Eligibility", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
     {"item": "Geographic Eligibility", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
-    {"item": "Proposal Completeness", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
+    {"item": "Proposal Completeness (All 7 required sections present)", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
     {"item": "SAM/DUNS (Federal Only)", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"}
   ],
   "critical_issues": ["List specific missing data or conflicts"],

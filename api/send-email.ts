@@ -12,7 +12,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GEMINI_MODEL } from './_config.js';
+import { GEMINI_MODEL, getGeminiKey } from './_config.js';
 import { safeParseAIJSON } from './_utils.js';
 import { rateLimit, getClientIp } from './rateLimiter.js';
 
@@ -243,7 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const to = data.email || data.seekerEmail;
   if (!to) return res.status(400).json({ error: 'email required' });
 
-  const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+  const geminiKey = getGeminiKey() || '';
 
   try {
     let emailData: { subject: string; html: string };
