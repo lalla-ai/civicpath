@@ -561,32 +561,33 @@ Respond in clean markdown with EXACTLY these 4 sections:
 
   const handleAIFillFromUrl = async () => {
     const urls = [profile.website, profile.linkedinUrl, profile.twitterUrl].filter(Boolean).join(', ');
-    if (!urls) return;
+    if (!urls && !profile.companyName) return;
     setAiFilling(true);
-    setAiFillMsg('AI is analyzing your links...');
+    setAiFillMsg('AI Researcher is scanning the web...');
     try {
-      const prompt = `You are a grant profile assistant. Based on these URLs: ${urls}\n\nUsing any knowledge from your training data about this organization, OR inferring from the domain/handle names, create a grant-seeking organization profile.\n\nRespond with ONLY this JSON object — no markdown, no backticks, no extra text:\n{"companyName":"organization name","focusArea":"primary sector","missionStatement":"2-sentence mission","targetPopulation":"who they serve"}`;
-      const raw = await callGeminiProxy(prompt);
-      let parsed: any = null;
-      try { parsed = JSON.parse(raw.trim()); } catch {}
-      if (!parsed) { const m = raw.match(/\{[\s\S]*?\}/); if (m) try { parsed = JSON.parse(m[0]); } catch {} }
-      if (parsed && typeof parsed === 'object') {
-        setProfile(prev => ({
-          ...prev,
-          ...(parsed.companyName?.trim() && { companyName: parsed.companyName.trim() }),
-          ...(parsed.focusArea?.trim() && { focusArea: parsed.focusArea.trim() }),
-          ...(parsed.missionStatement?.trim() && { missionStatement: parsed.missionStatement.trim() }),
-          ...(parsed.targetPopulation?.trim() && { targetPopulation: parsed.targetPopulation.trim() }),
-        }));
-        setAiFillMsg('\u2713 Done! Review the pre-filled fields and continue.');
-      } else if (raw.length > 50) {
-        setProfile(prev => ({ ...prev, backgroundInfo: prev.backgroundInfo || raw.slice(0, 600) }));
-        setAiFillMsg('\u2713 AI context saved to background info.');
-      } else {
-        setAiFillMsg('\u26a0 Could not infer profile — fill fields manually.');
-      }
-    } catch {
-      setAiFillMsg('\u26a0 AI analyze failed — fill fields manually and continue.');
+      const res = await fetch('/api/enrich-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          companyName: profile.companyName,
+          website: profile.website,
+          linkedinUrl: profile.linkedinUrl,
+          twitterUrl: profile.twitterUrl 
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setProfile(prev => ({
+        ...prev,
+        ...data,
+        // Preserve local logo if exists, else use AI found one if any
+        logoDataUrl: prev.logoDataUrl || data.logoDataUrl || '',
+      }));
+      setAiFillMsg('✨ Profile enriched with real-time data!');
+    } catch (err: any) {
+      console.error('Enrichment failed:', err);
+      setAiFillMsg('⚠️ Scan failed — try again later.');
     } finally {
       setAiFilling(false);
       setTimeout(() => setAiFillMsg(''), 8000);
@@ -2837,23 +2838,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         )}
 
         {activeTab === 'profile' && (
-          <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in">
-
-            {/* Cover + Avatar + Logo Upload */}
+          <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in pb-12">
+            
+            {/* ── HEADER / HERO SECTION ── */}
             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-              <div className="h-28 bg-gradient-to-r from-[#76B900] to-[#689900] relative">
-                <div className="absolute inset-0 opacity-10" style={{backgroundImage:'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)',backgroundSize:'20px 20px'}} />
+              <div className="h-32 bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 relative">
+                <div className="absolute inset-0 opacity-20" style={{backgroundImage:'radial-gradient(circle at 2px 2px, #76B900 1px, transparent 0)', backgroundSize:'24px 24px'}} />
+                {profile.linkedinPicture && <img src={profile.linkedinPicture} alt="cover" className="w-full h-full object-cover blur-2xl opacity-30" />}
               </div>
-              <div className="px-6 pb-6">
-                <div className="-mt-10 mb-4 flex items-end justify-between">
-                  {/* Avatar with upload */}
+              <div className="px-8 pb-8">
+                <div className="-mt-12 mb-6 flex items-end justify-between">
                   <div className="relative group">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white bg-[#76B900] flex items-center justify-center shadow-lg overflow-hidden">
+                    <div className="w-24 h-24 rounded-2xl border-4 border-white bg-[#76B900] flex items-center justify-center shadow-xl overflow-hidden">
                       {profile.logoDataUrl
                         ? <img src={profile.logoDataUrl} alt="logo" className="w-full h-full object-cover" />
-                        : user?.photo
-                          ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
-                          : <span className="text-2xl font-black text-white">{(profile.companyName?.[0] || user?.name?.[0] || 'O').toUpperCase()}</span>
+                        : profile.linkedinPicture
+                          ? <img src={profile.linkedinPicture} alt={user?.name} className="w-full h-full object-cover" />
+                          : <span className="text-3xl font-black text-white">{(profile.companyName?.[0] || user?.name?.[0] || 'O').toUpperCase()}</span>
                       }
                     </div>
                     <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
@@ -2868,238 +2869,228 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         }} />
                     </label>
                   </div>
-                  <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-sm font-bold text-stone-600 hover:border-[#76B900] hover:text-[#76B900] transition-colors">
-                    Edit Profile
-                  </button>
-                </div>
-                <h2 className="text-2xl font-black text-stone-900">{profile.companyName || user?.name || 'Your Organization'}</h2>
-                {profile.tagline && <p className="text-stone-500 text-sm mt-1 italic">{profile.tagline}</p>}
-                <p className="text-stone-400 text-xs mt-0.5">{user?.email}</p>
-                <div className="flex flex-wrap items-center gap-2 mt-3">
-                  {profile.orgType && <span className="text-xs font-bold bg-[#76B900]/10 text-[#76B900] px-2.5 py-1 rounded-full">{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType === 'small-business' ? 'Small Business' : profile.orgType}</span>}
-                  {profile.location && <span className="text-xs text-stone-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{profile.location}</span>}
-                  {profile.yearFounded && <span className="text-xs text-stone-500">Est. {profile.yearFounded}</span>}
-                  {profile.teamSize && <span className="text-xs text-stone-500">{profile.teamSize} team</span>}
-                </div>
-                {(profile.website || profile.linkedinUrl || profile.twitterUrl) && (
-                  <div className="flex flex-wrap gap-3 mt-3">
-                    {profile.website && <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#76B900] hover:underline flex items-center gap-1"><Globe className="w-3 h-3" />Website</a>}
-                    {profile.linkedinUrl && <a href={profile.linkedinUrl.startsWith('http') ? profile.linkedinUrl : `https://${profile.linkedinUrl}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1"><Linkedin className="w-3 h-3" />LinkedIn</a>}
-                    {profile.twitterUrl && <span className="text-xs text-sky-500 flex items-center gap-1"><Twitter className="w-3 h-3" />{profile.twitterUrl}</span>}
+                  <div className="flex gap-2">
+                    <button onClick={() => setStep('onboarding')} className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white rounded-xl text-sm font-bold hover:bg-stone-800 transition-all shadow-sm">
+                      Edit Profile
+                    </button>
                   </div>
-                )}
+                </div>
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl font-[800] text-stone-900 tracking-tight">{profile.companyName || user?.name || 'Your Organization'}</h2>
+                    <p className="text-stone-500 text-lg font-medium mt-1">{profile.tagline || 'Building the future of community impact.'}</p>
+                    <div className="flex flex-wrap items-center gap-4 mt-4 text-sm font-medium text-stone-400">
+                      {profile.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-[#76B900]" />{profile.location}</span>}
+                      {profile.orgType && <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-[#76B900]" />{profile.orgType === '501c3' ? '501(c)(3) Nonprofit' : profile.orgType === 'startup' ? 'AI / Tech Startup' : profile.orgType}</span>}
+                      {profile.yearFounded && <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-[#76B900]" />Est. {profile.yearFounded}</span>}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.website && <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 hover:text-[#76B900] hover:border-[#76B900] transition-all"><Globe className="w-5 h-5" /></a>}
+                    {profile.linkedinUrl && <a href={profile.linkedinUrl.startsWith('http') ? profile.linkedinUrl : `https://${profile.linkedinUrl}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 hover:text-blue-600 hover:border-blue-600 transition-all"><Linkedin className="w-5 h-5" /></a>}
+                    {profile.twitterUrl && <a href={`https://x.com/${profile.twitterUrl.replace('@','')}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 hover:text-sky-500 hover:border-sky-500 transition-all"><Twitter className="w-5 h-5" /></a>}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-bold text-stone-800 flex items-center gap-2">
-                    <Linkedin className="w-4 h-4 text-blue-600" /> LinkedIn Sync
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* ── MAIN CONTENT (LEFT) ── */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* About / Background */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-[#76B900]" /> Organization Overview
                   </h3>
-                  <p className="text-xs text-stone-500 mt-1">
-                    Connect your LinkedIn account to keep your CivicPath member identity fresh with your latest LinkedIn name, photo, and email.
-                  </p>
-                  {profile.linkedinProfileName && (
-                    <div className="mt-3 text-sm text-stone-700 space-y-1">
-                      <p><span className="font-semibold">LinkedIn member:</span> {profile.linkedinProfileName}</p>
-                      {profile.linkedinEmail && <p><span className="font-semibold">Email:</span> {profile.linkedinEmail}</p>}
-                      {profile.linkedinConnectedAt && (
-                        <p className="text-xs text-stone-500">Last synced {new Date(profile.linkedinConnectedAt).toLocaleString()}</p>
-                      )}
+                  <div className="prose prose-stone max-w-none">
+                    <p className="text-stone-600 leading-relaxed whitespace-pre-wrap text-[15px]">
+                      {profile.backgroundInfo || profile.resumeText || 'No background information provided yet. Use the AI Research tool to automatically generate an overview from your web presence.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mission & Focus */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4 flex items-center gap-2">
+                    <Cpu className="w-5 h-5 text-[#76B900]" /> Mission & Strategy
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="p-5 bg-stone-50 border border-stone-200 rounded-2xl">
+                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Core Mission</p>
+                      <p className="text-stone-800 font-medium italic">"{profile.missionStatement || 'No mission statement added.'}"</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 border border-stone-100 rounded-xl">
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Focus Area</p>
+                        <p className="text-sm font-bold text-stone-700">{profile.focusArea || 'Not specified'}</p>
+                      </div>
+                      <div className="p-4 border border-stone-100 rounded-xl">
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Target Population</p>
+                        <p className="text-sm font-bold text-stone-700">{profile.targetPopulation || 'General'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grant History */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                  <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-[#76B900]" /> Funding History
+                  </h3>
+                  {profile.grantHistoryText ? (
+                    <div className="relative pl-6 border-l-2 border-stone-100 space-y-8">
+                      {profile.grantHistoryText.split(/[·;\n]+/).map((entry, i) => {
+                        const text = entry.trim();
+                        if (!text) return null;
+                        const isWon = /won|awarded|received/i.test(text);
+                        return (
+                          <div key={i} className="relative">
+                            <div className={`absolute -left-[31px] top-0 w-3 h-3 rounded-full border-2 border-white shadow-sm ${isWon ? 'bg-[#76B900]' : 'bg-stone-300'}`} />
+                            <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 hover:border-[#76B900]/30 transition-colors">
+                              <p className="text-sm text-stone-700 font-medium leading-relaxed">{text}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-stone-100 rounded-2xl">
+                      <p className="text-stone-400 text-sm">No grant history recorded.</p>
                     </div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={startLinkedInConnect}
-                  disabled={linkedinSyncing}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-60"
-                >
-                  {linkedinSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Linkedin className="w-4 h-4" />}
-                  {profile.linkedinMemberId ? 'Refresh LinkedIn' : 'Connect LinkedIn'}
-                </button>
-              </div>
-              {linkedinMsg && (
-                <div className="mt-4 rounded-xl border border-[#76B900]/20 bg-[#76B900]/10 px-3 py-2 text-sm text-[#4f7200] font-medium">
-                  {linkedinMsg}
-                </div>
-              )}
-            </div>
 
-            {/* Profile Strength */}
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-stone-800">Profile Strength</h3>
-                <span className={`text-sm font-black ${profileScoreColor}`}>{profileScore}%</span>
-              </div>
-              <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
-                <div className={`h-full rounded-full transition-all duration-700 ${profileBarColor}`} style={{width:`${profileScore}%`}} />
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {[
-                  {label:'Logo', ok: !!profile.logoDataUrl},
-                  {label:'Tagline', ok: profile.tagline.length > 3},
-                  {label:'Year Founded', ok: profile.yearFounded.length === 4},
-                  {label:'EIN', ok: profile.ein.length >= 4},
-                  {label:'DUNS/SAM', ok: profile.dunsNumber.length >= 4},
-                  {label:'Mission', ok: profile.missionStatement.length >= 30},
-                  {label:'Impact Metrics', ok: profile.impactMetrics.length >= 10},
-                ].map(item => (
-                  <span key={item.label} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    item.ok ? 'bg-[#76B900]/10 text-[#76B900]' : 'bg-stone-100 text-stone-400'
-                  }`}>{item.ok ? '✓' : '✕'} {item.label}</span>
-                ))}
-              </div>
-              {profileScore < 80 && <p className="text-xs text-stone-400 mt-2">Complete your profile to improve AI grant matching accuracy. <button onClick={() => setStep('onboarding')} className="text-[#76B900] font-bold hover:underline">Complete now →</button></p>}
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                {l:'Annual Budget', v: profile.annualBudget || '—'},
-                {l:'Team Size', v: profile.teamSize || '—'},
-                {l:'Funding Goal', v: profile.fundingAmount || '—'},
-                {l:'Year Founded', v: profile.yearFounded || '—'},
-              ].map((s, i) => (
-                <div key={i} className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm text-center">
-                  <div className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-1">{s.l}</div>
-                  <div className="text-sm font-black text-stone-800">{s.v}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Federal Credentials */}
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-              <h3 className="font-bold text-stone-800 mb-4 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-500" /> Federal Grant Credentials
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border ${
-                  profile.ein ? 'bg-[#76B900]/5 border-[#76B900]/20' : 'bg-amber-50 border-amber-200'
-                }">
-                  <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
-                    profile.ein ? 'text-[#76B900]' : 'text-amber-600'
-                  }">{profile.ein ? '✓ EIN / Tax ID' : '⚠️ EIN / Tax ID — Required'}</div>
-                  <div className="text-sm font-mono text-stone-800">{profile.ein || <span className="text-stone-400 italic">Not added yet — needed for federal grants</span>}
-                  </div>
-                </div>
-                <div className="p-4 rounded-xl border ${
-                  profile.dunsNumber ? 'bg-[#76B900]/5 border-[#76B900]/20' : 'bg-amber-50 border-amber-200'
-                }">
-                  <div className="text-xs font-bold uppercase tracking-wide mb-1 ${
-                    profile.dunsNumber ? 'text-[#76B900]' : 'text-amber-600'
-                  }">{profile.dunsNumber ? '✓ DUNS / SAM Number' : '⚠️ DUNS / SAM — Required for Grants.gov'}</div>
-                  <div className="text-sm font-mono text-stone-800">{profile.dunsNumber || <span className="text-stone-400 italic">Not added yet — register at sam.gov</span>}
+                {/* Funding Goal */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4 flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-[#76B900]" /> Active Funding Goals
+                  </h3>
+                  <div className="p-6 bg-gradient-to-br from-[#76B900]/5 to-transparent border border-[#76B900]/10 rounded-2xl">
+                    <p className="text-stone-700 font-semibold mb-2">{profile.fundingAmount ? `Target: ${profile.fundingAmount}` : 'Seeking funding'}</p>
+                    <p className="text-stone-600 text-sm leading-relaxed">{profile.projectDescription || 'No active project description provided.'}</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Impact Metrics */}
-            {profile.impactMetrics ? (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#76B900]" /> Impact Metrics</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile.impactMetrics.split(/[·,;]+/).map((m, i) => m.trim() && (
-                    <span key={i} className="bg-[#76B900]/10 text-[#76B900] text-sm font-semibold px-3 py-1.5 rounded-full">{m.trim()}</span>
-                  ))}
+              {/* ── SIDEBAR (RIGHT) ── */}
+              <div className="space-y-6">
+                
+                {/* AI RESEARCH CARD */}
+                <div className="bg-stone-900 rounded-2xl border border-stone-800 shadow-xl p-6 text-white overflow-hidden relative group">
+                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-[#76B900] blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                  <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                    <BrainCircuit className="w-5 h-5 text-[#76B900]" /> AI Real-Time Research
+                  </h3>
+                  <p className="text-stone-400 text-xs mb-5 leading-relaxed">
+                    Automatically sync your profile with your web presence. Our agents will scan your website and social profiles to update your mission and history.
+                  </p>
+                  <button
+                    onClick={handleAIFillFromUrl}
+                    disabled={aiFilling || (!profile.website && !profile.linkedinUrl)}
+                    className="w-full py-3 rounded-xl bg-[#76B900] text-stone-900 font-bold text-sm hover:bg-[#86d200] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale shadow-lg shadow-[#76B900]/20"
+                  >
+                    {aiFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    {aiFilling ? 'Researching...' : 'Sync with Web (AI)'}
+                  </button>
+                  {aiFillMsg && <p className="mt-3 text-[10px] font-bold text-[#76B900] uppercase tracking-widest text-center">{aiFillMsg}</p>}
                 </div>
-              </div>
-            ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
-                <span className="text-amber-500 mt-0.5">⚠️</span>
-                <div>
-                  <p className="text-sm font-bold text-amber-800">No impact metrics yet</p>
-                  <p className="text-xs text-amber-700 mt-0.5">Numbers beat adjectives. Add metrics like "500 students served · $2M secured" to stand out to funders.</p>
-                  <button onClick={() => setStep('onboarding')} className="text-xs font-bold text-amber-800 underline mt-1">Add impact metrics →</button>
-                </div>
-              </div>
-            )}
 
-            {/* Mission */}
-            {(profile.focusArea || profile.missionStatement) && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Cpu className="w-4 h-4 text-[#76B900]" /> Mission & Focus</h3>
-                {profile.focusArea && <span className="inline-block text-sm font-bold bg-stone-100 text-stone-700 px-3 py-1 rounded-full mb-3">{profile.focusArea}</span>}
-                {profile.missionStatement && <p className="text-stone-600 text-sm leading-relaxed">{profile.missionStatement}</p>}
-                {profile.targetPopulation && <p className="text-stone-500 text-xs mt-3 flex items-center gap-1"><Users className="w-3 h-3" /> Serving: {profile.targetPopulation}</p>}
-              </div>
-            )}
-
-            {/* Team Members */}
-            {profile.teamMembersText && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-[#76B900]" /> Team</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile.teamMembersText.split(',').map((m, i) => m.trim() && (
-                    <div key={i} className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2">
-                      <div className="w-7 h-7 bg-[#76B900]/10 rounded-full flex items-center justify-center text-xs font-black text-[#76B900]">{m.trim()[0]?.toUpperCase()}</div>
-                      <span className="text-sm text-stone-700">{m.trim()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Grant History */}
-            {profile.grantHistoryText && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#76B900]" /> Grant History</h3>
-                <div className="space-y-2">
-                  {profile.grantHistoryText.split(/[·;\n]+/).map((entry, i) => {
-                    const text = entry.trim();
-                    if (!text) return null;
-                    const isWon = /won|awarded|received/i.test(text);
-                    const isReview = /review|pending|submitted/i.test(text);
-                    return (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200">
-                        <span className={`text-xs font-black px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${
-                          isWon ? 'bg-[#76B900]/10 text-[#76B900]' : isReview ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'
-                        }`}>{isWon ? 'Won' : isReview ? 'In Review' : 'Applied'}</span>
-                        <span className="text-sm text-stone-700">{text}</span>
+                {/* Profile Strength */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-stone-800 text-sm uppercase tracking-widest">Strength</h3>
+                    <span className={`text-sm font-black ${profileScoreColor}`}>{profileScore}%</span>
+                  </div>
+                  <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden mb-4">
+                    <div className={`h-full rounded-full transition-all duration-1000 ${profileBarColor}`} style={{width:`${profileScore}%`}} />
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      {label:'Identity', ok: !!profile.logoDataUrl || !!profile.linkedinPicture},
+                      {label:'Vision', ok: profile.missionStatement.length >= 30},
+                      {label:'Federal', ok: profile.ein.length >= 4},
+                      {label:'Impact', ok: profile.impactMetrics.length >= 10},
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center justify-between text-xs">
+                        <span className="text-stone-500 font-medium">{item.label}</span>
+                        <span className={item.ok ? 'text-[#76B900]' : 'text-stone-300'}>{item.ok ? '✓' : '○'}</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Funding Goal */}
-            {profile.projectDescription && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#76B900]" /> Current Funding Goal</h3>
-                <p className="text-stone-600 text-sm leading-relaxed">{profile.projectDescription}</p>
-              </div>
-            )}
+                {/* Vital Stats */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                  <div className="p-4 bg-stone-50 border-b border-stone-100">
+                    <h3 className="font-bold text-stone-900 text-xs uppercase tracking-widest">Key Metrics</h3>
+                  </div>
+                  <div className="divide-y divide-stone-100">
+                    {[
+                      {l:'Annual Budget', v: profile.annualBudget},
+                      {l:'Team Size', v: profile.teamSize},
+                      {l:'Years Active', v: profile.yearsOperating},
+                    ].map((s, i) => (
+                      <div key={i} className="px-6 py-4 flex items-center justify-between">
+                        <span className="text-xs font-medium text-stone-500">{s.l}</span>
+                        <span className="text-sm font-bold text-stone-800">{s.v || '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Background */}
-            {(profile.backgroundInfo || profile.resumeText) && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
-                <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-[#76B900]" /> Background & Experience</h3>
-                <p className="text-stone-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.backgroundInfo || profile.resumeText}</p>
-              </div>
-            )}
+                {/* Impact Pills */}
+                {profile.impactMetrics && (
+                  <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                    <h3 className="font-bold text-stone-800 text-xs uppercase tracking-widest mb-4">Live Impact</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.impactMetrics.split(/[•·,;]+/).map((m, i) => m.trim() && (
+                        <span key={i} className="bg-[#76B900]/10 text-[#76B900] text-[11px] font-bold px-3 py-1.5 rounded-lg border border-[#76B900]/20">{m.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Documents note */}
-            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 flex items-start gap-3">
-              <Upload className="w-4 h-4 text-stone-400 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-bold text-stone-700">Documents (501c3 cert, financials, W-9)</p>
-                <p className="text-xs text-stone-500 mt-0.5">Document upload with cloud storage coming in the next release. For now, paste key details in your background section above.</p>
+                {/* Social Login Sync */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                  <h3 className="font-bold text-stone-800 text-xs uppercase tracking-widest mb-4">Authentication</h3>
+                  <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                        <Linkedin className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-blue-800 leading-none">LinkedIn</p>
+                        <p className="text-[11px] text-blue-600 mt-1">{profile.linkedinMemberId ? 'Connected' : 'Not Linked'}</p>
+                      </div>
+                    </div>
+                    <button onClick={startLinkedInConnect} className="text-xs font-bold text-blue-700 hover:underline">
+                      {profile.linkedinMemberId ? 'Refresh' : 'Connect'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Credentials */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                  <h3 className="text-amber-800 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" /> Compliance
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-amber-600 uppercase">EIN / Tax ID</p>
+                      <p className="text-sm font-mono text-stone-800 mt-1">{profile.ein || 'Missing'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-amber-600 uppercase">DUNS / SAM</p>
+                      <p className="text-sm font-mono text-stone-800 mt-1">{profile.dunsNumber || 'Missing'}</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
-
-            {/* Empty state */}
-            {profileScore < 20 && (
-              <div className="bg-[#76B900]/5 border border-[#76B900]/20 rounded-2xl p-8 text-center">
-                <p className="text-stone-700 font-semibold mb-3">Your profile is mostly empty.</p>
-                <p className="text-stone-500 text-sm mb-4">A complete profile gets 3x better grant matches from our AI agents.</p>
-                <button onClick={() => setStep('onboarding')} className="bg-[#76B900] text-[#111111] font-bold px-6 py-3 rounded-xl hover:bg-[#689900] transition-colors">
-                  Complete My Profile →
-                </button>
-              </div>
-            )}
           </div>
         )}
 
