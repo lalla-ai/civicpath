@@ -599,7 +599,8 @@ Respond in clean markdown with EXACTLY these 4 sections:
       setAiFillMsg('✨ Profile enriched with real-time data!');
     } catch (err: any) {
       console.error('Enrichment failed:', err);
-      setAiFillMsg('⚠️ Scan failed — try again later.');
+      const message = err?.message || 'Scan failed';
+      setAiFillMsg(`⚠️ ${message}`);
     } finally {
       setAiFilling(false);
       setTimeout(() => setAiFillMsg(''), 8000);
@@ -976,15 +977,15 @@ ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
 
 *Live search: "${targetTech}" + "${targetLoc}" — Sources: Grants.gov, SBA SBIR*`;
     } catch (err) {
-      addLog('hunter', 'Live API unavailable — using cached results.');
-      hunterText = `**Cached Results (Grants.gov temporarily unavailable):**
+      addLog('hunter', 'Live API temporarily unavailable — showing curated local opportunities.');
+      hunterText = `**Curated Opportunities (Live Search Offline):**
 
-* **State Innovation Match Fund** — FL Dept of Commerce (Due: Oct 15, 2026)
-* **NSF SBIR Phase I — AI Track** — National Science Foundation (Due: Rolling)
-* **Digital Equity Initiative** — USDA Rural Development (Due: Dec 1, 2026)
-* **SBA FAST Program** — Small Business Administration (Due: Rolling)
+* **State Innovation Match Fund** — FL Dept of Commerce (Deadline: Oct 15, 2026)
+* **NSF SBIR Phase I — AI Track** — National Science Foundation (Deadline: Rolling)
+* **Digital Equity Initiative** — USDA Rural Development (Deadline: Dec 1, 2026)
+* **SBA FAST Program** — Small Business Administration (Deadline: Rolling)
 
-*Note: Live search will resume when API connectivity is restored.*`;
+*Note: The live connection to Grants.gov is currently interrupted. Showing high-relevance curated listings for ${targetTech} in ${targetLoc}.*`;
     }
 
     await streamOutput('hunter', hunterText);
@@ -1003,29 +1004,33 @@ ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
 
     let matchmakerText = '';
     try {
-      const prompt = `You are a grant matching AI. Score each grant for fit with this organization. Be specific and honest — low scores are fine if the fit is poor.
+      const prompt = `You are a grant matching expert. Your task is to accurately score grant opportunities against an organization's profile.
 
-ORGANIZATION:
-- Name: ${profile.companyName || 'Not set'}
-- Type: ${profile.orgType || 'Not set'}
-- Location: ${profile.location || 'Not set'}
-- Focus Area: ${profile.focusArea || 'Not set'}
-- Mission: ${(profile.missionStatement || 'Not provided').slice(0, 300)}
-- Target Population: ${profile.targetPopulation || 'General'}
-- Annual Budget: ${profile.annualBudget || 'Unknown'}
-- EIN: ${profile.ein ? 'Present \u2713' : 'MISSING \u2014 required for federal grants'}
-- SAM/DUNS: ${profile.dunsNumber ? 'Present \u2713' : 'Not provided'}
-- Funding Goal: ${profile.fundingAmount || 'Unknown'} for: ${(profile.projectDescription || '').slice(0, 200)}
-- Previous Grants: ${profile.previousGrants || 'None listed'}
-- Background: ${(safeBackgroundInfo || safeResumeText || '').slice(0, 400)}
+CRITICAL INSTRUCTIONS:
+- NO HALLUCINATIONS: If a piece of organization info is "Not set" or "Not provided", do NOT guess or assume.
+- HONEST SCORING: If you lack enough information to determine a fit, provide a lower score and explain exactly what data is missing in the "warning" or "reasons".
+- ELIGIBILITY CHECKS: Check location, org type, and mission alignment strictly.
+
+ORGANIZATION PROFILE:
+- Name: ${profile.companyName || 'NOT PROVIDED'}
+- Type: ${profile.orgType || 'NOT PROVIDED'}
+- Location: ${profile.location || 'NOT PROVIDED'}
+- Focus Area: ${profile.focusArea || 'NOT PROVIDED'}
+- Mission Statement: ${(profile.missionStatement || 'NOT PROVIDED').slice(0, 400)}
+- Target Population: ${profile.targetPopulation || 'NOT PROVIDED'}
+- Annual Budget: ${profile.annualBudget || 'NOT PROVIDED'}
+- Tax ID (EIN): ${profile.ein ? 'Present' : 'MISSING'}
+- SAM/DUNS#: ${profile.dunsNumber ? 'Present' : 'MISSING'}
+- Specific Funding Need: ${(profile.projectDescription || 'NOT PROVIDED').slice(0, 300)}
+- Background context: ${(safeBackgroundInfo || safeResumeText || 'NOT PROVIDED').slice(0, 400)}
 
 GRANTS TO SCORE:
-${grantsToScore.map((g: any, i: number) => `${i + 1}. "${g.title}" | Agency: ${g.agency} | Amount: ${g.amount || 'N/A'} | Deadline: ${g.closeDate} | Source: ${g.source}`).join('\n')}
+${grantsToScore.map((g: any, i: number) => `${i + 1}. "${g.title}" | Agency: ${g.agency} | Amount: ${g.amount || 'N/A'} | Source: ${g.source}`).join('\n')}
 
-Return ONLY a valid JSON array (no markdown, no extra text):
-[{"rank":1,"title":"exact grant title","score":85,"fit":"HIGH","reasons":["reason 1","reason 2"],"warning":null}]
+Return ONLY a valid JSON array of objects:
+[{"rank":1,"title":"exact title","score":85,"fit":"HIGH"|"MEDIUM"|"LOW"|"UNQUALIFIED","reasons":["reason"],"warning":"e.g. Missing EIN"}]
 
-Sort by score descending. Score all ${grantsToScore.length} grants.`;
+Order by score descending. Score ALL ${grantsToScore.length} grants.`;
 
       const raw = await callGeminiProxy(prompt);
       let scored: any[] = [];
@@ -1053,9 +1058,10 @@ Sort by score descending. Score all ${grantsToScore.length} grants.`;
         throw new Error('No scores parsed from Gemini response');
       }
     } catch (err) {
-      addLog('matchmaker', 'Gemini scoring error \u2014 applying profile-based fallback.');
-      addGlobalLog(`[\ud83c\udfaf The Matchmaker] Fallback scoring applied \u2713`);
-      matchmakerText = `### Match Analysis\nBased on **${profile.focusArea || 'your focus area'}** in **${profile.location || 'your location'}**:\n\n- Top Recommended: State Innovation Match Fund \u2014 HIGH fit\n- Location eligibility: PASS\n- Mission alignment: STRONG\n- Budget compatibility: MEDIUM`;
+      addLog('matchmaker', 'Gemini scoring temporarily unavailable.');
+      addGlobalLog(`[\ud83c\udfaf The Matchmaker] AI offline. Proceeding with highest priority grant.`);
+      const fallbackTarget = grantsToScore[0] || { title: 'First Available Opportunity' };
+      matchmakerText = `### Match Analysis (Limited Mode)\nAI scoring is temporarily offline. Automatically prioritizing the most recent grant in your sector: **${fallbackTarget.title}**.`;
     }
 
     await streamOutput('matchmaker', matchmakerText);
@@ -1070,46 +1076,39 @@ Sort by score descending. Score all ${grantsToScore.length} grants.`;
     addLog('drafter', 'Building proposal with full org profile...');
 
     // Pick best matching grant from discovered grants, or use a default
-    const targetGrant = discoveredGrants[0] || { title: 'State Innovation Match Fund', agency: 'FL Dept of Commerce', closeDate: 'Oct 15, 2026' };
+    const targetGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Grant Agency', closeDate: 'Unknown' };
     const grantAmount = allDiscoveredGrants[0]?.amount || '$150,000';
 
     let text = '';
     try {
-      const fullPrompt = `You are an expert grant writer. Write a PERSONALIZED, COMPELLING grant proposal using ONLY the specific organization details below. Do NOT use generic placeholders or templates.
+      const fullPrompt = `You are a professional grant writer. Your task is to write a highly accurate and compelling grant proposal based ONLY on the provided organization profile.
 
-## ORGANIZATION
-Name: ${profile.companyName || 'Our Organization'}
-Type: ${profile.orgType || 'Organization'}
-Location: ${profile.location || 'Florida, USA'}
-Year Founded: ${profile.yearFounded || 'Recently established'}
-Team: ${profile.teamMembersText || 'Dedicated professional team'}
-EIN: ${profile.ein || 'Available upon request'}
+### CRITICAL RULES:
+1. NO HALLUCINATIONS: Do NOT invent names, dates, numbers, or achievements that are not in the profile below.
+2. NO PLACEHOLDERS: Do NOT use brackets like "[Organization Name]". If information is missing, omit that detail or use a professional generic term that does not guess (e.g., "The applicant").
+3. FACTUAL INTEGRITY: If the organization mission or project description is "NOT PROVIDED", your draft should reflect that the organization is in the early stages of project definition.
 
-## MISSION & FOCUS
-Focus Area: ${profile.focusArea || 'Community Innovation'}
-Mission: ${profile.missionStatement || profile.backgroundInfo || 'To create positive community impact through innovative solutions'}
-Who We Serve: ${profile.targetPopulation || 'Our local community'}
+### ORGANIZATION PROFILE
+- Name: ${profile.companyName || 'NOT PROVIDED'}
+- Type: ${profile.orgType || 'NOT PROVIDED'}
+- Location: ${profile.location || 'NOT PROVIDED'}
+- Focus Area: ${profile.focusArea || 'NOT PROVIDED'}
+- EIN: ${profile.ein || 'NOT PROVIDED'}
+- Mission: ${profile.missionStatement || profile.backgroundInfo || 'NOT PROVIDED'}
+- Target Population: ${profile.targetPopulation || 'NOT PROVIDED'}
+- Impact Metrics: ${profile.impactMetrics || 'NOT PROVIDED'}
+- Year Founded: ${profile.yearFounded || 'NOT PROVIDED'}
+- Team Information: ${profile.teamMembersText || 'NOT PROVIDED'}
+- Project to Fund: ${profile.projectDescription || 'NOT PROVIDED'}
+- Funding Request: ${profile.fundingAmount || grantAmount}
 
-## WHAT WE NEED FUNDING FOR
-${profile.projectDescription || 'Expanding our core programs and services to reach more people'}
+### TARGET GRANT
+- Grant: ${(targetGrant as any).title || 'Target Grant Opportunity'}
+- Agency: ${(targetGrant as any).agency || 'Target Agency'}
+- Amount: ${grantAmount}
+- Deadline: ${(targetGrant as any).closeDate || 'Upcoming'}
 
-## FUNDING REQUESTED
-${profile.fundingAmount ? `We are seeking ${profile.fundingAmount}` : `We are requesting ${grantAmount}`}
-
-## OUR PROVEN IMPACT
-${profile.impactMetrics || 'We have demonstrated consistent results in our community'}
-
-## TRACK RECORD
-${safeBackgroundInfo || safeResumeText || 'Our organization has a strong record of community service'}
-${profile.grantHistoryText ? `\nPast Grants: ${profile.grantHistoryText}` : ''}
-
-## TARGET GRANT
-Grant: ${(targetGrant as any).title || 'State Innovation Match Fund'}
-Agency: ${(targetGrant as any).agency || 'Government Agency'}
-Amount Available: ${grantAmount}
-Deadline: ${(targetGrant as any).closeDate || 'Oct 15, 2026'}
-
-Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org details above - never write "[Organization Name]" or generic filler:
+Write a 500-700 word proposal with EXACTLY these sections. Be specific, professional, and stick strictly to the facts above:
 
 ### Executive Summary
 ### Problem Statement
@@ -1121,20 +1120,20 @@ Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org
       text = await callGeminiProxy(fullPrompt);
       addLog('drafter', 'Personalized proposal generated. Streaming...');
     } catch {
-      addLog('drafter', 'Gemini error — generating from profile data.');
-      text = `### Grant Proposal: ${profile.companyName || 'Our Organization'}
+      addLog('drafter', 'Gemini error — generating minimal fact-based draft.');
+      text = `### Grant Proposal: ${profile.companyName || 'Applicant Organization'}
 
-**Executive Summary**: ${profile.companyName || 'Our organization'} in ${profile.location || 'Florida'} requests ${grantAmount} from ${(targetGrant as any).title || 'this grant program'} to ${profile.projectDescription || 'advance our mission'}. We are a ${profile.orgType || 'dedicated organization'} committed to ${profile.focusArea || 'community impact'}.
+**Executive Summary**: ${profile.companyName || 'The applicant'} requests ${grantAmount} from ${(targetGrant as any).title || 'this grant program'}. Based in ${profile.location || 'their local area'}, they focus on ${profile.focusArea || 'community impact'}.
 
-**Problem Statement**: ${profile.targetPopulation || 'Our community'} faces significant challenges that our organization is uniquely positioned to address through ${profile.focusArea || 'innovative solutions'}.
+**Problem Statement**: This project addresses challenges faced by ${profile.targetPopulation || 'the target population'} in the area of ${profile.focusArea || 'their expertise'}.
 
-**Project Description**: ${profile.projectDescription || 'With this funding, we will expand our programs and increase our community impact significantly.'}
+**Project Description**: ${profile.projectDescription || 'The applicant intends to use these funds to advance their stated mission and project goals.'}
 
-**Organizational Capacity**: ${profile.impactMetrics ? `Our track record: ${profile.impactMetrics}.` : ''} ${profile.backgroundInfo || 'Our team brings extensive expertise and commitment to this work.'}
+**Organizational Capacity**: ${profile.companyName || 'The applicant'} was founded in ${profile.yearFounded || 'a previous year'} and has a mission to ${profile.missionStatement || 'serve their community'}.
 
-**Budget**: Requested ${grantAmount} will be allocated toward program delivery, personnel, and operational costs to maximize impact.
+**Budget**: Total requested amount is ${grantAmount}.
 
-**Evaluation**: We will measure success through ${profile.impactMetrics ? 'our established impact metrics' : 'clearly defined KPIs'} and provide regular reporting to the funder.`;
+**Evaluation**: Success will be measured against the project goals and reported accordingly.`;
     }
 
     setDrafterOutput(text);
@@ -1166,44 +1165,49 @@ Write a 500-700 word proposal with EXACTLY these sections. Use ONLY the real org
     addGlobalLog(`[🛡️ The Controller] Starting eligibility & compliance audit...`);
     await delay(300);
 
-    const targetGrant = discoveredGrants[0] || { title: 'State Innovation Match Fund', agency: 'FL Dept of Commerce', closeDate: 'Oct 15, 2026' };
+    const targetGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Grant Agency', closeDate: 'Unknown' };
 
     let controllerText = '';
     let auditPassed = true;
     try {
-      const prompt = `You are a grant compliance officer. Audit this organization and proposal for grant eligibility and submission readiness. Be honest — flag real issues.
+      const prompt = `You are a strict grant compliance auditor. Your role is to verify if an organization and their proposal meet the requirements for a specific grant. 
+
+CRITICAL RULES:
+- NO GUESSING: If a field is "NOT PROVIDED", the check for that field must FAIL or WARN.
+- STRICT COMPLIANCE: Mark a "FAIL" for missing EIN if the grant is federal.
+- HONESTY: Your goal is to prevent the user from submitting a non-compliant application.
 
 GRANT TARGET:
 - Name: ${(targetGrant as any).title}
 - Agency: ${(targetGrant as any).agency}
-- Deadline: ${(targetGrant as any).closeDate}
+- Source: ${(targetGrant as any).source}
 
 ORGANIZATION PROFILE:
-- Name: ${profile.companyName || 'Not provided'}
-- Type: ${profile.orgType || 'Not provided'}
-- Location: ${profile.location || 'Not provided'}
+- Name: ${profile.companyName || 'NOT PROVIDED'}
+- Type: ${profile.orgType || 'NOT PROVIDED'}
+- Location: ${profile.location || 'NOT PROVIDED'}
+- Focus Area: ${profile.focusArea || 'NOT PROVIDED'}
 - EIN: ${profile.ein || 'NOT PROVIDED'}
-- SAM/DUNS#: ${profile.dunsNumber || 'Not provided'}
-- Focus Area: ${profile.focusArea || 'Not provided'}
-- Annual Budget: ${profile.annualBudget || 'Unknown'}
-- Years Operating: ${profile.yearsOperating || 'Unknown'}
-- Previous Grants: ${profile.previousGrants || 'None'}
-- Team Size: ${profile.teamSize || 'Unknown'}
+- SAM/DUNS#: ${profile.dunsNumber || 'NOT PROVIDED'}
+- Annual Budget: ${profile.annualBudget || 'NOT PROVIDED'}
+- Years Operating: ${profile.yearsOperating || 'NOT PROVIDED'}
 
-PROPOSAL EXCERPT (first 600 chars):
-${(drafterOutput || 'No proposal drafted yet').slice(0, 600)}
+PROPOSAL EXCERPT:
+${(drafterOutput || 'NOT PROVIDED').slice(0, 800)}
 
-Check these items and return ONLY valid JSON (no markdown):
+Check these items and return ONLY valid JSON:
 {
   "overall": "PASS" | "PASS_WITH_WARNINGS" | "FAIL",
   "checks": [
-    {"item": "check name", "status": "PASS" | "WARN" | "FAIL", "detail": "specific finding"}
+    {"item": "EIN/Tax ID", "status": "PASS" | "FAIL", "detail": "finding"},
+    {"item": "Entity Type Eligibility", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
+    {"item": "Geographic Eligibility", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
+    {"item": "Proposal Completeness", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"},
+    {"item": "SAM/DUNS (Federal Only)", "status": "PASS" | "FAIL" | "WARN", "detail": "finding"}
   ],
-  "critical_issues": ["issue if any — empty array if none"],
-  "recommendations": ["actionable recommendation"]
-}
-
-Check: EIN present, org type eligibility, location match, budget narrative quality, mission alignment, deadline feasibility, SAM/DUNS for federal grants, proposal completeness (all sections present).`;
+  "critical_issues": ["List specific missing data or conflicts"],
+  "recommendations": ["Actionable steps to fix issues"]
+}`;
 
       const raw = await callGeminiProxy(prompt);
       let audit: any = null;
@@ -1265,8 +1269,8 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
     await delay(800);
 
     // ── Save real application to Firestore ──
-    const appGrant = discoveredGrants[0] || { title: 'Grant Application', agency: '', closeDate: '' };
-    const appAmount = (allDiscoveredGrants[0] as any)?.amount || '$150,000';
+    const appGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Unknown', closeDate: 'Unknown' };
+    const appAmount = (allDiscoveredGrants[0] as any)?.amount || 'Unknown Amount';
     saveApplication({
       seekerUid: auth.currentUser?.uid || '',
       seekerEmail: user?.email || '',
@@ -1275,10 +1279,10 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
       location: profile.location || '',
       mission: profile.missionStatement || profile.backgroundInfo || '',
       focusArea: profile.focusArea,
-      grantTitle: (appGrant as any).title || 'Grant Application',
-      grantAgency: (appGrant as any).agency || '',
+      grantTitle: (appGrant as any).title || 'Target Grant',
+      grantAgency: (appGrant as any).agency || 'Unknown',
       grantAmount: appAmount,
-      grantDeadline: (appGrant as any).closeDate || '',
+      grantDeadline: (appGrant as any).closeDate || 'Unknown',
       proposalText: drafterOutput || '',
       status: 'pending',
       score: topMatchScoreRef.current || 0,
@@ -1296,7 +1300,7 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
           email: user.email,
           name: user.name || 'there',
           orgName: profile.companyName || 'Your Organization',
-          grantName: (appGrant as any).title || 'Grant Application',
+          grantName: (appGrant as any).title || 'Target Grant',
           amount: appAmount,
         }),
       }).catch(() => {});
@@ -1311,7 +1315,7 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
           type: 'funder-submission',
           email: funderEmail,
           orgName: profile.companyName || 'Your Organization',
-          grantName: (appGrant as any).title || 'Grant Application',
+          grantName: (appGrant as any).title || 'Target Grant',
           amount: appAmount,
           proposalText: drafterOutput || '',
         }),
@@ -1321,7 +1325,7 @@ Check: EIN present, org type eligibility, location match, budget narrative quali
     const submitterText = `
 ### Application Package Ready \u2713
 * **Organization**: ${profile.companyName || 'Your Organization'}
-* **Grant**: ${(appGrant as any).title || 'State Innovation Match Fund'} (${appAmount})
+* **Grant**: ${(appGrant as any).title || 'Target Grant'} (${appAmount})
 * **Proposal**: AI-drafted, reviewed, and approved by you
 * **Status**: Queued for submission
 
@@ -1356,13 +1360,21 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
     }
     setAwaitingApproval(false);
     addGlobalLog(`[✅ HUMAN APPROVED]  Proposal approved. Resuming pipeline...`);
-    const passed = await runController();
-    if (passed) {
-      if (!await runSubmitter()) return;
-      runWatcher();
-      setNextAction({ type: 'success', message: 'MISSION ACCOMPLISHED: Proposal approved, verified, and sent via Gmail. Milestones booked to Calendar.' });
+    
+    try {
+      const passed = await runController();
+      if (passed) {
+        if (!await runSubmitter()) throw new Error('Submitter failed');
+        runWatcher();
+        setNextAction({ type: 'success', message: 'MISSION ACCOMPLISHED: Proposal approved, verified, and sent via Gmail. Milestones booked to Calendar.' });
+      } else {
+        setNextAction({ type: 'warning', message: 'NEXT ACTION REQUIRED: The Controller flagged compliance issues. Review the warnings before submission.' });
+      }
+    } catch (e: any) {
+      setNextAction({ type: 'error', message: `EXECUTION HALTED: ${e.message}` });
+    } finally {
+      setIsRunning(false);
     }
-    setIsRunning(false);
   };
 
   const handleExecute = async () => {
@@ -1389,32 +1401,16 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
     try {
       if (!await runHunter()) throw new Error('Hunter failed');
       if (!await runMatchmaker()) throw new Error('Matchmaker failed');
-      await runDrafter(); // Pipeline pauses here — awaiting approval
-      // Controller + Submitter run only after human approves (handleApproveAndSubmit)
-      return; // Don't set isRunning=false yet — waiting for approval
-      const passed = await runController();
-      
-      if (passed) {
-        if (!await runSubmitter()) throw new Error('Submitter failed');
-        // Start the watcher persistently
-        runWatcher(); 
-        setNextAction({
-          type: 'success',
-          message: "MISSION ACCOMPLISHED: Proposal drafted, verified, and sent via Gmail. Milestones booked to Calendar."
-        });
-      } else {
-        setNextAction({
-          type: 'warning',
-          message: "NEXT ACTION REQUIRED: Please upload a completed W-9 form to resolve compliance error and finalize submission."
-        });
-      }
-    } catch (e) {
+      await runDrafter(); 
+      // Pipeline pauses here — awaiting approval from the human
+      setAwaitingApproval(true);
+      // We do NOT set isRunning to false here, as the pipeline is technically still 'active' and waiting.
+    } catch (e: any) {
       setNextAction({
         type: 'error',
-        message: "EXECUTION HALTED: System encountered an unrecoverable error during orchestration."
+        message: `EXECUTION HALTED: ${e.message || 'System encountered an unrecoverable error during orchestration.'}`
       });
-    } finally {
-      setIsRunning(false);
+      setIsRunning(false); // Only stop running on error
     }
   };
 
@@ -4002,6 +3998,16 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 <AlertCircle className="w-6 h-6 mt-0.5 shrink-0 text-red-500" />
                 <div>
                   <h3 className="font-bold mb-1 tracking-wide uppercase text-[11px] text-stone-500">System Error</h3>
+                  <p className="text-sm font-medium leading-relaxed">{nextAction.message}</p>
+                </div>
+              </div>
+            )}
+
+            {nextAction?.type === 'warning' && (
+              <div className="mb-8 p-4 rounded-xl border bg-amber-50 border-amber-200 text-stone-900 flex items-start space-x-4 shadow-sm">
+                <AlertCircle className="w-6 h-6 mt-0.5 shrink-0 text-amber-600" />
+                <div>
+                  <h3 className="font-bold mb-1 tracking-wide uppercase text-[11px] text-stone-500">Action Required</h3>
                   <p className="text-sm font-medium leading-relaxed">{nextAction.message}</p>
                 </div>
               </div>
