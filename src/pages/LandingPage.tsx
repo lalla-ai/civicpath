@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Hexagon, ArrowUpRight } from 'lucide-react';
+import { Hexagon, ArrowUpRight, Sparkles, ShieldCheck, Globe, Users, Zap, Search, Leaf, FileText, Cpu, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
@@ -16,8 +16,15 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'CivicPath — AI Grant Finder | 8 Agents, Full Lifecycle, Free to Start';
+    document.title = 'CivicPath — Your Mission, Amplified by Sovereign AI';
+    
+    // Inject fonts for the new editorial look
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
   }, []);
+
   const [heroQuery, setHeroQuery] = useState('');
   const [heroAnswer, setHeroAnswer] = useState('');
   const [heroLoading, setHeroLoading] = useState(false);
@@ -33,12 +40,12 @@ export default function LandingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `You are MyLalla, a grant advisor for CivicPath. A visitor asked: "${q}"\n\nGive a warm, helpful 2-3 sentence answer about grants that might be relevant. Be specific and encouraging. End with a call to action to sign up on CivicPath.`,
+          prompt: `You are MyLalla, a prestigious grant advisor for CivicPath. A visitor asked: "${q}"\n\nGive a warm, helpful 2-3 sentence answer. Be specific, data-driven, and end with a call to action.`,
           useSearch: true,
         }),
       });
       const data = await res.json();
-      setHeroAnswer(data.text || 'Sign up to get your personalized grant matches in under 60 seconds!');
+      setHeroAnswer(data.text || 'Your mission deserves the best funding. Sign up to match in 60 seconds.');
     } catch {
       setHeroAnswer("I'd love to help! Sign up for free to get your personalized grant match list — we'll find the best funding for your organization in under 60 seconds.");
     } finally {
@@ -47,272 +54,187 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] text-[#1A1A1A]" style={{fontFamily:'Inter,sans-serif'}}>
+    <div className="min-h-screen bg-[#FDFCFB] text-[#1C1917] selection:bg-[#76B900]/20" style={{fontFamily:'"Inter", sans-serif'}}>
+      
+      {/* ── BACKGROUND AURA ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-[#76B900]/5 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute top-[20%] -right-[5%] w-[40%] h-[40%] bg-amber-100/30 blur-[100px] rounded-full" />
+      </div>
 
-      {/* NAV */}
-      <nav className="sticky top-0 z-50 bg-[#F9F7F2] border-b border-stone-200">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      {/* ── NAV ── */}
+      <nav className="sticky top-0 z-50 bg-[#FDFCFB]/80 backdrop-blur-md border-b border-stone-100">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
             <Logo />
-            <span className="text-stone-900 font-bold text-lg">{t('app.title')}</span>
+            <span className="text-stone-900 font-extrabold text-xl tracking-tight">CivicPath</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-stone-500">
-            <a href="#how" className="hover:text-stone-900 transition-colors">{t('nav.howItWorks')}</a>
-            <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">{t('nav.findGrants')}</Link>
-            <Link to="/login?role=funder" className="hover:text-stone-900 transition-colors">{t('nav.giveGrants')}</Link>
-            <Link to="/pricing" className="hover:text-stone-900 transition-colors">{t('nav.pricing')}</Link>
-          </div>
-          <div className="flex items-center gap-3">
+          
+          <div className="hidden md:flex items-center gap-8 text-[13px] font-semibold text-stone-500 uppercase tracking-wider">
             <LanguageSwitcher />
-            <Link to="/login" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">{t('nav.logIn')}</Link>
-            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-sm">{t('nav.findGrantsCta')}</Link>
+            <a href="#how" className="hover:text-stone-900 transition-colors">Methodology</a>
+            <Link to="/login?role=seeker" className="hover:text-stone-900 transition-colors">The Hunter</Link>
+            <Link to="/pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link to="/login" className="text-sm font-bold text-stone-500 hover:text-stone-900 transition-colors">Login</Link>
+            <Link to="/login?role=seeker" className="bg-[#1C1917] text-[#76B900] font-bold px-5 py-2.5 rounded-full hover:bg-stone-800 transition-all text-sm shadow-lg shadow-stone-200">
+              Get Started
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="pt-16 sm:pt-24 pb-14 sm:pb-20 text-center px-5 sm:px-6">
-        <div className="inline-flex items-center gap-2 bg-[#76B90015] text-[#5a9000] rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide">
-          {t('hero.badge')}
-        </div>
-        <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-stone-900 leading-[1.08] max-w-3xl mx-auto">
-          {t('hero.h1')}<br />
-          <span className="text-[#76B900]">{t('hero.h2')}</span>
-        </h1>
-        <p className="mt-4 text-base sm:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
-          {t('hero.sub')}
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-6 py-3 rounded-lg hover:bg-[#689900] transition-colors shadow-sm">{t('hero.ctaFind')}</Link>
-          <Link to="/login?role=funder" className="border border-stone-300 text-stone-700 font-semibold px-6 py-3 rounded-lg hover:border-stone-500 hover:text-stone-900 transition-colors bg-white">{t('hero.ctaGive')}</Link>
-          <Link to="/mylalla" className="bg-stone-900 text-white font-semibold px-6 py-3 rounded-lg hover:bg-stone-800 transition-colors flex items-center gap-2">
-            <span className="text-sm">✨</span> {t('hero.ctaAsk')}
-          </Link>
-        </div>
-        {/* MyLalla Hero Chat Bar */}
-        <div className="mt-10 max-w-2xl mx-auto">
-          <form onSubmit={handleHeroAsk} className="flex gap-2">
-            <div className="flex-1 relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#76B900] text-sm">✨</span>
-              <input
-                type="text"
-                value={heroQuery}
-                onChange={e => setHeroQuery(e.target.value)}
-                placeholder={t('hero.chatPlaceholder')}
-                className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-white border-2 border-stone-200 focus:border-[#76B900] focus:ring-2 focus:ring-[#76B900]/10 outline-none text-stone-900 text-sm shadow-sm transition-all"
-              />
+      {/* ── HERO SECTION ── */}
+      <main className="relative z-10">
+        <section className="pt-24 pb-20 px-6 max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-stone-100 text-stone-600 rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] mb-8 border border-stone-200">
+            <Sparkles className="w-3 h-3 text-[#76B900]" /> Google Cloud ADK Hackathon Finalist
+          </div>
+          
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-normal leading-[0.95] tracking-tight text-stone-900 mb-8" style={{fontFamily:'"Instrument Serif", serif'}}>
+            Your Mission,<br />
+            <span className="italic">Amplified by</span> <span className="text-[#76B900]">Sovereign AI.</span>
+          </h1>
+          
+          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-stone-500 leading-relaxed mb-12 font-medium">
+            CivicPath replaces manual grant management with an 8-agent AI Operating System. From discovery through cryptographic closeout—we handle the complexity so you can focus on the impact.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/login?role=seeker" className="group bg-[#76B900] text-[#1C1917] font-black px-10 py-4 rounded-full hover:bg-[#86d200] transition-all shadow-xl shadow-[#76B900]/20 text-lg flex items-center gap-2">
+              Find My Grants <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            </Link>
+            <Link to="/mylalla" className="text-stone-900 font-bold px-8 py-4 rounded-full border-2 border-stone-100 hover:bg-stone-50 transition-all text-lg bg-white">
+              Meet MyLalla AI
+            </Link>
+          </div>
+
+          {/* AI SEARCH BAR — GLASSMORPHISM */}
+          <div className="mt-16 max-w-3xl mx-auto relative group">
+            <div className="absolute inset-0 bg-[#76B900]/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+            <div className="relative bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-2 shadow-2xl overflow-hidden shadow-stone-200/50">
+              <form onSubmit={handleHeroAsk} className="flex gap-2">
+                <input
+                  type="text"
+                  value={heroQuery}
+                  onChange={e => setHeroQuery(e.target.value)}
+                  placeholder="Ask our Research Agent: What federal grants support AI innovation in Miami?"
+                  className="flex-1 bg-transparent border-none outline-none px-6 py-4 text-stone-800 placeholder:text-stone-400 font-medium text-lg"
+                />
+                <button type="submit" disabled={heroLoading} className="bg-[#1C1917] text-white px-8 rounded-2xl font-bold hover:bg-stone-800 transition-all flex items-center gap-2">
+                  {heroLoading ? 'Thinking...' : 'Consult'}
+                </button>
+              </form>
+              {heroAnswer && (
+                <div className="p-6 text-left border-t border-stone-100 animate-in slide-in-from-top-4 duration-500">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 bg-[#76B900] rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Response from MyLalla (GKE Boundary)</span>
+                  </div>
+                  <p className="text-stone-700 leading-relaxed text-lg font-serif italic">"{heroAnswer}"</p>
+                </div>
+              )}
             </div>
-            <button
-              type="submit"
-              disabled={!heroQuery.trim() || heroLoading}
-              className="px-5 py-3.5 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors disabled:opacity-40 text-sm shadow-sm whitespace-nowrap"
-            >
-              {heroLoading ? '...' : t('hero.chatBtn')}
-            </button>
-          </form>
-          {heroAnswer && (
-            <div className="mt-4 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl text-left text-sm text-stone-700 leading-relaxed">
-              <div className="flex items-start gap-2">
-                <span className="text-[#76B900] text-base shrink-0 mt-0.5">✨</span>
-                <div>
-                  <span className="font-bold text-[#5a9000]">MyLalla: </span>
-                  {heroAnswer}
-                  <div className="mt-3">
-                    <button onClick={() => navigate('/login?role=seeker')} className="text-xs font-bold text-[#76B900] hover:text-[#5a9000] underline">{t('hero.chatCta')}</button>
+          </div>
+        </section>
+
+        {/* ── THE SOUL SECTION (TECHNO-NATURALISM) ── */}
+        <section id="how" className="py-24 bg-stone-50 border-y border-stone-100 relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-5xl font-normal leading-[1.1] mb-6 text-stone-900" style={{fontFamily:'"Instrument Serif", serif'}}>
+                The Trust Layer for the<br /><span className="text-[#76B900]">Grant Economy.</span>
+              </h2>
+              <p className="text-stone-500 text-lg mb-10 leading-relaxed">
+                As AI proposals flood funder inboxes, trust is the new currency. CivicPath uses **0G Labs Blockchain** and **Google KMS** to provide cryptographic proof of your organization’s identity and data integrity.
+              </p>
+              <div className="space-y-6">
+                {[
+                  { title: 'Sovereign Closeout', desc: 'Agent 8 executes a 500ms purge of session data, satisfying GDPR Art.17 instantly.', icon: <Leaf className="w-5 h-5" /> },
+                  { title: '0G Merkle Anchoring', desc: 'Every application is anchored to the 0G DA layer, creating an immutable audit trail.', icon: <ShieldCheck className="w-5 h-5" /> },
+                  { title: 'TEE Boundary', desc: 'Your data never leaves the Confidential GKE boundary during AI inference.', icon: <Zap className="w-5 h-5" /> }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[#76B900]/10 flex items-center justify-center text-[#76B900] shrink-0">{item.icon}</div>
+                    <div>
+                      <h4 className="font-bold text-stone-900 text-sm mb-1">{item.title}</h4>
+                      <p className="text-stone-500 text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <div className="aspect-[4/5] bg-white rounded-3xl border border-stone-200 shadow-2xl overflow-hidden p-8 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#76B900] w-[65%]" />
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-stone-400">
+                    <span>Integrity Score</span>
+                    <span>94.2% Verified</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <p className="mt-5 text-xs text-stone-400 tracking-wide">{t('hero.trust')}</p>
-      </section>
-
-      {/* 8 AGENTS */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-t border-stone-100">
-        <div className="text-center mb-10 sm:mb-12">
-          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-3">THE ENGINE</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Eight AI agents. Full lifecycle.</h2>
-          <p className="text-stone-400 max-w-lg mx-auto mt-3 text-sm">From live grant discovery to sovereign closeout — the only platform that covers the complete grant lifecycle, automatically.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-5xl mx-auto">
-          {[
-            {n:'01',t:'Hunter',d:'Scans Grants.gov and 50+ databases live for your exact profile.',tag:''},
-            {n:'02',t:'Matchmaker',d:'Scores every grant 0–100 using Gemini AI — not keywords.',tag:''},
-            {n:'03',t:'Drafter',d:'Writes your full proposal in under 60 seconds.',tag:''},
-            {n:'04',t:'Controller',d:'Verifies eligibility before you spend time applying.',tag:''},
-            {n:'05',t:'Submitter',d:'Queues and sends applications on your schedule.',tag:''},
-            {n:'06',t:'Watcher',d:'Monitors 24/7 for new grants that match your mission.',tag:''},
-            {n:'07',t:'Compliance Scanner',d:'Extracts every reporting deadline from your Award Letter. Drafts compliance reports with Hard Block detection.',tag:'New'},
-            {n:'08',t:'The Closer',d:'Generates a cryptographic Audit Pack (ZIP + Merkle root + 0G anchor) and executes the 500ms Sovereign Purge.',tag:'New'},
-          ].map((a,i) => (
-            <div key={i} className={`border rounded-xl p-5 hover:border-[#76B900] hover:bg-white transition-all cursor-default group relative ${
-              i >= 6 ? 'bg-[#111] border-[#76B900]/20 hover:border-[#76B900]/60' : 'bg-[#FAFAF8] border-stone-200'
-            }`}>
-              {a.tag && (
-                <span className="absolute top-3 right-3 text-[9px] font-black bg-[#76B900] text-[#111] px-1.5 py-0.5 rounded uppercase tracking-wide">{a.tag}</span>
-              )}
-              <div className={`text-[11px] font-black mb-3 tracking-widest transition-colors ${
-                i >= 6 ? 'text-[#76B900]/40 group-hover:text-[#76B900]' : 'text-stone-300 group-hover:text-[#76B900]'
-              }`}>{a.n}</div>
-              <div className={`font-semibold text-sm mb-1.5 ${i >= 6 ? 'text-white' : 'text-stone-900'}`}>{a.t}</div>
-              <div className={`text-xs leading-relaxed ${i >= 6 ? 'text-stone-500' : 'text-stone-400'}`}>{a.d}</div>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-xs text-stone-400 mt-6">Agents 1–6: Grant discovery &amp; submission pipeline &nbsp;&middot;&nbsp; Agents 7–8: Post-award compliance &amp; sovereign closeout</p>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="how" className="bg-[#F9F7F2] border-t border-stone-100 py-16 sm:py-20 px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold">HOW IT WORKS</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-
-          {/* Step 1 */}
-          <div className="bg-white rounded-2xl p-8 border border-stone-200">
-            <span className="text-[11px] font-black tracking-widest text-stone-200">01</span>
-            <div className="mt-5 w-11 h-11 bg-[#76B900]/10 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            </div>
-            <h3 className="text-lg font-bold text-stone-900 mt-4">Tell us your mission</h3>
-            <p className="text-stone-400 text-sm leading-relaxed mt-2">30 seconds. Your org name, location, focus area, and background. That's all the agents need.</p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="bg-[#111111] rounded-2xl p-8 border border-[#222]">
-            <span className="text-[11px] font-black tracking-widest text-[#222]">02</span>
-            <div className="mt-5 w-11 h-11 bg-[#76B900]/15 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            </div>
-            <h3 className="text-lg font-bold text-white mt-4">Agents do everything</h3>
-            <p className="text-stone-500 text-sm mt-2">Your 8-agent team runs automatically:</p>
-            <div className="mt-3 space-y-1.5">
-              {['Hunter scans Grants.gov + SBA live','Matchmaker scores every grant 0–100','Drafter writes your proposal via Gemini','Controller checks all compliance','Submitter queues for your approval','Watcher monitors 24/7 for new grants','Compliance Scanner manages post-award reporting','The Closer executes sovereign closeout + Audit Pack'].map((a,i) => (
-                <div key={i} className={`text-xs flex items-center gap-2 ${i >= 6 ? 'text-[#76B900]/70' : 'text-stone-500'}`}>
-                  <span className="w-1 h-1 rounded-full bg-[#76B900] shrink-0" />{a}
+                <div className="flex-1 flex flex-col justify-center items-center text-center space-y-4 py-12">
+                   <div className="w-20 h-20 bg-stone-900 rounded-2xl flex items-center justify-center text-[#76B900] shadow-xl animate-bounce">
+                     <ShieldCheck className="w-10 h-10" />
+                   </div>
+                   <h3 className="text-2xl font-serif italic text-stone-900">"Your profile is now<br />0G-Anchored."</h3>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Step 3 — no more solid green */}
-          <div className="bg-white rounded-2xl p-8 border border-stone-200 border-l-4 border-l-[#76B900]">
-            <span className="text-[11px] font-black tracking-widest text-stone-200">03</span>
-            <div className="mt-5 w-11 h-11 bg-[#76B900]/10 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#76B900]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <h3 className="text-lg font-bold text-stone-900 mt-4">You approve. They submit.</h3>
-            <p className="text-stone-400 text-sm leading-relaxed mt-2">Review your AI-drafted proposal. One click to approve. Agents send it, book your calendar, and keep watching.</p>
-            <div className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#76B900]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#76B900]"></span>
-              AI works. You control.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SOVEREIGN */}
-      <section id="sovereign" className="px-6 py-20 bg-white border-t border-stone-100">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-[11px] text-[#76B900] uppercase tracking-[0.15em] font-bold mb-5">TRUST & SECURITY</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">Built Sovereign. Built for Government.</h2>
-          <p className="mt-4 text-stone-400 max-w-lg mx-auto text-sm leading-relaxed">Your data never leaves our infrastructure. Privacy is not a policy — it's baked into the architecture.</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-            {[
-              {label:'Local Infrastructure', detail:'Data never touches external clouds'},
-              {label:'E2E Encrypted', detail:'Profile, proposals, credentials'},
-              {label:'Open Source Core', detail:'Audit the code yourself'},
-              {label:'Government Ready', detail:'FedRAMP-aligned architecture'},
-            ].map((item, i) => (
-              <div key={i} className="bg-[#FAFAF8] border border-stone-200 rounded-xl p-4 text-left">
-                <div className="w-7 h-7 bg-[#76B900]/10 rounded-lg flex items-center justify-center mb-3">
-                  <span className="w-2 h-2 rounded-full bg-[#76B900]"></span>
+                <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                  <p className="text-[10px] font-mono text-stone-400 break-all leading-tight">
+                    Merkle Root: 0x5f3a7c9d2e4f6a8b1c3d5e7f9a0b2c4d6e8f0a1b2c3d4e5f6a7b8c9d0e1f2a3b
+                  </p>
                 </div>
-                <p className="text-xs font-bold text-stone-800">{item.label}</p>
-                <p className="text-xs text-stone-400 mt-0.5">{item.detail}</p>
               </div>
-            ))}
+              {/* Floating Leaf Decoration */}
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[#76B900]/5 blur-3xl rounded-full" />
+            </div>
           </div>
-          <div className="flex gap-2 justify-center mt-8 flex-wrap">
-            {[
-              '🏆 Google Cloud ADK Hackathon 2026 Finalist',
-              '🔐 FedRAMP-Aligned Architecture',
-              '🔒 E2E Encrypted · GDPR Art.17',
-              '🏙️ Miami-Dade Pilot Partner',
-              '📄 Patent Pending · THINKVERSE-001',
-            ].map((b,i) => (
-              <span key={i} className="bg-[#76B90015] text-[#5a9000] rounded-full px-3 py-1 text-xs font-medium">{b}</span>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FINAL CTA */}
-      <section className="py-20 sm:py-28 text-center px-5 sm:px-6 bg-[#111111]">
-        <h2 className="text-3xl sm:text-4xl font-bold text-white max-w-xl mx-auto leading-tight tracking-tight">Your community deserves<br />to be funded.</h2>
-          <p className="mt-4 text-stone-400 max-w-md mx-auto">8 AI agents. Full lifecycle. Discovery → Submission → Compliance → Sovereign Closeout.</p>
-        <Link to="/login?role=seeker" className="mt-8 inline-block bg-[#76B900] text-[#111111] font-bold px-8 py-3.5 rounded-lg hover:bg-[#689900] transition-colors text-sm">
-          Find My Grants →
-        </Link>
-        <p className="mt-4 text-xs text-stone-600">Free · No credit card · Sovereign data</p>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-white border-t border-stone-200 py-12">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between gap-8 mb-10">
-            {/* Brand */}
+        {/* ── FOOTER ── */}
+        <footer className="py-20 bg-white border-t border-stone-100">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start gap-12">
             <div className="max-w-xs">
-              <div className="flex items-center gap-2 mb-2">
+               <div className="flex items-center gap-2 mb-6">
                 <Logo />
-                <span className="font-bold text-stone-900 text-base">CivicPath</span>
+                <span className="text-stone-900 font-extrabold text-xl">CivicPath</span>
               </div>
-              <p className="text-xs text-stone-400 leading-relaxed">Your community. Funded. 8 AI agents. Full grant lifecycle. Built in Florida.</p>
-              <div className="flex gap-3 mt-3">
-                <a href="https://github.com/lalla-ai/civicpath" target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-stone-700 transition-colors" title="GitHub">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                </a>
-                <a href="mailto:hello@civicpath.ai" className="text-stone-400 hover:text-stone-700 transition-colors text-xs font-medium">hello@civicpath.ai</a>
-              </div>
+              <p className="text-stone-400 text-sm leading-relaxed">
+                The world’s first 8-agent AI operating system for the complete grant lifecycle. Built in Florida, available globally.
+              </p>
             </div>
-            {/* Links */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
-              <div>
-                <p className="font-bold text-stone-700 mb-2 text-xs uppercase tracking-wider">Product</p>
-                <div className="space-y-1.5">
-                  <a href="/" className="block text-stone-400 hover:text-stone-900 transition-colors">Home</a>
-                  <a href="/pricing" className="block text-stone-400 hover:text-stone-900 transition-colors">Pricing</a>
-                  <a href="/demo" className="block text-stone-400 hover:text-stone-900 transition-colors">Live Demo</a>
-                  <a href="/login?role=seeker" className="block text-stone-400 hover:text-stone-900 transition-colors">Find My Grant</a>
-                  <a href="/login?role=funder" className="block text-stone-400 hover:text-stone-900 transition-colors">Give Grants</a>
-                </div>
-              </div>
-              <div>
-                <p className="font-bold text-stone-700 mb-2 text-xs uppercase tracking-wider">Company</p>
-                <div className="space-y-1.5">
-                  <a href="mailto:hello@civicpath.ai" className="block text-stone-400 hover:text-stone-900 transition-colors">Contact</a>
-                  <a href="https://helloagentic.ai" target="_blank" rel="noopener noreferrer" className="block text-stone-400 hover:text-stone-900 transition-colors">HelloAgentic</a>
-                  <a href="https://github.com/lalla-ai/civicpath" target="_blank" rel="noopener noreferrer" className="block text-stone-400 hover:text-stone-900 transition-colors">GitHub</a>
-                </div>
-              </div>
-              <div>
-                <p className="font-bold text-stone-700 mb-2 text-xs uppercase tracking-wider">Legal</p>
-                <div className="space-y-1.5">
-                  <a href="/privacy" className="block text-stone-400 hover:text-stone-900 transition-colors">Privacy</a>
-                  <a href="/terms" className="block text-stone-400 hover:text-stone-900 transition-colors">Terms</a>
-                </div>
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+               <div>
+                 <h5 className="font-black text-[11px] uppercase tracking-[0.2em] text-stone-900 mb-6">Architecture</h5>
+                 <ul className="space-y-4 text-sm font-medium text-stone-400">
+                   <li><Link to="/login" className="hover:text-stone-900 transition-colors">The Hunter</Link></li>
+                   <li><Link to="/login" className="hover:text-stone-900 transition-colors">The Drafter</Link></li>
+                   <li><Link to="/login" className="hover:text-stone-900 transition-colors">Sovereign Purge</Link></li>
+                 </ul>
+               </div>
+               <div>
+                 <h5 className="font-black text-[11px] uppercase tracking-[0.2em] text-stone-900 mb-6">Company</h5>
+                 <ul className="space-y-4 text-sm font-medium text-stone-400">
+                   <li><Link to="/pricing" className="hover:text-stone-900 transition-colors">Ethics Protocol</Link></li>
+                   <li><a href="https://helloagentic.ai" className="hover:text-stone-900 transition-colors">HelloAgentic</a></li>
+                   <li><a href="mailto:hello@civicpath.ai" className="hover:text-stone-900 transition-colors">Press Kit</a></li>
+                 </ul>
+               </div>
             </div>
           </div>
-          <div className="pt-6 border-t border-stone-100 flex flex-col sm:flex-row justify-between gap-2 text-xs text-stone-400">
-            <span>© 2026 CivicPath (HelloAgentic) · Google Cloud ADK Hackathon 2026 Finalist · Built in Florida</span>
-            <span>8 AI agents · Gemini 2.0 Flash · Firebase · 0G Labs</span>
+          <div className="max-w-6xl mx-auto px-6 mt-20 pt-8 border-t border-stone-100 flex flex-col md:flex-row justify-between text-[11px] font-black uppercase tracking-widest text-stone-400">
+            <p>© 2026 CivicPath — Built for the Google ADK Hackathon</p>
+            <div className="flex gap-6 mt-4 md:mt-0">
+               <Link to="/privacy" className="hover:text-stone-900 transition-colors">Privacy</Link>
+               <Link to="/terms" className="hover:text-stone-900 transition-colors">Terms</Link>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </main>
     </div>
   );
 }
