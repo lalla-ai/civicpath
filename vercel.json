@@ -1,7 +1,6 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/__/auth/(.*)", "destination": "https://civicpath-85263.firebaseapp.com/__/auth/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
