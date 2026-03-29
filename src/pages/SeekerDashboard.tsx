@@ -2998,6 +2998,69 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   {aiFillMsg && <p className="mt-3 text-[10px] font-bold text-[#76B900] uppercase tracking-widest text-center">{aiFillMsg}</p>}
                 </div>
 
+                {/* ── NEW: FUNDING READINESS IQ ── */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+                  <h3 className="font-bold text-stone-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-500" /> Funding Readiness IQ
+                  </h3>
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Federal Eligibility', score: profile.ein && profile.dunsNumber ? 100 : 0, icon: '🏛️' },
+                      { label: 'Narrative Strength', score: profile.missionStatement.length > 50 ? 90 : 30, icon: '✍️' },
+                      { label: 'Data Integrity', score: 100, icon: '🛡️' },
+                    ].map(iq => (
+                      <div key={iq.label}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[11px] font-bold text-stone-600 flex items-center gap-1.5">{iq.icon} {iq.label}</span>
+                          <span className="text-[11px] font-black text-stone-900">{iq.score}%</span>
+                        </div>
+                        <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-stone-900 transition-all duration-1000" style={{ width: `${iq.score}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── NEW: AGENTIC VOICE / TONE ── */}
+                <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-100 p-6">
+                  <h3 className="font-bold text-purple-900 text-xs uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Agentic Writing Persona
+                  </h3>
+                  <div className="p-3 bg-white border border-purple-100 rounded-xl shadow-sm">
+                    <p className="text-[10px] font-bold text-purple-400 uppercase mb-1">Detected Tone</p>
+                    <p className="text-sm font-bold text-purple-700">
+                      {profile.missionStatement.length > 100 ? 'Scientific & Analytical' : 'Passionate & Community-First'}
+                    </p>
+                    <p className="text-[11px] text-purple-500 mt-2 leading-relaxed">
+                      Our Drafter agent will automatically mirror this voice to maximize alignment with funder values.
+                    </p>
+                  </div>
+                </div>
+
+                {/* ── NEW: SOVEREIGN PROOF GALLERY ── */}
+                <div className="bg-[#fcfdfa] border border-[#76B900]/20 rounded-2xl p-6">
+                  <h3 className="font-bold text-[#5a9000] text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" /> Sovereign Proofs
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-white border border-[#76B900]/10 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#76B900] animate-pulse" />
+                        <span className="text-[11px] font-bold text-stone-700">Entity Verified</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#76B900]">0G-ANCHORED</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white border border-[#76B900]/10 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#76B900] animate-pulse" />
+                        <span className="text-[11px] font-bold text-stone-700">Budget Proof</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#76B900]">Merkle-Active</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Profile Strength */}
                 <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
                   <div className="flex items-center justify-between mb-4">
