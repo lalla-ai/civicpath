@@ -272,6 +272,36 @@ export default function SeekerDashboard() {
     } catch { setUpgradeModalCodeMsg('Could not redeem. Try again.'); }
     finally { setUpgradeModalCodeLoading(false); }
   };
+
+  // Billing tab — redeem code state (must be top-level, never inside IIFE)
+  const [billingCode, setBillingCode] = useState('');
+  const [billingCodeLoading, setBillingCodeLoading] = useState(false);
+  const [billingCodeMsg, setBillingCodeMsg] = useState('');
+
+  const handleBillingRedeem = async () => {
+    if (!billingCode.trim()) return;
+    setBillingCodeLoading(true);
+    setBillingCodeMsg('');
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('Not logged in');
+      const res = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'redeem-code', code: billingCode.trim(), idToken: token }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('civicpath_plan', 'beta');
+        setUserPlan('beta');
+        setBillingCodeMsg('\u2713 Beta access activated! Unlimited pipeline runs enabled.');
+        setBillingCode('');
+      } else {
+        setBillingCodeMsg(data.error || 'Invalid code. Please check and try again.');
+      }
+    } catch { setBillingCodeMsg('Could not redeem code. Please try again.'); }
+    finally { setBillingCodeLoading(false); }
+  };
   const isPaidPlan = userPlan === 'pro' || userPlan === 'funder';
   const runsRemaining = Math.max(0, FREE_RUN_LIMIT - monthlyRuns);
 
@@ -2451,38 +2481,6 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             } catch { alert('Network error. Please try again.'); }
           };
 
-          const [redeemCode, setRedeemCode] = useState('');
-          const [redeemLoading, setRedeemLoading] = useState(false);
-          const [redeemMsg, setRedeemMsg] = useState('');
-
-          const handleRedeemCode = async () => {
-            if (!redeemCode.trim()) return;
-            setRedeemLoading(true);
-            setRedeemMsg('');
-            try {
-              const token = await auth.currentUser?.getIdToken();
-              if (!token) throw new Error('Not logged in');
-              const res = await fetch('/api/sovereign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'redeem-code', code: redeemCode.trim(), idToken: token }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                localStorage.setItem('civicpath_plan', 'beta');
-                setUserPlan('beta');
-                setRedeemMsg('✓ Beta access activated! Unlimited pipeline runs enabled.');
-                setRedeemCode('');
-              } else {
-                setRedeemMsg(data.error || 'Invalid code. Please check and try again.');
-              }
-            } catch (err: any) {
-              setRedeemMsg('Could not redeem code. Please try again.');
-            } finally {
-              setRedeemLoading(false);
-            }
-          };
-
           const handleUpgrade = async (plan: string) => {
             try {
               const res = await fetch('/api/create-checkout-session', {
@@ -2561,23 +2559,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     <input
                       type="text"
                       placeholder="e.g. CIVICPATH2026"
-                      value={redeemCode}
-                      onChange={e => setRedeemCode(e.target.value.toUpperCase())}
+                  value={billingCode}
+                      onChange={e => setBillingCode(e.target.value.toUpperCase())}
                       className="flex-1 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider"
                       autoComplete="off"
                       spellCheck={false}
                     />
                     <button
-                      onClick={handleRedeemCode}
-                      disabled={redeemLoading || !redeemCode.trim()}
+                      onClick={handleBillingRedeem}
+                      disabled={billingCodeLoading || !billingCode.trim()}
                       className="px-4 py-2 bg-[#76B900] text-[#111] font-bold rounded-xl text-sm hover:bg-[#689900] transition-colors disabled:opacity-50"
                     >
-                      {redeemLoading ? '...' : 'Activate'}
+                      {billingCodeLoading ? '...' : 'Activate'}
                     </button>
                   </div>
-                  {redeemMsg && (
-                    <p className={`text-xs mt-2 font-medium ${redeemMsg.startsWith('✓') ? 'text-[#76B900]' : 'text-red-500'}`}>
-                      {redeemMsg}
+                  {billingCodeMsg && (
+                    <p className={`text-xs mt-2 font-medium ${billingCodeMsg.startsWith('\u2713') ? 'text-[#76B900]' : 'text-red-500'}`}>
+                      {billingCodeMsg}
                     </p>
                   )}
                 </div>

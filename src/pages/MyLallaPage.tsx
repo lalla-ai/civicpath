@@ -261,19 +261,20 @@ export default function MyLallaPage() {
   const isDark = theme === 'dark';
   const c = {
     bg: isDark ? 'bg-[#1C1917]' : 'bg-[#FFFFFF]',
+    mainBg: isDark ? 'bg-[#1C1917]' : 'bg-[#FFFFFF]',
+    sidebar: isDark ? 'bg-[#171514]' : 'bg-[#F9F9F8]',
     text: isDark ? 'text-[#E8E3DC]' : 'text-[#111111]',
     textMuted: isDark ? 'text-stone-400' : 'text-stone-500',
-    sidebar: isDark ? 'bg-[#171514]' : 'bg-[#FAF9F7]',
     border: isDark ? 'border-white/5' : 'border-stone-200',
     borderHover: isDark ? 'hover:border-white/10' : 'hover:border-stone-300',
     hover: isDark ? 'hover:bg-white/5' : 'hover:bg-stone-100',
     card: isDark ? 'bg-[#221f1e]' : 'bg-[#FDFCFB]',
-    input: isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-stone-50 border-stone-200 text-stone-900',
+    input: isDark ? 'bg-[#221f1e] border-white/10 text-white' : 'bg-white border-stone-200 text-stone-900',
     prose: isDark ? 'prose-invert text-stone-300 prose-headings:text-stone-100' : 'text-stone-800 prose-headings:text-stone-900',
   };
 
   return (
-    <div className={`flex h-screen overflow-hidden selection:bg-[#76B900]/30 ${c.bg} ${c.text}`} style={{ fontFamily:'DM Sans, Inter, sans-serif' }}>
+    <div className={`flex h-screen overflow-hidden selection:bg-[#76B900]/30 ${c.mainBg} ${c.text}`} style={{ fontFamily:'DM Sans, Inter, sans-serif' }}>
       
       {/* ── Sidebar ── */}
       <div 
@@ -427,11 +428,11 @@ export default function MyLallaPage() {
                   <div key={msg.id} className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     
                     {msg.role === 'user' ? (
-                      <div className="flex flex-col items-end gap-1">
-                        <div className={`px-5 py-3.5 rounded-3xl rounded-tr-sm max-w-[85%] sm:max-w-[75%] text-[15px] leading-relaxed shadow-sm ${isDark ? 'bg-[#2a2624] text-stone-100' : 'bg-stone-100 text-stone-900 border border-stone-200'}`}>
+                      <div className="flex flex-col items-end gap-1.5 max-w-[85%] sm:max-w-[75%] group">
+                        <div className={`px-5 py-3.5 rounded-2xl shadow-sm text-[15px] leading-relaxed ${isDark ? 'bg-[#2a2624] text-stone-100' : 'bg-[#F9F9F8] text-stone-900 border border-stone-200'}`}>
                           {msg.content}
                         </div>
-                        <button className={`text-[10px] font-medium flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity ${c.textMuted}`}>
+                        <button className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${c.textMuted}`}>
                           <Edit2 className="w-3 h-3" /> Edit
                         </button>
                       </div>
@@ -482,19 +483,25 @@ export default function MyLallaPage() {
                           )}
 
                           {/* Claude-style Actions Row */}
-                          <div className={`mt-4 flex items-center gap-1 ${c.textMuted}`}>
-                            <button onClick={() => handleCopy(msg.content, msg.id)} className={`p-1.5 rounded-md ${c.hover} transition-colors tooltip`} title="Copy text">
+                          <div className={`mt-6 flex items-center gap-1 ${c.textMuted}`}>
+                            <button onClick={() => handleCopy(msg.content, msg.id)} className={`p-2 rounded-lg ${c.hover} transition-colors tooltip`} title="Copy to clipboard">
                               {copied === msg.id ? <Check className="w-4 h-4 text-[#76B900]" /> : <Copy className="w-4 h-4" />}
                             </button>
-                            <button onClick={() => toggleSpeech(msg.content, msg.id)} className={`p-1.5 rounded-md ${c.hover} transition-colors tooltip`} title="Read aloud">
-                              {speakingId === msg.id ? <VolumeX className="w-4 h-4 text-amber-500" /> : <Volume2 className="w-4 h-4" />}
+                            <button onClick={() => toggleSpeech(msg.content, msg.id)} className={`p-2 rounded-lg ${c.hover} transition-colors tooltip`} title="Read response aloud">
+                              {speakingId === msg.id ? <VolumeX className="w-4 h-4 text-red-500 animate-pulse" /> : <Volume2 className="w-4 h-4" />}
                             </button>
-                            <button onClick={() => downloadReportPDF(msg.content, `MyLalla — ${new Date().toLocaleDateString()}`, 'Grant Research', 'MyLalla.ai')} className={`p-1.5 rounded-md ${c.hover} transition-colors tooltip`} title="Download PDF">
+                            <button onClick={() => handleSubmit(msg.content.slice(0, 20))} className={`p-2 rounded-lg ${c.hover} transition-colors tooltip`} title="Retry response">
+                              <Zap className="w-4 h-4 rotate-180" />
+                            </button>
+                            <button onClick={() => downloadReportPDF(msg.content, `MyLalla — ${new Date().toLocaleDateString()}`, 'Grant Research', 'MyLalla.ai')} className={`p-2 rounded-lg ${c.hover} transition-colors tooltip`} title="Export as PDF">
                               <Download className="w-4 h-4" />
                             </button>
-                            <div className={`w-px h-4 mx-1 ${isDark ? 'bg-white/10' : 'bg-stone-300'}`}></div>
-                            <button className={`p-1.5 rounded-md ${c.hover} transition-colors tooltip`} title="Good response">
-                              <MessageSquare className="w-4 h-4" /> {/* Stand in for thumbs up */}
+                            <div className={`w-px h-5 mx-2 ${isDark ? 'bg-white/10' : 'bg-stone-200'}`}></div>
+                            <button className={`p-2 rounded-lg ${c.hover} transition-colors tooltip hover:text-[#76B900]`} title="Helpful">
+                              <ShieldCheck className="w-4 h-4" />
+                            </button>
+                            <button className={`p-2 rounded-lg ${c.hover} transition-colors tooltip hover:text-red-400`} title="Not helpful">
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
