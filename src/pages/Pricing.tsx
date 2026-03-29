@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Loader2, X, KeyRound } from 'lucide-react';
+import { auth } from '../firebase';
 
 const PLANS: Record<string, any[]> = {
   monthly: [
@@ -49,6 +50,37 @@ export default function Pricing() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [topError, setTopError] = useState('');
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const [betaCode, setBetaCode] = useState('');
+  const [betaLoading, setBetaLoading] = useState(false);
+  const [betaMsg, setBetaMsg] = useState('');
+  const [showBetaInput, setShowBetaInput] = useState(false);
+
+  const handleBetaCode = async () => {
+    if (!betaCode.trim()) return;
+    setBetaLoading(true);
+    setBetaMsg('');
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        setBetaMsg('Please sign in first, then return to this page to enter your code.');
+        return;
+      }
+      const res = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'redeem-code', code: betaCode.trim(), idToken: token }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('civicpath_plan', 'beta');
+        setBetaMsg('\u2713 Beta access activated! Unlimited pipeline runs enabled. Go to your dashboard.');
+        setBetaCode('');
+      } else {
+        setBetaMsg(data.error || 'Invalid code.');
+      }
+    } catch { setBetaMsg('Could not redeem code. Please try again.'); }
+    finally { setBetaLoading(false); }
+  };
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
   const successPlan = searchParams.get('plan');
@@ -252,6 +284,48 @@ export default function Pricing() {
           All plans include sovereign data infrastructure. Your data never leaves the platform.{' '}
           <Link to="/privacy" className="text-[#76B900] hover:underline">Privacy Policy</Link>
         </p>
+
+        {/* Beta access code */}
+        <div className="max-w-sm mx-auto mt-8">
+          <button
+            onClick={() => setShowBetaInput(v => !v)}
+            className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-stone-300 rounded-xl text-sm text-stone-500 hover:border-[#76B900] hover:text-[#76B900] transition-colors font-medium"
+          >
+            <KeyRound className="w-4 h-4" />
+            Have a beta access code? Click to enter
+          </button>
+          {showBetaInput && (
+            <div className="mt-3 bg-[#76B900]/5 border border-[#76B900]/30 rounded-xl p-4">
+              <p className="text-xs text-stone-500 mb-3">Enter your code to unlock unlimited access — no credit card needed.</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. CIVICPATH2026"
+                  value={betaCode}
+                  onChange={e => setBetaCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-white border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider"
+                  autoFocus
+                  autoComplete="off"
+                />
+                <button
+                  onClick={handleBetaCode}
+                  disabled={betaLoading || !betaCode.trim()}
+                  className="px-4 py-2.5 bg-[#76B900] text-[#111] font-bold rounded-xl text-sm hover:bg-[#689900] transition-colors disabled:opacity-50"
+                >
+                  {betaLoading ? <span className="animate-spin inline-block">...</span> : 'Activate'}
+                </button>
+              </div>
+              {betaMsg && (
+                <p className={`text-xs mt-2 font-medium ${betaMsg.startsWith('\u2713') ? 'text-[#76B900]' : 'text-red-500'}`}>
+                  {betaMsg}
+                  {betaMsg.startsWith('\u2713') && (
+                    <Link to="/seeker" className="ml-2 underline font-bold">Go to Dashboard →</Link>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <footer className="border-t border-stone-200 py-8 text-center text-sm text-stone-400">

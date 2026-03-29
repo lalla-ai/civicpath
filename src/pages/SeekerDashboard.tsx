@@ -245,6 +245,33 @@ export default function SeekerDashboard() {
   );
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [upgradeModalCode, setUpgradeModalCode] = useState('');
+  const [upgradeModalCodeLoading, setUpgradeModalCodeLoading] = useState(false);
+  const [upgradeModalCodeMsg, setUpgradeModalCodeMsg] = useState('');
+
+  const handleUpgradeModalRedeem = async () => {
+    if (!upgradeModalCode.trim()) return;
+    setUpgradeModalCodeLoading(true);
+    setUpgradeModalCodeMsg('');
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('Not logged in');
+      const res = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'redeem-code', code: upgradeModalCode.trim(), idToken: token }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('civicpath_plan', 'beta');
+        setUserPlan('beta');
+        setShowUpgradeModal(false);
+      } else {
+        setUpgradeModalCodeMsg(data.error || 'Invalid code.');
+      }
+    } catch { setUpgradeModalCodeMsg('Could not redeem. Try again.'); }
+    finally { setUpgradeModalCodeLoading(false); }
+  };
   const isPaidPlan = userPlan === 'pro' || userPlan === 'funder';
   const runsRemaining = Math.max(0, FREE_RUN_LIMIT - monthlyRuns);
 
@@ -2287,18 +2314,35 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-stone-200 p-8 text-center">
             <div className="text-4xl mb-3">🚀</div>
             <h2 className="text-xl font-black text-stone-900 mb-2">Free limit reached</h2>
-            <p className="text-stone-500 text-sm mb-1">You’ve used all <strong>{FREE_RUN_LIMIT} free pipeline runs</strong> this month.</p>
-            <p className="text-stone-400 text-xs mb-6">Upgrade to Pro for unlimited runs, unlimited proposals, and priority support.</p>
-            <a
-              href="/pricing"
-              className="block w-full py-3 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors mb-3"
-            >
+            <p className="text-stone-500 text-sm mb-1">You've used all <strong>{FREE_RUN_LIMIT} free pipeline runs</strong> this month.</p>
+            <p className="text-stone-400 text-xs mb-5">Upgrade to Pro for unlimited runs, unlimited proposals, and priority support.</p>
+            <a href="/pricing" className="block w-full py-3 bg-[#76B900] text-[#111111] font-bold rounded-xl hover:bg-[#689900] transition-colors mb-3">
               Upgrade to Pro — $49/mo →
             </a>
-            <button
-              onClick={() => setShowUpgradeModal(false)}
-              className="w-full py-2.5 border border-stone-200 text-stone-500 font-medium rounded-xl hover:bg-stone-50 text-sm"
-            >
+            {/* Beta code */}
+            <div className="border border-stone-200 rounded-xl p-3 mb-3 text-left">
+              <p className="text-xs font-semibold text-stone-500 mb-2 flex items-center gap-1.5">
+                <span>🎟</span> Have a beta access code?
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={upgradeModalCode}
+                  onChange={e => setUpgradeModalCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-3 py-2 rounded-lg bg-stone-50 border border-stone-200 text-sm font-mono outline-none focus:border-[#76B900]"
+                />
+                <button
+                  onClick={handleUpgradeModalRedeem}
+                  disabled={upgradeModalCodeLoading || !upgradeModalCode.trim()}
+                  className="px-3 py-2 bg-[#76B900] text-[#111] font-bold rounded-lg text-sm disabled:opacity-50"
+                >
+                  {upgradeModalCodeLoading ? '...' : 'Go'}
+                </button>
+              </div>
+              {upgradeModalCodeMsg && <p className="text-xs text-red-500 mt-1.5">{upgradeModalCodeMsg}</p>}
+            </div>
+            <button onClick={() => setShowUpgradeModal(false)} className="w-full py-2.5 border border-stone-200 text-stone-500 font-medium rounded-xl hover:bg-stone-50 text-sm">
               Maybe later
             </button>
           </div>
