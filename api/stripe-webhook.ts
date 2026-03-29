@@ -57,25 +57,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const plan = session.metadata?.plan || 'pro';
+        const userId = session.metadata?.userId;
         const customerEmail = session.customer_email || session.customer_details?.email;
 
-        if (customerEmail) {
-          // Find user by email and update their plan in Firestore
+        const planData = {
+          plan,
+          planActivatedAt: new Date().toISOString(),
+          role: plan === 'funder' ? 'funder' : 'seeker',
+        };
+
+        if (userId) {
+          // Direct UID lookup — fast, reliable, no index required
+          await db.doc(`users/${userId}`).set(planData, { merge: true });
+          console.log(`[Stripe] Plan "${plan}" activated for uid: ${userId}`);
+        } else if (customerEmail) {
+          // Fallback: email lookup for sessions without userId in metadata
           const usersSnap = await db.collection('users')
             .where('profile.email', '==', customerEmail)
             .limit(1)
             .get();
-
           if (!usersSnap.empty) {
-            const userDoc = usersSnap.docs[0];
-            await userDoc.ref.set(
-              {
-                plan,
-                planActivatedAt: new Date().toISOString(),
-                role: plan === 'funder' ? 'funder' : 'seeker',
-              },
-              { merge: true }
-            );
+            await usersSnap.docs[0].ref.set(planData, { merge: true });
+            console.log(`[Stripe] Plan "${plan}" activated via email: ${customerEmail}`);
+          } else {
+            console.warn(`[Stripe] No user found for email: ${customerEmail}`);
           }
         }
       }

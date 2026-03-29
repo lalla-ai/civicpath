@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2025-01-27.acacia' });
 
-  const { plan, email } = req.body || {};
+  const { plan, email, userId } = req.body || {};
   if (!plan) return res.status(400).json({ error: 'plan required (pro | funder)' });
 
   // Price IDs — set these as Vercel env vars after creating products in Stripe dashboard
@@ -36,10 +36,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...(email ? { customer_email: email } : {}),
       success_url: `${baseUrl}/pricing?success=true&plan=${plan}`,
       cancel_url: `${baseUrl}/pricing?canceled=true`,
-      metadata: { plan },
+      metadata: { plan, ...(userId ? { userId } : {}) },
       subscription_data: {
         trial_period_days: 14, // 14-day free trial on all paid plans
-        metadata: { plan },
+        metadata: { plan, ...(userId ? { userId } : {}) },
       },
     });
 

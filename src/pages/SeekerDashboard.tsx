@@ -2594,7 +2594,11 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             try {
               const res = await fetch('/api/create-checkout-session', {
                 method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ plan, email: user?.email || '' }),
+                body: JSON.stringify({
+                  plan,
+                  email: user?.email || '',
+                  userId: auth.currentUser?.uid || '',
+                }),
               });
               const data = await res.json();
               if (data.url) window.location.href = data.url;
