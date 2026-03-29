@@ -79,6 +79,7 @@ export default function MyLallaPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Load sessions on mount
   useEffect(() => {
@@ -124,26 +125,43 @@ export default function MyLallaPage() {
   }, [input]);
 
   // ── Voice Interactions (STT / TTS) ──
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+
   const toggleListening = () => {
     if (isListening) {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
       setIsListening(false);
       return;
     }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Voice input is not supported in this browser. Try Chrome or Edge.");
+      setVoiceError('Voice input requires Chrome or Edge.');
+      setTimeout(() => setVoiceError(null), 3000);
       return;
     }
+    setVoiceError(null);
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
+    recognition.lang = 'en-US';
     recognition.onresult = (e: any) => {
       const transcript = Array.from(e.results).map((r: any) => r[0].transcript).join('');
-      if (e.results[0].isFinal) {
-        setInput(prev => prev + (prev ? ' ' : '') + transcript);
-      }
+      setInput(prev => prev + (prev ? ' ' : '') + transcript);
     };
-    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (e: any) => {
+      if (e.error === 'not-allowed') setVoiceError('Microphone access denied. Check browser permissions.');
+      else if (e.error === 'no-speech') setVoiceError('No speech detected. Try again.');
+      else setVoiceError('Voice error: ' + e.error);
+      setTimeout(() => setVoiceError(null), 4000);
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+    recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
   };
@@ -575,11 +593,17 @@ export default function MyLallaPage() {
                   {/* Voice Input Button */}
                   <button 
                     onClick={toggleListening}
-                    className={`p-2 rounded-lg transition-colors flex items-center justify-center tooltip ${isListening ? 'text-red-500 bg-red-500/10' : `${c.textMuted} ${c.hover}`}`}
-                    title="Speak"
+                    className={`p-2 rounded-lg transition-colors flex items-center justify-center tooltip ${isListening ? 'text-red-500 bg-red-500/10 animate-pulse' : `${c.textMuted} ${c.hover}`}`}
+                    title={isListening ? 'Stop recording' : 'Voice input'}
                   >
                     <Mic className="w-5 h-5" />
                   </button>
+                  {voiceError && (
+                    <span className="text-[10px] text-red-500 font-medium max-w-[140px] leading-tight">{voiceError}</span>
+                  )}
+                  {isListening && !voiceError && (
+                    <span className="text-[10px] text-red-500 font-medium animate-pulse">Listening…</span>
+                  )}
                   
                   <div className={`h-4 w-px mx-1 ${isDark ? 'bg-white/10' : 'bg-stone-300'}`}></div>
                   <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${c.textMuted}`}>
