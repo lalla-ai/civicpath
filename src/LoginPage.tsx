@@ -236,6 +236,44 @@ export default function LoginPage() {
           </button>
         </div>
 
+        {/* Beta Access Code Banner — always visible regardless of login method */}
+        <div className="px-8 pt-6 pb-0">
+          <div className="rounded-xl border border-[#76B900]/30 bg-[#76B900]/5 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setShowCodeField(v => !v)}
+              className="w-full flex items-center justify-between text-left group"
+            >
+              <span className="text-sm font-semibold text-stone-800 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-[#76B900]" />
+                Have a beta access code?
+              </span>
+              <span className="text-xs text-[#76B900] font-bold group-hover:underline">
+                {showCodeField ? 'Hide' : 'Enter code →'}
+              </span>
+            </button>
+            {showCodeField && (
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. CIVICPATH2026"
+                  value={betaCode}
+                  onChange={e => setBetaCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-3 py-2 rounded-xl bg-white border border-[#76B900]/40 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider text-stone-900 placeholder:text-stone-400"
+                  autoComplete="off"
+                  spellCheck={false}
+                  autoFocus
+                />
+              </div>
+            )}
+            {betaCode.trim() && (
+              <p className="text-xs text-[#76B900] font-medium mt-2 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Code entered — will activate after you sign in below
+              </p>
+            )}
+          </div>
+        </div>
+
         <div className="p-8 space-y-4">
           {/* Social Buttons */}
           <div className="grid grid-cols-1 gap-3">
@@ -316,31 +354,6 @@ export default function LoginPage() {
                 <AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span>
               </div>
             )}
-
-            {/* Beta access code field */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowCodeField(v => !v)}
-                className="text-xs text-stone-400 hover:text-[#76B900] transition-colors flex items-center gap-1.5"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                Have a beta access code?
-              </button>
-              {showCodeField && (
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code (e.g. CIVICPATH2026)"
-                    value={betaCode}
-                    onChange={e => setBetaCode(e.target.value.toUpperCase())}
-                    className="flex-1 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400 font-mono tracking-wider"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-              )}
-            </div>
 
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-[#76B900] hover:bg-[#689900] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center disabled:opacity-60">
