@@ -8,6 +8,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { orchestratedInference } from '../lib/agents/orchestrator';
 import ReactMarkdown from 'react-markdown';
+import OmninorMascot from '../components/OmninorMascot';
 import { jsPDF } from 'jspdf';
 import type { ChatMessage } from '../gemini';
 import { grantLeafHash, buildMerkleRoot, simulateZGSync, truncateHash } from '../lib/merkle';
@@ -246,6 +247,10 @@ export default function SeekerDashboard() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const isPaidPlan = userPlan === 'pro' || userPlan === 'funder';
   const runsRemaining = Math.max(0, FREE_RUN_LIMIT - monthlyRuns);
+
+  const [omninorMessage, setOmninorMessage] = useState<string | null>(null);
+  const [omninorAction, setOmninorAction] = useState<(() => void) | null>(null);
+  const [omninorActionLabel, setOmninorActionLabel] = useState<string | null>(null);
 
   // Sync plan from Firestore when user logs in
   useEffect(() => {
@@ -554,6 +559,8 @@ Respond in clean markdown with EXACTLY these 4 sections:
 
   const profileScoreColor = profileScore >= 80 ? 'text-[#76B900]' : profileScore >= 50 ? 'text-amber-600' : 'text-red-500';
   const profileBarColor = profileScore >= 80 ? 'bg-[#76B900]' : profileScore >= 50 ? 'bg-amber-500' : 'bg-red-400';
+
+
 
   const callGeminiProxy = async (prompt: string, useSearch = false): Promise<string> => {
     // Routes through the Orchestrator [FIG.1 [104]] for:
@@ -1163,7 +1170,7 @@ Write a 600-800 word proposal with EXACTLY these sections. Use bolding for empha
     return true;
   };
 
-  const runController = async () => {
+  const runController = async (finalProposal: string) => {
     updateAgent('controller', { status: 'working', logs: [], output: null });
     addLog('controller', 'Running AI compliance audit via Gemini...');
     addGlobalLog(`[🛡️ The Controller] Starting eligibility & compliance audit...`);
@@ -1197,7 +1204,7 @@ ORGANIZATION PROFILE:
 - Years Operating: ${profile.yearsOperating || 'NOT PROVIDED'}
 
 PROPOSAL EXCERPT:
-${(drafterOutput || 'NOT PROVIDED').slice(0, 800)}
+${finalProposal.slice(0, 800)}
 
 Check these items and return ONLY valid JSON:
 {
@@ -1260,14 +1267,14 @@ Check these items and return ONLY valid JSON:
     return auditPassed;
   };
 
-  const runSubmitter = async () => {
+  const runSubmitter = async (finalProposal: string) => {
     updateAgent('submitter', { status: 'working', logs: [], output: null });
-    
+
     addGlobalLog(`[✉️ The Submitter]  Authenticating with Gmail API (OAuth2)...`);
     addLog('submitter', 'Constructing email payload & attaching PDFs...');
     await delay(1000);
-    
-    addGlobalLog(`[\u2709\ufe0f The Submitter]  Application package prepared and queued \u2713`);
+
+    addGlobalLog(`[✉️ The Submitter]  Application package prepared and queued \u2713`);
     addLog('submitter', 'Proposal packaged. Sending confirmation email...');
     await delay(800);
 
@@ -1286,7 +1293,7 @@ Check these items and return ONLY valid JSON:
       grantAgency: (appGrant as any).agency || 'Unknown',
       grantAmount: appAmount,
       grantDeadline: (appGrant as any).closeDate || 'Unknown',
-      proposalText: drafterOutput || '',
+      proposalText: finalProposal,
       status: 'pending',
       score: topMatchScoreRef.current || 0,
       funderEmail: (allDiscoveredGrants[0] as any)?.funderEmail || '',
@@ -1320,11 +1327,10 @@ Check these items and return ONLY valid JSON:
           orgName: profile.companyName || 'Your Organization',
           grantName: (appGrant as any).title || 'Target Grant',
           amount: appAmount,
-          proposalText: drafterOutput || '',
+          proposalText: finalProposal,
         }),
       }).catch(() => {});
     }
-
     const submitterText = `
 ### Application Package Ready \u2713
 * **Organization**: ${profile.companyName || 'Your Organization'}
@@ -1357,17 +1363,19 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   };
 
   const handleApproveAndSubmit = async () => {
+    let finalText = drafterOutput || '';
     if (editMode) {
       setDrafterOutput(editedProposal);
+      finalText = editedProposal;
       setEditMode(false);
     }
     setAwaitingApproval(false);
     addGlobalLog(`[✅ HUMAN APPROVED]  Proposal approved. Resuming pipeline...`);
     
     try {
-      const passed = await runController();
+      const passed = await runController(finalText);
       if (passed) {
-        if (!await runSubmitter()) throw new Error('Submitter failed');
+        if (!await runSubmitter(finalText)) throw new Error('Submitter failed');
         runWatcher();
         setNextAction({ type: 'success', message: 'MISSION ACCOMPLISHED: Proposal approved, verified, and sent via Gmail. Milestones booked to Calendar.' });
       } else {
@@ -1379,7 +1387,6 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
       setIsRunning(false);
     }
   };
-
   const handleExecute = async () => {
     if (isRunning) return;
 
@@ -1416,6 +1423,53 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
       setIsRunning(false); // Only stop running on error
     }
   };
+
+  // ── Omninor Contextual Coach Logic ──
+  useEffect(() => {
+    if (awaitingApproval) {
+      setOmninorMessage("The Drafter just finished your proposal. Review it below, then press Enter to approve and initiate the compliance audit.");
+      setOmninorActionLabel("Approve & Submit");
+      setOmninorAction(() => handleApproveAndSubmit);
+    } else if (nextAction?.type === 'success' && !isRunning) {
+      setOmninorMessage("Mission accomplished! Your proposal is queued for submission. I've also auto-generated your post-award compliance schedule.");
+      setOmninorActionLabel("View Schedule");
+      setOmninorAction(() => () => setActiveTab('scheduler'));
+    } else if (nextAction?.type === 'warning' && !isRunning) {
+      setOmninorMessage("Hold on! The Controller flagged some missing compliance data. Please review the warnings above before we submit.");
+      setOmninorActionLabel(null);
+      setOmninorAction(null);
+    } else if (activeTab === 'meetings' && !!transcriptAnalysis) {
+      setOmninorMessage("I've analyzed your meeting transcript. Your organization's Matchmaker profile has been successfully updated with the funder's unwritten requirements.");
+      setOmninorActionLabel(null);
+      setOmninorAction(null);
+    } else if (activeTab === 'dashboard' && monthlyRuns === 0 && profileScore >= 50 && !isRunning && !awaitingApproval && !nextAction) {
+      setOmninorMessage("Your profile looks strong enough for a test run! Press Enter to let me find your best grant matches and draft your first proposal.");
+      setOmninorActionLabel("Run AI Pipeline");
+      setOmninorAction(() => handleExecute);
+    } else {
+      setOmninorMessage(null);
+      setOmninorActionLabel(null);
+      setOmninorAction(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingApproval, nextAction, isRunning, activeTab, transcriptAnalysis, monthlyRuns, profileScore]);
+
+  // Global Keyboard Shortcuts for Omninor
+  useEffect(() => {
+    if (!omninorMessage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && omninorAction) {
+        e.preventDefault();
+        omninorAction();
+        setOmninorMessage(null);
+      }
+      if (e.key === 'Escape') {
+        setOmninorMessage(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [omninorMessage, omninorAction]);
 
   const getStatusIcon = (status: AgentStatus) => {
     switch (status) {
@@ -3357,18 +3411,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         )}
 
         {activeTab === 'meetings' && (
-          <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden animate-in fade-in">
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden animate-in fade-in max-w-5xl mx-auto">
             <div className="p-6 border-b border-stone-100 flex flex-col md:flex-row justify-between gap-4 bg-stone-50/50">
               <div>
-                <h2 className="text-xl font-bold text-stone-800 flex items-center"><Users className="w-5 h-5 mr-2 text-[#76B900]" /> Meeting Summary Agent</h2>
-                <p className="text-sm text-stone-500 mt-1">Paste your transcript or connect Google Meet to automatically extract actionable grant milestones.</p>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-200 text-stone-700 text-[11px] font-bold uppercase tracking-wider mb-3">
+                  <Video className="w-3.5 h-3.5 text-blue-500" /> Funder Intelligence
+                </div>
+                <h2 className="text-2xl font-black text-stone-900 flex items-center">Funder CRM & AI Notetaker</h2>
+                <p className="text-sm text-stone-500 mt-1 max-w-2xl">
+                  AI automatically joins your Discovery Calls with grant officers, transcribes their requirements, and updates your organization's Matchmaker profile to increase your win rate.
+                </p>
               </div>
-              <div className="flex space-x-3">
-                <button onClick={() => window.open('https://meet.google.com', '_blank')} className="flex-1 md:flex-none px-4 py-2 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
-                  <Video className="w-4 h-4 mr-2 text-stone-500" /> Connect Meet
+              <div className="flex space-x-3 items-start">
+                <button onClick={() => window.open('https://meet.google.com', '_blank')} className="flex-1 md:flex-none px-4 py-2.5 bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-xl hover:bg-stone-50 shadow-sm transition-colors flex items-center justify-center">
+                  <Video className="w-4 h-4 mr-2 text-blue-500" /> Connect Zoom/Meet
                 </button>
-                <button onClick={() => setShowTranscriptModal(true)} className="flex-1 md:flex-none px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center justify-center">
-                  <FileText className="w-4 h-4 mr-2" /> Paste Transcript
+                <button onClick={() => setShowTranscriptModal(true)} className="flex-1 md:flex-none px-4 py-2.5 bg-[#111111] text-white text-sm font-bold rounded-xl shadow-sm hover:bg-stone-800 transition-colors flex items-center justify-center">
+                  <FileText className="w-4 h-4 mr-2 text-[#76B900]" /> Paste Transcript
                 </button>
               </div>
             </div>
@@ -4084,6 +4143,34 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
         )}
 
       </main>
+
+      {/* ── Omninor Contextual Coach (Superhuman Command Bar Style) ── */}
+      {omninorMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] w-full max-w-2xl px-4 animate-in slide-in-from-bottom-8 fade-in duration-300">
+          <div className="bg-[#111111]/95 backdrop-blur-md text-white p-3 pr-4 rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] border border-[#333] flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center shrink-0 border border-stone-700 shadow-inner">
+              <OmninorMascot className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium leading-snug text-stone-200">{omninorMessage}</p>
+            </div>
+            {omninorActionLabel && omninorAction && (
+              <button 
+                onClick={() => { omninorAction(); setOmninorMessage(null); }}
+                className="shrink-0 px-4 py-2 bg-[#76B900] text-[#111] text-sm font-bold rounded-xl hover:bg-[#689900] transition-colors shadow-sm flex items-center gap-2 group"
+              >
+                {omninorActionLabel}
+                <kbd className="hidden sm:inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-sans bg-[#111]/20 text-[#111] rounded border border-[#111]/20 group-hover:bg-[#111]/30 transition-colors">↵</kbd>
+              </button>
+            )}
+            <button onClick={() => setOmninorMessage(null)} className="shrink-0 w-8 h-8 flex items-center justify-center text-stone-500 hover:text-white rounded-full hover:bg-stone-800 transition-colors">
+              <span className="sr-only">Close</span>
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

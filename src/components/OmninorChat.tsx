@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { globalGraph } from '../lib/agents/graph';
+import OmninorMascot from './OmninorMascot';
 
 async function askOmninor(prompt: string): Promise<string> {
   const res = await fetch('/api/gemini-proxy', {
@@ -87,7 +88,9 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a] shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#333] rounded flex items-center justify-center text-[10px] font-black text-white">⌘</div>
+              <div className="w-6 h-6 flex items-center justify-center">
+                <OmninorMascot className="w-6 h-6" />
+              </div>
               <span className="font-bold text-white text-sm">Omninor</span>
               <span className="text-[9px] font-black text-[#76B900] bg-[#76B900]/10 px-1.5 py-0.5 rounded uppercase tracking-wider">AI Support</span>
             </div>
@@ -99,10 +102,11 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="flex flex-col gap-3 h-full">
-                <div className="mt-2">
-                  <p className="text-white text-sm font-semibold">Hi! I'm Omninor ⌘</p>
-                  <p className="text-stone-400 text-xs mt-1 leading-relaxed">Ask me anything about CivicPath — how it works, pricing, grants, or getting started.</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <OmninorMascot className="w-5 h-5" />
+                  <p className="text-white text-sm font-semibold">Hi! I'm Omninor</p>
                 </div>
+                <p className="text-stone-400 text-xs mt-1 leading-relaxed">Ask me anything about CivicPath — how it works, pricing, grants, or getting started.</p>
                 <div className="flex flex-col gap-2 mt-2">
                   {starters.map(q => (
                     <button key={q} onClick={() => send(q)}
@@ -116,7 +120,9 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
             {messages.map((m, i) => (
               <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
-                  <div className="w-6 h-6 bg-[#333] rounded flex items-center justify-center text-[9px] font-black text-white shrink-0 mt-0.5">⌘</div>
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">
+                    <OmninorMascot className="w-6 h-6" />
+                  </div>
                 )}
                 <div className={`max-w-[82%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                   m.role === 'user'
@@ -131,7 +137,9 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
             ))}
             {loading && (
               <div className="flex gap-2 justify-start">
-                <div className="w-6 h-6 bg-[#333] rounded flex items-center justify-center text-[9px] font-black text-white shrink-0">⌘</div>
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                  <OmninorMascot className="w-6 h-6" />
+                </div>
                 <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl rounded-bl-sm px-3 py-2 flex gap-1 items-center">
                   <span className="w-1.5 h-1.5 bg-[#76B900] rounded-full animate-bounce" style={{animationDelay:'0ms'}} />
                   <span className="w-1.5 h-1.5 bg-[#76B900] rounded-full animate-bounce" style={{animationDelay:'150ms'}} />
@@ -167,11 +175,11 @@ ${grants?.length ? `Recently discovered grants: ${grants.map(g => g.title).join(
       <button
         onClick={() => setOpen(o => !o)}
         className={`fixed bottom-5 right-5 z-50 w-12 h-12 rounded-2xl shadow-xl flex items-center justify-center font-black text-sm transition-all hover:scale-105 active:scale-95 ${
-          open ? 'bg-[#333] text-white border border-[#444]' : 'bg-[#111] text-[#76B900] border border-[#2a2a2a] hover:border-[#76B900]'
+          open ? 'bg-[#333] text-white border border-[#444]' : 'bg-[#111] border border-[#2a2a2a] hover:border-[#76B900]'
         }`}
         title="Ask Omninor"
       >
-        {open ? '×' : '⌘'}
+        {open ? '×' : <OmninorMascot className="w-8 h-8" />}
       </button>
     </>
   );

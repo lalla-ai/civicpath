@@ -65,6 +65,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     { id:'gates-001', title:'Gates Foundation Grand Challenges: AI & Global Health', agency:'Bill & Melinda Gates Foundation', openDate:'2026-04-01', closeDate:'2026-10-01', source:'Gates Foundation', url:'https://gcgh.grandchallenges.org/', category:'Foundation', amount:'$100,000 seed' },
     { id:'rwjf-001', title:'Robert Wood Johnson Foundation: Health Equity Tech Grant', agency:'RWJF', openDate:'2026-02-15', closeDate:'2026-07-31', source:'RWJF', url:'https://www.rwjf.org/en/grants/funding-opportunities.html', category:'Foundation', amount:'$500,000' },
     { id:'lumina-001', title:'Lumina Foundation: Workforce & Postsecondary Innovation', agency:'Lumina Foundation', openDate:'2026-03-01', closeDate:'2026-09-01', source:'Lumina Foundation', url:'https://www.luminafoundation.org/grants/', category:'Foundation / Education', amount:'$300,000' },
+
+    // ── AI Startup — Military / Defense SBIR ──
+    { id:'afwerx-001', title:'AFWERX SBIR Phase I: AI & Autonomy for Defense Applications', agency:'U.S. Air Force (AFWERX)', openDate:'2026-04-01', closeDate:'2026-07-15', source:'AFWERX SBIR', url:'https://afwerx.com/sbir/', category:'Federal SBIR', amount:'$150,000' },
+    { id:'afwerx-002', title:'AFWERX Open Topic SBIR Phase II: Commercial AI Transition', agency:'U.S. Air Force (AFWERX)', openDate:'2026-05-01', closeDate:'2026-09-30', source:'AFWERX SBIR', url:'https://afwerx.com/sbir/', category:'Federal SBIR', amount:'$1,750,000' },
+    { id:'army-001', title:'Army xTechSearch: AI & Machine Learning Technology Competition', agency:'U.S. Army DEVCOM', openDate:'2026-03-15', closeDate:'2026-06-15', source:'Army xTechSearch', url:'https://www.xtechsearch.army.mil/', category:'Federal SBIR', amount:'$250,000' },
+    { id:'navy-001', title:'Navy NSIN SBIR Phase I: Dual-Use AI Technology', agency:'U.S. Navy NSIN', openDate:'2026-04-01', closeDate:'2026-08-01', source:'Navy NSIN', url:'https://nsin.us/', category:'Federal SBIR', amount:'$150,000' },
+    { id:'nist-001', title:'NIST SBIR: AI Safety, Assurance & Standards Innovation', agency:'National Institute of Standards and Technology', openDate:'2026-04-15', closeDate:'2026-08-31', source:'NIST SBIR', url:'https://www.nist.gov/tpo/small-business-innovation-research', category:'Federal SBIR', amount:'$300,000' },
+    { id:'dhs-001', title:'DHS SBIR Phase I: AI-Powered Homeland Security Technology', agency:'Dept. of Homeland Security', openDate:'2026-05-01', closeDate:'2026-09-01', source:'DHS SBIR', url:'https://www.sbir.gov/agencies/dhs', category:'Federal SBIR', amount:'$150,000' },
+    { id:'nsf-icorps', title:'NSF I-Corps: AI Startup Commercialization Grant', agency:'National Science Foundation', openDate:'2026-01-01', closeDate:'Rolling', source:'NSF I-Corps', url:'https://www.nsf.gov/i-corps/', category:'Commercialization', amount:'$50,000' },
+    { id:'nsf-pose', title:'NSF POSE: Pathways to Enable Open-Source AI Ecosystems', agency:'National Science Foundation', openDate:'2026-04-01', closeDate:'2026-10-15', source:'NSF POSE', url:'https://new.nsf.gov/funding/opportunities/pose-pathways-enable-open-source-ecosystems', category:'Research', amount:'$1,500,000' },
+    { id:'sbir-p2', title:'SBIR Phase II Scale-Up Award (Post Phase I, all federal agencies)', agency:'Multiple Federal Agencies (SBA)', openDate:'2026-01-01', closeDate:'Rolling', source:'SBIR Phase II', url:'https://www.sbir.gov/phase-2', category:'Federal SBIR', amount:'$2,000,000' },
+    { id:'eda-001', title:'EDA Build to Scale: AI-Driven Regional Innovation Cluster', agency:'Economic Development Administration (EDA)', openDate:'2026-06-01', closeDate:'2026-09-30', source:'EDA', url:'https://eda.gov/programs/build-to-scale', category:'Economic Development', amount:'$3,000,000' },
+    { id:'iqt-001', title:'In-Q-Tel AI Partnership: National Security Technology Program', agency:'In-Q-Tel (CIA / Intelligence Community)', openDate:'2026-01-01', closeDate:'Rolling', source:'In-Q-Tel', url:'https://www.iqt.org/', category:'National Security', amount:'$500,000 + contracts' },
+    // ── AI Startup — Top Accelerators ──
+    { id:'yc-001', title:'Y Combinator S26/W26 Batch: AI-First Startup Program', agency:'Y Combinator', openDate:'2026-01-01', closeDate:'Rolling', source:'YC Accelerator', url:'https://www.ycombinator.com/apply/', category:'Accelerator', amount:'$500,000 (7% equity)' },
+    { id:'techstars-ai', title:'Techstars AI Accelerator: Global Program', agency:'Techstars', openDate:'2026-04-01', closeDate:'Rolling', source:'Techstars', url:'https://www.techstars.com/accelerators', category:'Accelerator', amount:'$120,000 (6% equity)' },
+    { id:'intel-ignite', title:'Intel Ignite: AI Deep-Tech Startup Program (No Equity)', agency:'Intel', openDate:'2026-03-01', closeDate:'Rolling', source:'Intel Ignite', url:'https://intelignite.com/', category:'Accelerator', amount:'$100,000 credits + mentorship' },
+    // ── AI Startup — Platform API & Compute Grants ──
+    { id:'openai-001', title:'OpenAI Researcher Access & API Credit Program for Startups', agency:'OpenAI', openDate:'2026-01-01', closeDate:'Rolling', source:'OpenAI', url:'https://openai.com/research/api-access', category:'AI Program', amount:'$25,000 API credits' },
+    { id:'anthropic-001', title:'Anthropic Responsible AI Startup Program: Claude API Access', agency:'Anthropic', openDate:'2026-01-01', closeDate:'Rolling', source:'Anthropic', url:'https://www.anthropic.com/', category:'AI Program', amount:'$50,000 API credits' },
+    { id:'hf-001', title:'Hugging Face ZeroGPU: Open-Source AI Startup Grant & Hosting', agency:'Hugging Face', openDate:'2026-01-01', closeDate:'Rolling', source:'Hugging Face', url:'https://huggingface.co/docs/hub/spaces-zerogpu', category:'AI Program', amount:'$50,000 compute credits' },
+    // ── AI for Good — Foundations ──
+    { id:'mcgovern-001', title:'Patrick J. McGovern Foundation: AI for Social Impact Grant', agency:'Patrick J. McGovern Foundation', openDate:'2026-03-01', closeDate:'2026-09-01', source:'Private Foundation', url:'https://www.mcgovern.org/apply-for-funding/', category:'Foundation', amount:'$250,000' },
+    { id:'otf-001', title:'Open Technology Fund: Internet Freedom & AI Safety Innovation', agency:'Open Technology Fund', openDate:'2026-01-01', closeDate:'Rolling', source:'Open Technology Fund', url:'https://www.opentech.fund/funds/', category:'Foundation', amount:'$900,000' },
+    { id:'ai-grant', title:'AI Grant Program: Independent AI Research & Startup Funding', agency:'AI Grant Community (Nathan Labenz)', openDate:'2026-01-01', closeDate:'Rolling', source:'AI Grant', url:'https://aigrant.com/', category:'Community Grant', amount:'Up to $250,000' },
+    { id:'sloan-ai', title:'Sloan Foundation: AI Transparency, Safety & Research Grant', agency:'Alfred P. Sloan Foundation', openDate:'2026-04-01', closeDate:'2026-10-01', source:'Sloan Foundation', url:'https://sloan.org/programs/technology/', category:'Foundation', amount:'$500,000' },
+    { id:'macarthur-ai', title:'MacArthur Foundation: Responsible AI Technology Grant', agency:'MacArthur Foundation', openDate:'2026-02-01', closeDate:'2026-08-01', source:'Private Foundation', url:'https://www.macfound.org/', category:'Foundation', amount:'$150,000' },
+    { id:'wellcome-ai', title:'Wellcome Leap: AI for Global Health Challenge ($50M pool)', agency:'Wellcome Trust', openDate:'2026-03-01', closeDate:'2026-07-01', source:'Wellcome Trust', url:'https://wellcomeleap.org/', category:'Foundation', amount:'Up to $5,000,000' },
     // ── University & Research ──
     { id:'uni-001', title:'NSF CAREER Award: Early-Career Faculty AI Research', agency:'National Science Foundation', openDate:'2026-07-01', closeDate:'2026-10-15', source:'NSF University', url:'https://www.nsf.gov/funding/pgm_summ.jsp?pims_id=503214', category:'University / Faculty', amount:'$400,000' },
     { id:'uni-002', title:'NIH Academic Research Enhancement Award (AREA)', agency:'National Institutes of Health', openDate:'2026-02-01', closeDate:'2026-06-25', source:'NIH University', url:'https://grants.nih.gov/grants/guide/pa-files/PA-20-204.html', category:'University / Research', amount:'$300,000' },
@@ -90,7 +118,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
   } catch { /* Grants.gov unavailable */ }
 
-  // --- SOURCE 2: SBA SBIR ---
+  // --- SOURCE 2: NIH Reporter (live — active NIH awards by keyword) ---
+  try {
+    const nihRes = await fetch('https://api.reporter.nih.gov/v2/projects/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        criteria: { advanced_text_search: { operator: 'and', search_field: 'all', search_text: keyword || 'artificial intelligence' } },
+        include_fields: ['ProjectTitle', 'Organization', 'AgencyIcAdmin', 'ProjectEndDate', 'AwardNoticeDate', 'TotalCost', 'ApplId'],
+        offset: 0,
+        limit: 5,
+        sort_field: 'TotalCost',
+        sort_order: 'desc',
+      }),
+    });
+    if (nihRes.ok) {
+      const nihData = await nihRes.json();
+      liveTotal += nihData.meta?.total || 0;
+      (nihData.results || []).forEach((g: any) => liveResults.push({
+        id: `nih-rptr-${g.appl_id}`,
+        title: g.project_title || 'NIH Research Project',
+        agency: `NIH / ${g.agency_ic_admin || 'National Institutes of Health'}`,
+        openDate: g.award_notice_date ? g.award_notice_date.slice(0, 10) : '',
+        closeDate: g.project_end_date ? g.project_end_date.slice(0, 10) : 'Rolling',
+        source: 'NIH Reporter',
+        url: `https://reporter.nih.gov/project-details/${g.appl_id}`,
+        amount: g.total_cost ? `$${Number(g.total_cost).toLocaleString()}` : undefined,
+      }));
+    }
+  } catch { /* NIH Reporter unavailable */ }
+
+  // --- SOURCE 3: SBA SBIR ---
   try {
     const sbirKeyword = keyword.toLowerCase().includes('ai') || keyword.toLowerCase().includes('tech')
       ? keyword : `${keyword} technology`;
@@ -110,7 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch { /* SBIR unavailable */ }
 
-  // --- SOURCE 3: Curated database (33+ federal, accelerators, foundations) ---
+  // --- SOURCE 4: Curated database (55+ grants: federal, AI-startup, accelerators, foundations) ---
   // Only add mock grants NOT already covered by live results
   const combined = [...liveResults];
   const total = liveTotal + expandedMock.length;

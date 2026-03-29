@@ -1,0 +1,17 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body / Main Screen -->
+  <rect x="15" y="30" width="70" height="55" rx="24" fill="#76B900" />
+  
+  <!-- Antenna stem -->
+  <line x1="50" y1="30" x2="50" y2="12" stroke="#76B900" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Antenna bulb -->
+  <circle cx="50" cy="12" r="8" fill="#76B900" />
+  
+  <!-- Screen face -->
+  <rect x="27" y="45" width="46" height="26" rx="12" fill="#111111" />
+  
+  <!-- Happy glowing eyes -->
+  <path d="M 36 56 Q 40 50 44 56" fill="none" stroke="#76B900" stroke-width="4" stroke-linecap="round" />
+  <path d="M 56 56 Q 60 50 64 56" fill="none" stroke="#76B900" stroke-width="4" stroke-linecap="round" />
+</svg>
