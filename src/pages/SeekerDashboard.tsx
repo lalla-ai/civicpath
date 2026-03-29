@@ -2407,6 +2407,38 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             } catch { alert('Network error. Please try again.'); }
           };
 
+          const [redeemCode, setRedeemCode] = useState('');
+          const [redeemLoading, setRedeemLoading] = useState(false);
+          const [redeemMsg, setRedeemMsg] = useState('');
+
+          const handleRedeemCode = async () => {
+            if (!redeemCode.trim()) return;
+            setRedeemLoading(true);
+            setRedeemMsg('');
+            try {
+              const token = await auth.currentUser?.getIdToken();
+              if (!token) throw new Error('Not logged in');
+              const res = await fetch('/api/sovereign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'redeem-code', code: redeemCode.trim(), idToken: token }),
+              });
+              const data = await res.json();
+              if (data.success) {
+                localStorage.setItem('civicpath_plan', 'beta');
+                setUserPlan('beta');
+                setRedeemMsg('✓ Beta access activated! Unlimited pipeline runs enabled.');
+                setRedeemCode('');
+              } else {
+                setRedeemMsg(data.error || 'Invalid code. Please check and try again.');
+              }
+            } catch (err: any) {
+              setRedeemMsg('Could not redeem code. Please try again.');
+            } finally {
+              setRedeemLoading(false);
+            }
+          };
+
           const handleUpgrade = async (plan: string) => {
             try {
               const res = await fetch('/api/create-checkout-session', {
@@ -2474,6 +2506,45 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 )}
               </div>
+
+              {/* Beta / Tester Access Code */}
+              {userPlan !== 'pro' && userPlan !== 'funder' && userPlan !== 'beta' && (
+                <div className="mt-4 border-t border-stone-100 pt-4">
+                  <p className="text-xs font-semibold text-stone-500 mb-2 flex items-center gap-1.5">
+                    <span>🎟</span> Have a beta access code?
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. CIVICPATH2026"
+                      value={redeemCode}
+                      onChange={e => setRedeemCode(e.target.value.toUpperCase())}
+                      className="flex-1 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <button
+                      onClick={handleRedeemCode}
+                      disabled={redeemLoading || !redeemCode.trim()}
+                      className="px-4 py-2 bg-[#76B900] text-[#111] font-bold rounded-xl text-sm hover:bg-[#689900] transition-colors disabled:opacity-50"
+                    >
+                      {redeemLoading ? '...' : 'Activate'}
+                    </button>
+                  </div>
+                  {redeemMsg && (
+                    <p className={`text-xs mt-2 font-medium ${redeemMsg.startsWith('✓') ? 'text-[#76B900]' : 'text-red-500'}`}>
+                      {redeemMsg}
+                    </p>
+                  )}
+                </div>
+              )}
+              {userPlan === 'beta' && (
+                <div className="mt-4 border-t border-stone-100 pt-4">
+                  <p className="text-xs text-[#76B900] font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Beta access active — unlimited pipeline runs enabled
+                  </p>
+                </div>
+              )}
 
               {/* Plan comparison */}
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">

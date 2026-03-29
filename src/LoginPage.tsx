@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, Loader2, Mail, Lock, User, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, Lock, User, CheckCircle2, KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { useAuth } from './AuthContext';
@@ -29,7 +29,8 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
-
+  const [betaCode, setBetaCode] = useState('');
+  const [showCodeField, setShowCodeField] = useState(false);
   useEffect(() => {
     if (sessionStorage.getItem('civicpath_auth_redirect_pending') === 'true') {
       setGoogleLoading(true);
@@ -79,8 +80,14 @@ export default function LoginPage() {
       if (googleLoading && user.email) {
         sendWelcomeEmail(user.name || '', user.email, targetRole);
       }
-      navigate(targetRole === 'funder' ? '/funder' : '/seeker', { replace: true });
+      const doNavigate = () => navigate(targetRole === 'funder' ? '/funder' : '/seeker', { replace: true });
+      if (betaCode.trim()) {
+        redeemBetaCode(betaCode.trim()).finally(doNavigate);
+      } else {
+        doNavigate();
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate, searchParams, role]);
 
   const handleGoogle = async () => {
@@ -122,6 +129,23 @@ export default function LoginPage() {
       setError('LinkedIn sign-in failed. Please try again.');
       setInfo('');
     }
+  };
+
+  const redeemBetaCode = async (code: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const res = await fetch('/api/sovereign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'redeem-code', code: code.trim(), idToken: token }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Always update localStorage so UI reflects beta plan immediately
+        localStorage.setItem('civicpath_plan', 'beta');
+      }
+    } catch { /* silent fail — user can redeem from dashboard later */ }
   };
 
   const sendWelcomeEmail = (userName: string, userEmail: string, userRole: string) => {
@@ -292,6 +316,31 @@ export default function LoginPage() {
                 <AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span>
               </div>
             )}
+
+            {/* Beta access code field */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowCodeField(v => !v)}
+                className="text-xs text-stone-400 hover:text-[#76B900] transition-colors flex items-center gap-1.5"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                Have a beta access code?
+              </button>
+              {showCodeField && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter code (e.g. CIVICPATH2026)"
+                    value={betaCode}
+                    onChange={e => setBetaCode(e.target.value.toUpperCase())}
+                    className="flex-1 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm text-stone-900 placeholder:text-stone-400 font-mono tracking-wider"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+              )}
+            </div>
 
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-[#76B900] hover:bg-[#689900] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center disabled:opacity-60">

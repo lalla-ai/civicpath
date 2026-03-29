@@ -367,6 +367,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
+      // ── Beta Access Code Redemption ────────────────────────────────────────
+      case 'redeem-code': {
+        const { code: rawCode, idToken } = req.body;
+        if (!rawCode) return res.status(400).json({ error: 'code required' });
+        if (!idToken) return res.status(400).json({ error: 'idToken required' });
+
+        // Validate against BETA_CODES env var (comma-separated), default fallback included
+        const validCodes = (process.env.BETA_CODES || 'CIVICPATH2026')
+          .split(',')
+          .map((c: string) => c.trim().toUpperCase())
+          .filter(Boolean);
+
+        if (!validCodes.includes(String(rawCode).trim().toUpperCase())) {
+          return res.status(400).json({ error: 'Invalid or expired access code.' });
+        }
+
+        const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+        if (!sa) {
+          // Admin SDK not configured — code is valid but we can't write to Firestore.
+          // Client-side will update localStorage as fallback.
+          return res.status(200).json({ success: true, plan: 'beta', serverWrite: false });
+        }
+
+        try {
+          const [{ initializeApp, getApps, cert }, { getFirestore }, { getAuth }] = await Promise.all([
+            import('firebase-admin/app'),
+            import('firebase-admin/firestore'),
+            import('firebase-admin/auth'),
+          ]);
+          if (getApps().length === 0) initializeApp({ credential: cert(JSON.parse(sa)) });
+
+          const decoded = await getAuth().verifyIdToken(idToken);
+          const db = getFirestore();
+          await db.doc(`users/${decoded.uid}`).set(
+            { plan: 'beta', betaActivatedAt: new Date().toISOString() },
+            { merge: true }
+          );
+          return res.status(200).json({ success: true, plan: 'beta', serverWrite: true });
+        } catch (err: any) {
+          return res.status(500).json({ error: `Code redemption failed: ${err.message}` });
+        }
+      }
+
       // ── MyLalla Research Engine (Nemotron-3-Super + live grants) ─────────────
       case 'mylalla-research': {
         const { query: mlQueryRaw, sessionId: mlSession, orgProfile } = req.body;
