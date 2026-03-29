@@ -13,19 +13,19 @@ type FunderTab = 'overview' | 'post' | 'applicants' | 'analytics' | 'lalla';
 interface Grant { id: string; name: string; amount: string; focus: string[]; location: string; deadline: string; status: 'active'|'draft'; applications: number; }
 interface Applicant { id: string; org: string; mission: string; location: string; score: number; grant: string; grantAmount?: string; date: string; status: 'pending'|'approved'|'rejected'|'review'; proposalText?: string; seekerEmail?: string; seekerName?: string; isLive?: boolean; }
 const GRANTS: Grant[] = [
-  { id:'1', name:'Mom and Pop Small Business Grant', amount:'$10,000', focus:['Small Business'], location:'Miami-Dade County', deadline:'2026-06-30', status:'active', applications:23 },
-  { id:'2', name:'MDEAT Black Business Grant', amount:'$25,000', focus:['Business','Community'], location:'Miami-Dade County', deadline:'2026-07-15', status:'active', applications:41 },
-  { id:'3', name:'Safe in the 305 Grant', amount:'$50,000', focus:['Community','Safety'], location:'Miami-Dade County', deadline:'2026-08-01', status:'active', applications:18 },
-  { id:'4', name:'Cultural Affairs Grant', amount:'$15,000', focus:['Arts','Culture'], location:'Miami-Dade County', deadline:'2026-09-01', status:'active', applications:34 },
-  { id:'5', name:'Digital Equity Fund', amount:'$100,000', focus:['Technology','Education'], location:'Miami-Dade County', deadline:'2026-10-01', status:'active', applications:57 },
+  { id:'1', name:'Community Innovation Seed Fund', amount:'$10,000', focus:['Small Business'], location:'National', deadline:'2026-06-30', status:'active', applications:23 },
+  { id:'2', name:'Underrepresented Founders Initiative', amount:'$25,000', focus:['Business','Community'], location:'National', deadline:'2026-07-15', status:'active', applications:41 },
+  { id:'3', name:'Safe Neighborhoods Grant', amount:'$50,000', focus:['Community','Safety'], location:'Statewide', deadline:'2026-08-01', status:'active', applications:18 },
+  { id:'4', name:'Cultural Arts Expansion Fund', amount:'$15,000', focus:['Arts','Culture'], location:'Regional', deadline:'2026-09-01', status:'active', applications:34 },
+  { id:'5', name:'Digital Equity Access Grant', amount:'$100,000', focus:['Technology','Education'], location:'National', deadline:'2026-10-01', status:'active', applications:57 },
 ];
 const APPLICANTS: Applicant[] = [
-  { id:'1', org:'Sunrise Tech Nonprofit', mission:'AI-driven solutions for Florida communities', location:'Orlando, FL', score:94, grant:'Digital Equity Fund', date:'Mar 20', status:'pending' },
-  { id:'2', org:'Miami Arts Collective', mission:'Bringing arts to underserved Miami neighborhoods', location:'Miami, FL', score:91, grant:'Cultural Affairs Grant', date:'Mar 21', status:'pending' },
-  { id:'3', org:'Little Haiti Business Hub', mission:'Supporting Caribbean entrepreneurs in Miami', location:'Miami, FL', score:88, grant:'MDEAT Black Business Grant', date:'Mar 21', status:'review' },
-  { id:'4', org:'Safe Streets Initiative', mission:'Community safety programs across Miami-Dade', location:'Miami-Dade, FL', score:85, grant:'Safe in the 305 Grant', date:'Mar 22', status:'pending' },
-  { id:'5', org:"Maria's Bakery & Cafe", mission:'Family-owned Cuban bakery serving Hialeah since 2010', location:'Hialeah, FL', score:82, grant:'Mom and Pop Small Business Grant', date:'Mar 22', status:'pending' },
-  { id:'6', org:'Overtown Digital Lab', mission:'Digital literacy programs for youth in Overtown', location:'Miami, FL', score:79, grant:'Digital Equity Fund', date:'Mar 23', status:'pending' },
+  { id:'1', org:'Sunrise Tech Nonprofit', mission:'AI-driven solutions for underserved communities', location:'Atlanta, GA', score:94, grant:'Digital Equity Access Grant', date:'Mar 20', status:'pending' },
+  { id:'2', org:'Urban Arts Collective', mission:'Bringing arts to underserved urban neighborhoods', location:'Chicago, IL', score:91, grant:'Cultural Arts Expansion Fund', date:'Mar 21', status:'pending' },
+  { id:'3', org:'Riverside Business Hub', mission:'Supporting minority entrepreneurs in the Southeast', location:'Memphis, TN', score:88, grant:'Underrepresented Founders Initiative', date:'Mar 21', status:'review' },
+  { id:'4', org:'Safe Streets Initiative', mission:'Community safety programs across public parks', location:'Dallas, TX', score:85, grant:'Safe Neighborhoods Grant', date:'Mar 22', status:'pending' },
+  { id:'5', org:"Maria's Bakery & Cafe", mission:'Family-owned bakery expanding community operations', location:'Austin, TX', score:82, grant:'Community Innovation Seed Fund', date:'Mar 22', status:'pending' },
+  { id:'6', org:'Downtown Digital Lab', mission:'Digital literacy programs for adults and seniors', location:'Cleveland, OH', score:79, grant:'Digital Equity Access Grant', date:'Mar 23', status:'pending' },
 ];
 const FOCUS_AREAS = ['Education','Technology','Housing','Health','Environment','Arts','Small Business','Community'];
 const heart = (s: number) => s >= 94 ? '❤️' : s >= 80 ? '🧡' : '💚';
@@ -40,7 +40,7 @@ export default function FunderDashboard() {
   const [celebration, setCelebration] = useState<string | null>(null);
   const [proposalModal, setProposalModal] = useState<Applicant | null>(null);
   const [filterGrant, setFilterGrant] = useState('all');
-  const [form, setForm] = useState({ name:'', description:'', amount:'', deadline:'', focus:[] as string[], location:'Miami Dade County', requirements:'' });
+  const [form, setForm] = useState({ name:'', description:'', amount:'', deadline:'', focus:[] as string[], location:'National', requirements:'' });
 
   const totalApps = grants.reduce((s,g) => s + g.applications, 0);
   const avgScore = Math.round(applicants.reduce((s,a) => s + a.score, 0) / applicants.length);
@@ -190,7 +190,7 @@ export default function FunderDashboard() {
       url: `mailto:${user?.email || 'grants@civicpath.ai'}?subject=Application: ${encodeURIComponent(form.name)}`,
     });
     setGrants(prev => [{ id:String(Date.now()), name:form.name, amount:form.amount, focus:form.focus, location:form.location, deadline:form.deadline, status:'active', applications:0 }, ...prev]);
-    setForm({ name:'', description:'', amount:'', deadline:'', focus:[], location:'Miami Dade County', requirements:'' });
+    setForm({ name:'', description:'', amount:'', deadline:'', focus:[], location:'National', requirements:'' });
     setPosting(false);
     setPostSuccess(true);
     setTimeout(() => { setPostSuccess(false); setActiveTab('overview'); }, 2000);
@@ -320,7 +320,7 @@ export default function FunderDashboard() {
                   <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Amount *</label><input value={form.amount} onChange={e => setForm({...form,amount:e.target.value})} placeholder="e.g. up to $50,000" className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                   <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Deadline</label><input type="date" value={form.deadline} onChange={e => setForm({...form,deadline:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900" /></div>
                 </div>
-                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Location Scope</label><select value={form.location} onChange={e => setForm({...form,location:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900"><option>Miami Dade County</option><option>South Florida</option><option>Statewide Florida</option><option>Federal</option></select></div>
+                <div><label className="text-sm font-semibold text-stone-700 block mb-1.5">Location Scope</label><select value={form.location} onChange={e => setForm({...form,location:e.target.value})} className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900"><option>National</option><option>Statewide</option><option>Regional</option><option>Local City/County</option></select></div>
                 <div><label className="text-sm font-semibold text-stone-700 block mb-2">Focus Areas</label><div className="flex flex-wrap gap-2">{FOCUS_AREAS.map(f => (<button key={f} onClick={() => setForm(prev => ({...prev,focus:prev.focus.includes(f)?prev.focus.filter(x=>x!==f):[...prev.focus,f]}))} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${form.focus.includes(f)?'bg-[#76B900] text-[#111111] border-[#76B900]':'border-stone-200 text-stone-600 hover:border-[#76B900] hover:text-[#76B900]'}`}>{f}</button>))}</div></div>
                 {postSuccess && (
                   <div className="p-4 bg-[#76B900]/10 border border-[#76B900]/30 rounded-xl flex items-center gap-2 text-sm font-bold text-[#76B900]">

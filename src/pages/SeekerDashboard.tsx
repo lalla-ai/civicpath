@@ -1819,7 +1819,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                       value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})}
                       className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400" />
                     <datalist id="location-suggestions">
-                      <option value="Miami, FL" /><option value="Orlando, FL" /><option value="Tampa, FL" /><option value="Jacksonville, FL" />
+                      <option value="Austin, TX" /><option value="Chicago, IL" /><option value="Seattle, WA" /><option value="Atlanta, GA" />
                       <option value="Fort Lauderdale, FL" /><option value="West Palm Beach, FL" /><option value="Tallahassee, FL" />
                       <option value="Gainesville, FL" /><option value="Pensacola, FL" /><option value="Cape Coral, FL" />
                       <option value="South Florida" /><option value="Central Florida" /><option value="North Florida" /><option value="Statewide Florida" />
