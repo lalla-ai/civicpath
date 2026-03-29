@@ -9,7 +9,7 @@ import { auth } from './firebase';
 
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { user, loginWithGoogle, loginWithLinkedIn, loginWithEmail, signupWithEmail } = useAuth();
+  const { user, loading: authLoading, loginWithGoogle, loginWithLinkedIn, loginWithEmail, signupWithEmail } = useAuth();
 
   // Unique page title
   useEffect(() => {
@@ -36,6 +36,17 @@ export default function LoginPage() {
       setInfo('Finishing Google sign-in…');
     }
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (sessionStorage.getItem('civicpath_auth_redirect_pending') !== 'true') return;
+    if (user) return;
+
+    sessionStorage.removeItem('civicpath_auth_redirect_pending');
+    setGoogleLoading(false);
+    setInfo('');
+    setError('Google sign-in did not complete. Please try again.');
+  }, [authLoading, user]);
 
   const handleForgotPassword = async () => {
     if (!email.trim()) { setError('Enter your email above first.'); return; }
