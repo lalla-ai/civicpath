@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBR-RZA2caNRQ8MOuj0VaJxhj30H7CyXwE",
-  authDomain: "civicpath-85263.firebaseapp.com",
+  authDomain: "civicpath.ai",
   projectId: "civicpath-85263",
   storageBucket: "civicpath-85263.firebasestorage.app",
   messagingSenderId: "1079524218284",

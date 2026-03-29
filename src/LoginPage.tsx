@@ -83,7 +83,18 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('[Google Login] Error:', err);
-      setError('Google sign-in failed. Please try again.');
+      const code = err?.code || '';
+      if (code.includes('popup-blocked')) {
+        setError('Google sign-in popup was blocked. Please allow popups and try again.');
+      } else if (code.includes('popup-closed-by-user')) {
+        setError('Google sign-in popup was closed before completing sign-in.');
+      } else if (code.includes('unauthorized-domain')) {
+        setError('Google sign-in is not authorized for this domain yet.');
+      } else if (code.includes('operation-not-allowed')) {
+        setError('Google sign-in is not enabled in Firebase Auth yet.');
+      } else {
+        setError('Google sign-in failed. Please try again.');
+      }
     } finally {
       setGoogleLoading(false);
     }
