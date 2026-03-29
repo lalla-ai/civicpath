@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginWithGoogle: (role?: string) => Promise<'popup' | 'redirect'>;
+  loginWithLinkedIn: (role?: string) => Promise<string>;
   loginWithEmail: (email: string, password: string, role?: string) => Promise<void>;
   signupWithEmail: (name: string, email: string, password: string, role?: string) => Promise<void>;
   setRole: (role: 'seeker' | 'funder') => void;
@@ -120,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, setRole, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithLinkedIn, loginWithEmail, signupWithEmail, setRole, logout }}>
       {children}
     </AuthContext.Provider>
   );

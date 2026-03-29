@@ -51,6 +51,7 @@ export default function DemoPage() {
       user: DEMO_USER,
       loading: false,
       loginWithGoogle: async () => 'popup',
+      loginWithLinkedIn: async () => 'redirect',
       loginWithEmail: async () => {},
       signupWithEmail: async () => {},
       setRole: () => {},
