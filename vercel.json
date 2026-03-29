@@ -2,7 +2,6 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/__/auth/(.*)", "destination": "https://civicpath-85263.firebaseapp.com/__/auth/$1" },
-    { "source": "/__/firebase/init.json", "destination": "https://civicpath-85263.firebaseapp.com/__/firebase/init.json" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
