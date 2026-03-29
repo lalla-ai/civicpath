@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Hexagon, ArrowUpRight } from 'lucide-react';
+import { Hexagon, ArrowUpRight, Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
@@ -25,6 +25,7 @@ export default function LandingPage() {
   const [heroQuery, setHeroQuery] = useState('');
   const [heroAnswer, setHeroAnswer] = useState('');
   const [heroLoading, setHeroLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleHeroAsk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,18 +69,35 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link to="/login" className="text-[15px] text-stone-500 hover:text-stone-900 transition-colors">{t('nav.logIn')}</Link>
-            <Link to="/login?role=seeker" className="bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-[15px]">{t('nav.findGrantsCta')}</Link>
+            <Link to="/login" className="hidden sm:block text-[15px] text-stone-500 hover:text-stone-900 transition-colors">{t('nav.logIn')}</Link>
+            <Link to="/login?role=seeker" className="hidden sm:block bg-[#76B900] text-[#111111] font-semibold px-4 py-2 rounded-lg hover:bg-[#689900] transition-colors text-[15px]">{t('nav.findGrantsCta')}</Link>
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-stone-100 transition-colors"
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5 text-stone-700" /> : <Menu className="w-5 h-5 text-stone-700" />}
+            </button>
           </div>
         </div>
+        {/* Mobile dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-stone-200 bg-[#F9F7F2] px-6 py-4 flex flex-col gap-4">
+            <a href="#how" onClick={() => setMobileMenuOpen(false)} className="text-[15px] text-stone-600 hover:text-stone-900 font-medium">{t('nav.howItWorks')}</a>
+            <Link to="/login?role=seeker" onClick={() => setMobileMenuOpen(false)} className="text-[15px] text-stone-600 hover:text-stone-900 font-medium">{t('nav.findGrants')}</Link>
+            <Link to="/login?role=funder" onClick={() => setMobileMenuOpen(false)} className="text-[15px] text-stone-600 hover:text-stone-900 font-medium">{t('nav.giveGrants')}</Link>
+            <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-[15px] text-stone-600 hover:text-stone-900 font-medium">{t('nav.pricing')}</Link>
+            <div className="flex gap-3 pt-2 border-t border-stone-200">
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-2.5 border border-stone-300 rounded-lg text-sm font-semibold text-stone-700">{t('nav.logIn')}</Link>
+              <Link to="/login?role=seeker" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-2.5 bg-[#76B900] text-[#111] rounded-lg text-sm font-semibold">{t('nav.findGrantsCta')}</Link>
+            </div>
+          </div>
+        )}
       </nav>
-
       {/* HERO */}
       <section className="pt-16 sm:pt-24 pb-14 sm:pb-20 text-center px-5 sm:px-6">
-        <div className="inline-flex items-center gap-2 bg-[#76B90015] text-[#5a9000] rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide">
-          {t('hero.badge')}
-        </div>
-        <h1 className="mt-6 text-5xl sm:text-6xl md:text-7xl font-normal tracking-tight text-stone-900 leading-[1.0] max-w-4xl mx-auto" style={{fontFamily:'"Instrument Serif", serif'}}>
+        <h1 className="mt-2 text-5xl sm:text-6xl md:text-7xl font-normal tracking-tight text-stone-900 leading-[1.0] max-w-4xl mx-auto" style={{fontFamily:'"Instrument Serif", serif'}}>
           {t('hero.h1')}<br />
           <span className="text-[#76B900]">{t('hero.h2')}</span>
         </h1>

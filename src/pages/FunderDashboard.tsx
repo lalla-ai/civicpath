@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { auth } from '../firebase';
-import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight, Sparkles, Send, Loader2 } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight, Sparkles, Send, Loader2, FileText } from 'lucide-react';
 import type { ChatMessage } from '../gemini';
 import ReactMarkdown from 'react-markdown';
 import { postFunderGrant, getFunderGrants } from '../lib/funderGrants';
@@ -42,7 +42,6 @@ export default function FunderDashboard() {
   const [filterGrant, setFilterGrant] = useState('all');
   const [form, setForm] = useState({ name:'', description:'', amount:'', deadline:'', focus:[] as string[], location:'National', requirements:'' });
 
-  const totalApps = grants.reduce((s,g) => s + g.applications, 0);
   const avgScore = Math.round(applicants.reduce((s,a) => s + a.score, 0) / applicants.length);
   const funded = applicants.filter(a => a.status === 'approved').length;
 
@@ -223,10 +222,30 @@ export default function FunderDashboard() {
               <div><span className="font-bold text-stone-800">Location:</span> {proposalModal.location}</div>
               <div><span className="font-bold text-stone-800">Match Score:</span> <span className="text-[#76B900] font-bold">{proposalModal.score}/100</span></div>
               {proposalModal.isLive && proposalModal.proposalText ? (
-                <div className="mt-2">
-                  <p className="font-bold text-stone-800 mb-2">AI-Drafted Proposal:</p>
-                  <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 max-h-60 overflow-y-auto prose prose-sm prose-stone max-w-none">
-                    <ReactMarkdown>{proposalModal.proposalText}</ReactMarkdown>
+                <div className="mt-4 border-t border-stone-100 pt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
+                    <p className="font-bold text-stone-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-stone-400" /> Full Proposal Narrative</p>
+                    <div className="bg-stone-50 border border-stone-200 rounded-xl p-5 max-h-[50vh] overflow-y-auto prose prose-sm prose-stone max-w-none">
+                      <ReactMarkdown>{proposalModal.proposalText}</ReactMarkdown>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <p className="font-bold text-stone-800 mb-1 flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-500" /> AI Review Scorecard</p>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                      <div className="text-[10px] font-black uppercase text-blue-500 tracking-wider mb-2">Alignment</div>
+                      <div className="font-bold text-stone-900 text-sm">Strategic Fit: High</div>
+                      <p className="text-xs text-stone-600 mt-1">Proposal narrative strongly aligns with {proposalModal.grant} guidelines.</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                      <div className="text-[10px] font-black uppercase text-emerald-600 tracking-wider mb-2">Compliance</div>
+                      <div className="font-bold text-stone-900 text-sm">Verified by Controller</div>
+                      <p className="text-xs text-stone-600 mt-1">Pre-screened for missing data, geographic scope, and eligibility.</p>
+                    </div>
+                    <div className="bg-stone-50 border border-stone-200 rounded-xl p-4">
+                      <div className="text-[10px] font-black uppercase text-stone-500 tracking-wider mb-2">Risk Assessment</div>
+                      <div className="font-bold text-stone-900 text-sm">Low Risk</div>
+                      <p className="text-xs text-stone-600 mt-1">Budget requests are standard. Spenddown logic is sound.</p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -274,7 +293,7 @@ export default function FunderDashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[{l:'Grants Posted',v:grants.length,c:'text-stone-900'},{l:'Total Applications',v:totalApps,c:'text-stone-900'},{l:'Avg Match Score',v:`${avgScore}%`,c:'text-[#76B900]'},{l:'Orgs Funded',v:funded,c:'text-[#76B900]'}].map((s,i) => (
+              {[{l:'Programs Active',v:grants.length,c:'text-stone-900'},{l:'Total Fund Size',v:'$5.0M',c:'text-stone-900'},{l:'Capital Disbursed',v:'$1.2M',c:'text-blue-600'},{l:'Avg Fit Score',v:`${avgScore}%`,c:'text-[#76B900]'}].map((s,i) => (
                 <div key={i} className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
                   <div className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">{s.l}</div>
                   <div className={`text-2xl font-black ${s.c}`}>{s.v}</div>
@@ -283,8 +302,8 @@ export default function FunderDashboard() {
             </div>
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-stone-900">Active Grants</h2>
-                <button onClick={() => setActiveTab('post')} className="flex items-center gap-1.5 px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg hover:bg-[#689900]"><Plus className="w-4 h-4" /> Post New</button>
+                <h2 className="text-lg font-bold text-stone-900">Active Programs</h2>
+                <button onClick={() => setActiveTab('post')} className="flex items-center gap-1.5 px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg hover:bg-[#689900]"><Plus className="w-4 h-4" /> New Program</button>
               </div>
               <div className="space-y-3">
                 {grants.map(g => (

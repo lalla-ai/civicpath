@@ -141,6 +141,50 @@ async function verify0GTransaction(txHash: string): Promise<{ verified: boolean;
 
 // ── KMS helpers ───────────────────────────────────────────────────────────────
 
+/**
+ * Generate a Google OAuth2 access token from a service account JSON key.
+ * Uses Node.js built-in crypto to sign the JWT — no extra dependencies.
+ * Scope: https://www.googleapis.com/auth/cloudkms
+ */
+async function getKMSToken(): Promise<string> {
+  // Prefer a pre-set static token (useful for testing)
+  const staticToken = process.env.GOOGLE_KMS_ACCESS_TOKEN;
+  if (staticToken) return staticToken;
+
+  const saJson = process.env.GOOGLE_KMS_SERVICE_ACCOUNT;
+  if (!saJson) throw new Error('GOOGLE_KMS_SERVICE_ACCOUNT (or GOOGLE_KMS_ACCESS_TOKEN) not configured');
+
+  const sa = JSON.parse(saJson);
+  const { createSign } = await import('node:crypto');
+
+  const now = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const claims = Buffer.from(JSON.stringify({
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/cloudkms',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  })).toString('base64url');
+
+  const sign = createSign('RSA-SHA256');
+  sign.update(`${header}.${claims}`);
+  const sig = sign.sign(sa.private_key).toString('base64url');
+  const jwt = `${header}.${claims}.${sig}`;
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
+    }),
+  });
+  const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) throw new Error(`KMS token exchange failed: ${JSON.stringify(tokenData)}`);
+  return tokenData.access_token;
+}
+
 function kmsOfflineResult(operation: string, message: string) {
   return {
     success: true,
@@ -153,8 +197,7 @@ function kmsOfflineResult(operation: string, message: string) {
 }
 
 async function kmsCallREST(url: string, method: 'POST' | 'PATCH', body: object) {
-  const token = process.env.GOOGLE_KMS_ACCESS_TOKEN;
-  if (!token) throw new Error('GOOGLE_KMS_ACCESS_TOKEN not set');
+  const token = await getKMSToken();
   const res = await fetch(url, {
     method,
     headers: {

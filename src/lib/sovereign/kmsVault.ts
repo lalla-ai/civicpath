@@ -20,10 +20,11 @@
  *     destroyKeyVersion() is a separate, irreversible operation requiring a guard.
  *
  * Activation env vars:
- *   GOOGLE_KMS_KEY_NAME      — Full resource name:
- *                               projects/{proj}/locations/{loc}/keyRings/{ring}/cryptoKeys/{key}
- *   GOOGLE_KMS_ACCESS_TOKEN  — OAuth2 access token or service account token
- *   GOOGLE_KMS_DESTROY_ENABLED — Set to 'true' to enable permanent key destruction
+ *   GOOGLE_KMS_KEY_NAME          — Full resource name:
+ *                                   projects/{proj}/locations/{loc}/keyRings/{ring}/cryptoKeys/{key}
+ *   GOOGLE_KMS_SERVICE_ACCOUNT   — Service account JSON (auto-generates OAuth2 token via JWT)
+ *   GOOGLE_KMS_ACCESS_TOKEN      — Optional: static OAuth2 token (overrides service account)
+ *   GOOGLE_KMS_DESTROY_ENABLED   — Set to 'true' to enable permanent key destruction
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
