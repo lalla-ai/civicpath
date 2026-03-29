@@ -517,6 +517,18 @@ Respond in clean markdown with EXACTLY these 4 sections:
     }
   };
 
+  const looksLikeRawPdf = (text: string) => {
+    const sample = text.slice(0, 1000);
+    return (
+      sample.includes('%PDF-') ||
+      sample.includes('ReportLab Generated PDF document') ||
+      (/^\d+\s+\d+\s+obj/m.test(sample) && sample.includes('/Type /Font'))
+    );
+  };
+
+  const safeBackgroundInfo = looksLikeRawPdf(profile.backgroundInfo) ? '' : profile.backgroundInfo;
+  const safeResumeText = looksLikeRawPdf(profile.resumeText) ? '' : profile.resumeText;
+
   // Profile completeness — with content quality validation (min chars required)
   const q = (s: string, min = 3) => s.trim().length >= min;
   const profileScore = Math.round([
@@ -531,7 +543,7 @@ Respond in clean markdown with EXACTLY these 4 sections:
     q(profile.projectDescription, 20),
     Boolean(profile.fundingAmount),
     Boolean(profile.previousGrants),
-    q(profile.backgroundInfo, 50) || q(profile.resumeText, 50),
+    q(safeBackgroundInfo, 50) || q(safeResumeText, 50),
     Boolean(profile.linkedinUrl || profile.website || profile.twitterUrl),
     q(profile.ein, 4),                    // NEW — required for federal grants
     q(profile.yearFounded, 4),            // NEW
@@ -619,6 +631,7 @@ Respond in clean markdown with EXACTLY these 4 sections:
       setTimeout(() => setAiFillMsg(''), 4000);
     }
   };
+
 
   useEffect(() => {
     localStorage.setItem('civicpath_profile', JSON.stringify(profile));
@@ -1004,7 +1017,7 @@ ORGANIZATION:
 - SAM/DUNS: ${profile.dunsNumber ? 'Present \u2713' : 'Not provided'}
 - Funding Goal: ${profile.fundingAmount || 'Unknown'} for: ${(profile.projectDescription || '').slice(0, 200)}
 - Previous Grants: ${profile.previousGrants || 'None listed'}
-- Background: ${(profile.backgroundInfo || profile.resumeText || '').slice(0, 400)}
+- Background: ${(safeBackgroundInfo || safeResumeText || '').slice(0, 400)}
 
 GRANTS TO SCORE:
 ${grantsToScore.map((g: any, i: number) => `${i + 1}. "${g.title}" | Agency: ${g.agency} | Amount: ${g.amount || 'N/A'} | Deadline: ${g.closeDate} | Source: ${g.source}`).join('\n')}
@@ -1087,7 +1100,7 @@ ${profile.fundingAmount ? `We are seeking ${profile.fundingAmount}` : `We are re
 ${profile.impactMetrics || 'We have demonstrated consistent results in our community'}
 
 ## TRACK RECORD
-${profile.backgroundInfo || profile.resumeText || 'Our organization has a strong record of community service'}
+${safeBackgroundInfo || safeResumeText || 'Our organization has a strong record of community service'}
 ${profile.grantHistoryText ? `\nPast Grants: ${profile.grantHistoryText}` : ''}
 
 ## TARGET GRANT
@@ -1897,17 +1910,24 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                 {/* Resume Upload */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700 flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-stone-400" />Upload Resume / Portfolio (TXT, PDF)
+                    <Upload className="w-4 h-4 text-stone-400" />Upload Resume / Portfolio (TXT, MD)
                   </label>
                   <label className="flex items-center justify-center gap-3 w-full py-4 border-2 border-dashed border-stone-200 rounded-xl cursor-pointer hover:border-[#76B900]/40 hover:bg-[#76B900]/5 transition-colors group">
                     <Upload className="w-5 h-5 text-stone-400 group-hover:text-[#76B900] transition-colors" />
                     <span className="text-sm text-stone-500 group-hover:text-[#76B900] transition-colors">
                       {profile.resumeText ? '\u2713 Resume loaded — click to replace' : 'Click to upload or drag & drop'}
                     </span>
-                    <input type="file" accept=".txt,.pdf,.md,.doc" className="hidden"
+                    <input type="file" accept=".txt,.md" className="hidden"
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                        const isDoc = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
+                        if (isPdf || isDoc) {
+                          setAiFillMsg('PDF and Word uploads are not supported yet. Please paste the text or upload a TXT/MD file.');
+                          setTimeout(() => setAiFillMsg(''), 6000);
+                          return;
+                        }
                         const reader = new FileReader();
                         reader.onload = ev => {
                           const text = ev.target?.result as string;
@@ -2907,7 +2927,7 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </h3>
                   <div className="prose prose-stone max-w-none">
                     <p className="text-stone-600 leading-relaxed whitespace-pre-wrap text-[15px]">
-                      {profile.backgroundInfo || profile.resumeText || 'No background information provided yet. Use the AI Research tool to automatically generate an overview from your web presence.'}
+                      {safeBackgroundInfo || safeResumeText || 'No background information provided yet. Use the AI Research tool to automatically generate an overview from your web presence.'}
                     </p>
                   </div>
                 </div>
