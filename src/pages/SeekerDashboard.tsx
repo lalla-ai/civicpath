@@ -454,6 +454,31 @@ export default function SeekerDashboard() {
   const [digestLoading, setDigestLoading] = useState(false);
   const [digestMsg, setDigestMsg] = useState('');
   const [linkedinMsg, setLinkedinMsg] = useState('');
+
+  // ── Google OAuth state (Gmail + Calendar) ────────────────────────────────
+  const [googleConnected, setGoogleConnected] = useState(() => !!localStorage.getItem('civicpath_google_connected'));
+  const [googleEmail, setGoogleEmail] = useState(() => localStorage.getItem('civicpath_google_email') || '');
+  const [calendarSyncing, setCalendarSyncing] = useState(false);
+  const [calendarSyncMsg, setCalendarSyncMsg] = useState('');
+
+  // Handle ?google_oauth=success redirect from /api/google-oauth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('google_oauth') === 'success') {
+      const email = params.get('email') || '';
+      setGoogleConnected(true);
+      setGoogleEmail(email);
+      localStorage.setItem('civicpath_google_connected', '1');
+      if (email) localStorage.setItem('civicpath_google_email', email);
+      // Clean URL
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+    } else if (params.get('google_oauth') === 'error') {
+      console.warn('[Google OAuth] Connection failed:', params.get('reason'));
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [linkedinSyncing, setLinkedinSyncing] = useState(false);
   const [showLinkedinModal, setShowLinkedinModal] = useState(false);
   const [linkedinPasteText, setLinkedinPasteText] = useState('');
@@ -1402,14 +1427,43 @@ Check these items and return ONLY valid JSON:
 
   const runSubmitter = async (finalProposal: string) => {
     updateAgent('submitter', { status: 'working', logs: [], output: null });
+    const uid = auth.currentUser?.uid;
 
-    addGlobalLog(`[✉️ The Submitter]  Authenticating with Gmail API (OAuth2)...`);
-    addLog('submitter', 'Constructing email payload & attaching PDFs...');
-    await delay(1000);
-
-    addGlobalLog(`[✉️ The Submitter]  Application package prepared and queued \u2713`);
-    addLog('submitter', 'Proposal packaged. Sending confirmation email...');
-    await delay(800);
+    if (googleConnected && uid) {
+      addGlobalLog(`[✉️ The Submitter]  Sending from your Gmail (${googleEmail || 'connected account'})...`);
+      addLog('submitter', `Sending proposal from your Gmail account...`);
+      await delay(600);
+      try {
+        const appGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Unknown' };
+        const res = await fetch('/api/gmail-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid,
+            to: user?.email,
+            subject: `Grant Application Ready: ${(appGrant as any).title || 'Target Grant'}`,
+            body: `<h2>Your proposal is ready for submission</h2><p><strong>Organization:</strong> ${profile.companyName || 'Your Organization'}</p><p><strong>Grant:</strong> ${(appGrant as any).title || 'Target Grant'}</p><hr/><pre style="white-space:pre-wrap;font-family:Georgia">${finalProposal}</pre><br/><p><em>Sent by CivicPath AI — civicpath.ai</em></p>`,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          addLog('submitter', `✓ Sent from your Gmail (Message ID: ${data.messageId})`);
+          addGlobalLog(`[✉️ The Submitter]  ✓ Sent from ${data.from} via Gmail API`);
+        } else {
+          throw new Error(data.error || 'Gmail send failed');
+        }
+      } catch (err: any) {
+        addLog('submitter', `Gmail send failed (${err.message}) — falling back to Resend`);
+        addGlobalLog(`[✉️ The Submitter]  Gmail error — sending via Resend fallback`);
+      }
+    } else {
+      addGlobalLog(`[✉️ The Submitter]  Sending confirmation via Resend...`);
+      addLog('submitter', 'Constructing email payload & attaching PDFs...');
+      await delay(1000);
+      addGlobalLog(`[✉️ The Submitter]  Application package prepared and queued ✓`);
+      addLog('submitter', 'Proposal packaged. Sending confirmation email...');
+      await delay(800);
+    }
 
     // ── Save real application to Firestore ──
     const appGrant = discoveredGrants[0] || { title: 'Target Grant', agency: 'Unknown', closeDate: 'Unknown' };
@@ -3466,32 +3520,58 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
               <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#76B900]" /> App Integrations</h2>
               <p className="text-sm text-stone-500 mt-1">Connect CivicPath to your tools to enable autonomous proposal sending and meeting intelligence.</p>
             </div>
-            <div className="mb-5 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex items-start gap-3">
-              <Sparkles className="w-4 h-4 text-[#76B900] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-bold text-stone-800">Meet & Zoom: Use AI Transcript Analysis</p>
-                <p className="text-xs text-stone-600 mt-0.5">Start your meeting → end it → download the auto-transcript → paste it in the <button onClick={() => { setActiveTab('meetings'); }} className="underline font-bold text-[#76B900] hover:text-[#689900]">Meetings tab</button> for instant AI analysis of decisions, risks, and action items. Gmail autonomous sending requires OAuth setup — <a href="mailto:hello@civicpath.ai?subject=Integration%20Setup" className="underline font-bold text-[#76B900]">request early access →</a></p>
+            {googleConnected && (
+              <div className="mb-5 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#76B900] shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-stone-800">Google connected — Gmail & Calendar active</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{googleEmail} · Submitter sends from your Gmail · Scheduler books automatically</p>
+                  </div>
+                </div>
+                <button onClick={() => {
+                  fetch('/api/google-oauth?action=revoke', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: auth.currentUser?.uid }) }).catch(() => {});
+                  setGoogleConnected(false); setGoogleEmail('');
+                  localStorage.removeItem('civicpath_google_connected'); localStorage.removeItem('civicpath_google_email');
+                }} className="text-xs text-stone-400 hover:text-red-500 font-medium shrink-0">Disconnect</button>
               </div>
-            </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Gmail Integration */}
-              <div className="border border-stone-200 rounded-xl p-5 flex flex-col justify-between bg-stone-50/50 hover:shadow-md transition-shadow">
+              {/* Gmail + Google Calendar Integration */}
+              <div className={`border-2 rounded-xl p-5 flex flex-col justify-between hover:shadow-md transition-shadow ${
+                googleConnected ? 'border-[#76B900]/40 bg-[#76B900]/5' : 'border-stone-200 bg-stone-50/50'
+              }`}>
                 <div>
                   <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-3 bg-red-100 rounded-lg text-red-600">
+                    <div className={`p-3 rounded-lg ${googleConnected ? 'bg-[#76B900]/10 text-[#76B900]' : 'bg-red-100 text-red-600'}`}>
                       <Mail className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-stone-800 text-base">Gmail API</h3>
-                      <p className="text-xs text-stone-500">Autonomous proposal sending</p>
+                      <h3 className="font-bold text-stone-800 text-base">Gmail + Google Calendar</h3>
+                      <p className="text-xs text-stone-500">{googleConnected ? `Connected · ${googleEmail}` : 'Autonomous sending + auto-booking'}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-stone-600 mb-6">Allows The Watcher and Submitter agents to send emails, updates, and final PDFs directly from your account.</p>
+                  <p className="text-sm text-stone-600 mb-4">Connect once — Submitter sends proposals from your Gmail, Scheduler silently books grant deadlines in your Calendar. No more opening tabs.</p>
+                  {googleConnected && (
+                    <div className="space-y-1.5 mb-4">
+                      <div className="flex items-center gap-2 text-xs text-[#76B900] font-medium"><CheckCircle2 className="w-3.5 h-3.5" /> Submitter sends from your Gmail</div>
+                      <div className="flex items-center gap-2 text-xs text-[#76B900] font-medium"><CheckCircle2 className="w-3.5 h-3.5" /> Scheduler auto-books deadlines</div>
+                    </div>
+                  )}
                 </div>
-                <a href="mailto:hello@civicpath.ai?subject=Gmail%20OAuth%20Integration%20Request"
-                  className="w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center border border-[#76B900] text-[#76B900] hover:bg-[#76B900]/5">
-                  Request Gmail Access →
-                </a>
+                {!googleConnected ? (
+                  <button
+                    onClick={() => {
+                      const uid = auth.currentUser?.uid;
+                      if (!uid) return;
+                      window.location.href = `/api/google-oauth?action=authorize&uid=${uid}&returnTo=/seeker`;
+                    }}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2 bg-[#76B900] text-[#111] hover:bg-[#689900]">
+                    <Mail className="w-4 h-4" /> Connect Gmail + Calendar
+                  </button>
+                ) : (
+                  <div className="text-xs text-[#76B900] font-bold text-center py-2">✓ Active — agents using your Gmail</div>
+                )}
               </div>
 
               {/* Google Meet Integration */}
@@ -3624,22 +3704,48 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     : 'Run the pipeline first to generate your personalized schedule from real grant deadlines.'}
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  const events = [
-                    { name: 'State Innovation Match Fund', date: '20261015' },
-                    { name: 'Regional Sustainability Initiative', date: '20261201' },
-                    { name: 'Dept of Energy SBIR Phase I', date: '20270101' },
-                  ];
-                  events.forEach(e => {
-                    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Grant Deadline: ' + e.name)}&dates=${e.date}/${e.date}&details=${encodeURIComponent('CivicPath — Apply for ' + e.name)}`;
-                    window.open(url, '_blank');
-                  });
-                }}
-                className="px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center w-full md:w-auto justify-center"
-              >
-                <Calendar className="w-4 h-4 mr-2" /> Sync to Google Calendar
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  disabled={calendarSyncing}
+                  onClick={async () => {
+                    const uid = auth.currentUser?.uid;
+                    if (!uid || !googleConnected) {
+                      // Fallback: open tabs
+                      discoveredGrants.forEach(g => {
+                        const calDate = g.closeDate.replace(/-/g, '').slice(0, 8);
+                        window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Grant Deadline: ' + g.title)}&dates=${calDate}/${calDate}&details=${encodeURIComponent('CivicPath — ' + g.title)}`, '_blank');
+                      });
+                      return;
+                    }
+                    setCalendarSyncing(true);
+                    setCalendarSyncMsg('');
+                    try {
+                      const events = discoveredGrants.map(g => ({
+                        title: `Grant Deadline: ${g.title}`,
+                        date: g.closeDate.slice(0, 10),
+                        description: `CivicPath — Apply for ${g.title} via ${g.agency}`,
+                      }));
+                      const res = await fetch('/api/calendar-create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid, events }),
+                      });
+                      const data = await res.json();
+                      setCalendarSyncMsg(data.success ? `✓ ${data.created} events added to your Calendar` : 'Calendar sync failed — try again');
+                    } catch {
+                      setCalendarSyncMsg('Network error — try again');
+                    } finally {
+                      setCalendarSyncing(false);
+                      setTimeout(() => setCalendarSyncMsg(''), 5000);
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#76B900] text-[#111111] text-sm font-bold rounded-lg shadow-sm hover:bg-[#689900] transition-colors flex items-center w-full md:w-auto justify-center disabled:opacity-60"
+                >
+                  {calendarSyncing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Booking...</> : <><Calendar className="w-4 h-4 mr-2" /> {googleConnected ? 'Auto-Book Calendar' : 'Sync to Google Calendar'}</>}
+                </button>
+                {!googleConnected && <p className="text-[10px] text-stone-400">Connect Google for silent auto-booking</p>}
+                {calendarSyncMsg && <p className="text-xs text-[#76B900] font-medium">{calendarSyncMsg}</p>}
+              </div>
             </div>
             
             {discoveredGrants.length === 0 ? (
