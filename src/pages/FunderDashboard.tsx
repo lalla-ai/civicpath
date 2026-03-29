@@ -196,7 +196,7 @@ export default function FunderDashboard() {
     setTimeout(() => { setPostSuccess(false); setActiveTab('overview'); }, 2000);
   };
   const filtered = filterGrant === 'all' ? applicants : applicants.filter(a => a.grant === filterGrant);
-  const tabs: {id:FunderTab;label:string;purple?:boolean}[] = [{id:'overview',label:'📊 Overview'},{id:'post',label:'➕ Post Grant'},{id:'applicants',label:'👥 Applicants'},{id:'analytics',label:'📈 Analytics'},{id:'lalla',label:'✨ Ask MyLalla',purple:true}];
+  const tabs: {id:FunderTab;label:string;purple?:boolean}[] = [{id:'overview',label:'📊 Dashboard'},{id:'post',label:'➕ Programs'},{id:'applicants',label:'👥 Review Portal'},{id:'analytics',label:'📈 Impact & Spend'},{id:'lalla',label:'✨ AI Analyst',purple:true}];
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] font-sans flex flex-col">

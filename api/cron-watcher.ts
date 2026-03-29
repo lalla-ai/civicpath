@@ -174,6 +174,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         html,
         replyTo: 'noreply@civicpath.ai',
       });
+
+      // ── Also send Telegram digest if user has linked their chat ID ──
+      const tgChatId = profile.telegramChatId;
+      const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (tgChatId && tgToken) {
+        const tgText = [
+          `👁️ *${grants.length} new ${profile.focusArea} grants for ${profile.companyName}*`,
+          '',
+          ...grants.slice(0, 3).map((g: any, i: number) =>
+            `*${i + 1}. ${g.title}*\n   🏛 ${g.agency} · 📅 ${g.closeDate}\n   🔗 ${g.url}`
+          ),
+          '',
+          `_Reply with \/grants to search for more or visit civicpath.ai_`,
+        ].join('\n');
+        await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: tgChatId,
+            text: tgText,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+          }),
+        }).catch(() => {});
+      }
+
       sent++;
     } catch (err) {
       console.error(`Watcher: failed for ${profile.email}:`, err);

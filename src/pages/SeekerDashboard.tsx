@@ -129,6 +129,7 @@ interface Profile {
   ein: string;               // EIN / Tax ID — required for federal grants
   dunsNumber: string;        // DUNS / SAM number — required for Grants.gov
   grantHistoryText: string;  // "NSF SBIR $150K — Won 2024; FL STEM — Applied 2025"
+  telegramChatId: string;    // Telegram chat ID for daily digest alerts
 }
 
 interface AgentState {
@@ -198,7 +199,7 @@ export default function SeekerDashboard() {
         geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
         impactMetrics: '', teamMembersText: '',
         projectDescription: '', fundingAmount: '', previousGrants: '',
-        backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: ''
+        backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: '', telegramChatId: ''
       };
       return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
     } catch { return {
@@ -208,7 +209,7 @@ export default function SeekerDashboard() {
       geographicScope: '', annualBudget: '', teamSize: '', yearsOperating: '',
       impactMetrics: '', teamMembersText: '',
       projectDescription: '', fundingAmount: '', previousGrants: '',
-      backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: ''
+      backgroundInfo: '', resumeText: '', ein: '', dunsNumber: '', grantHistoryText: '', telegramChatId: ''
     }; }
   });
 
@@ -2050,10 +2051,28 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                         className="w-full px-4 py-3 rounded-xl bg-white border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-stone-900 placeholder:text-stone-400" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-sm font-semibold text-stone-700">DUNS / SAM Number</label>
-                      <input type="text" placeholder="XXXXXXXXX"
-                        value={profile.dunsNumber} onChange={e => setProfile({...profile, dunsNumber: e.target.value})}
-                        className="w-full px-4 py-3 rounded-xl bg-white border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-stone-900 placeholder:text-stone-400" />
+                      <label className="text-sm font-semibold text-stone-700">DUNS / SAM UEI Number</label>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="e.g. ABCDE1234567"
+                          value={profile.dunsNumber} onChange={e => setProfile({...profile, dunsNumber: e.target.value})}
+                          className="flex-1 px-4 py-3 rounded-xl bg-white border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-stone-900 placeholder:text-stone-400" />
+                        {profile.dunsNumber && (
+                          <a
+                            href={`https://sam.gov/entity/${profile.dunsNumber.trim()}/core-data`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 px-3 py-3 bg-amber-100 border border-amber-300 text-amber-800 font-bold rounded-xl text-xs hover:bg-amber-200 transition-colors flex items-center gap-1"
+                          >
+                            🔍 Verify on SAM.gov
+                          </a>
+                        )}
+                      </div>
+                      {profile.dunsNumber && !/^[A-Z0-9]{12}$/i.test(profile.dunsNumber.trim()) && (
+                        <p className="text-xs text-amber-600 font-medium">⚠️ SAM UEI must be exactly 12 alphanumeric characters</p>
+                      )}
+                      {profile.dunsNumber && /^[A-Z0-9]{12}$/i.test(profile.dunsNumber.trim()) && (
+                        <p className="text-xs text-[#76B900] font-medium">✓ UEI format valid — click Verify to confirm registration on SAM.gov</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2072,6 +2091,23 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     value={profile.grantHistoryText} onChange={e => setProfile({...profile, grantHistoryText: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-stone-900 placeholder:text-stone-400 resize-none" />
                 </div>
+                {/* Telegram Chat ID for daily digest */}
+                <div className="p-4 bg-sky-50 border border-sky-200 rounded-xl space-y-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-sky-600 text-sm">📨</span>
+                    <div>
+                      <p className="text-sm font-bold text-sky-800">Telegram Daily Digest</p>
+                      <p className="text-xs text-sky-700">Get daily grant alerts on Telegram. Message <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="underline font-bold">@userinfobot</a> to get your Chat ID, then paste it below.</p>
+                    </div>
+                  </div>
+                  <input type="text" placeholder="e.g. 123456789 (from @userinfobot)"
+                    value={profile.telegramChatId} onChange={e => setProfile({...profile, telegramChatId: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-sky-200 focus:ring-2 focus:ring-sky-300 focus:border-sky-400 outline-none text-stone-900 placeholder:text-stone-400" />
+                  {profile.telegramChatId && (
+                    <p className="text-xs text-[#76B900] font-medium">✓ Telegram digest enabled — you’ll get daily grant alerts via @Civicpathgrants_bot</p>
+                  )}
+                </div>
+
                 {/* Team Members */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-stone-700">Team Members</label>
