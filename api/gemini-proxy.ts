@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rateLimit, getClientIp } from './rateLimiter.js';
+import { GEMINI_MODEL } from './_config.js';
 
 function extractAnthropicText(data: any): string {
   return (data?.content || [])

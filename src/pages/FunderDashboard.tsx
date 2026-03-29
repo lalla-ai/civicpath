@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { auth } from '../firebase';
 import { Plus, CheckCircle2, XCircle, Calendar, Eye, LogOut, Building2, MapPin, Clock, Filter, Hexagon, ArrowUpRight, Sparkles, Send, Loader2 } from 'lucide-react';
 import type { ChatMessage } from '../gemini';
 import ReactMarkdown from 'react-markdown';
@@ -184,7 +185,7 @@ export default function FunderDashboard() {
       location: form.location,
       focusAreas: form.focus,
       funderEmail: user?.email || '',
-      funderUid: '',
+      funderUid: auth.currentUser?.uid || '',
       active: true,
       url: `mailto:${user?.email || 'grants@civicpath.ai'}?subject=Application: ${encodeURIComponent(form.name)}`,
     });
