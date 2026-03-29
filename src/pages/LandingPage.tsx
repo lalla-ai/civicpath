@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Hexagon, ArrowUpRight, Sparkles, ShieldCheck, Globe, Users, Zap, Search, Leaf, FileText, Cpu, CheckCircle2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Hexagon, ArrowUpRight, Sparkles, ShieldCheck, Zap, Leaf } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Logo = () => (
@@ -12,7 +11,6 @@ const Logo = () => (
 );
 
 export default function LandingPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
