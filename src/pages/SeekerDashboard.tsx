@@ -2535,6 +2535,51 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                     </div>
                   </div>
                 )}
+
+                {/* Beta Access Code — inside the card, always visible for non-paid users */}
+                {userPlan !== 'pro' && userPlan !== 'funder' && (
+                  <div className="mt-4 pt-4 border-t border-stone-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-stone-800 flex items-center gap-2">
+                        🎟 Beta Access Code
+                      </p>
+                      {userPlan === 'beta' && (
+                        <span className="text-[10px] bg-[#76B900] text-[#111] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Active</span>
+                      )}
+                    </div>
+                    {userPlan === 'beta' ? (
+                      <p className="text-xs text-[#76B900] font-medium">✓ Beta access active — unlimited pipeline runs enabled</p>
+                    ) : (
+                      <>
+                        <p className="text-xs text-stone-500 mb-3">Enter your beta code to unlock unlimited runs — no credit card needed.</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="e.g. CIVICPATH2026"
+                            value={billingCode}
+                            onChange={e => setBillingCode(e.target.value.toUpperCase())}
+                            className="flex-1 px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider"
+                            autoComplete="off"
+                            spellCheck={false}
+                          />
+                          <button
+                            onClick={handleBillingRedeem}
+                            disabled={billingCodeLoading || !billingCode.trim()}
+                            className="px-4 py-2.5 bg-[#76B900] text-[#111] font-bold rounded-xl text-sm hover:bg-[#689900] transition-colors disabled:opacity-50"
+                          >
+                            {billingCodeLoading ? '...' : 'Activate'}
+                          </button>
+                        </div>
+                        {billingCodeMsg && (
+                          <p className={`text-xs mt-2 font-medium ${billingCodeMsg.startsWith('\u2713') ? 'text-[#76B900]' : 'text-red-500'}`}>
+                            {billingCodeMsg}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {isPaid && (
                   <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between gap-4">
                     <div>
@@ -2548,45 +2593,6 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
                   </div>
                 )}
               </div>
-
-              {/* Beta / Tester Access Code */}
-              {userPlan !== 'pro' && userPlan !== 'funder' && userPlan !== 'beta' && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
-                  <p className="text-xs font-semibold text-stone-500 mb-2 flex items-center gap-1.5">
-                    <span>🎟</span> Have a beta access code?
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="e.g. CIVICPATH2026"
-                  value={billingCode}
-                      onChange={e => setBillingCode(e.target.value.toUpperCase())}
-                      className="flex-1 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-[#76B900]/40 focus:border-[#76B900] outline-none text-sm font-mono tracking-wider"
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <button
-                      onClick={handleBillingRedeem}
-                      disabled={billingCodeLoading || !billingCode.trim()}
-                      className="px-4 py-2 bg-[#76B900] text-[#111] font-bold rounded-xl text-sm hover:bg-[#689900] transition-colors disabled:opacity-50"
-                    >
-                      {billingCodeLoading ? '...' : 'Activate'}
-                    </button>
-                  </div>
-                  {billingCodeMsg && (
-                    <p className={`text-xs mt-2 font-medium ${billingCodeMsg.startsWith('\u2713') ? 'text-[#76B900]' : 'text-red-500'}`}>
-                      {billingCodeMsg}
-                    </p>
-                  )}
-                </div>
-              )}
-              {userPlan === 'beta' && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
-                  <p className="text-xs text-[#76B900] font-semibold flex items-center gap-1.5">
-                    <span>✓</span> Beta access active — unlimited pipeline runs enabled
-                  </p>
-                </div>
-              )}
 
               {/* Plan comparison */}
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
