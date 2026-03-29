@@ -54,11 +54,25 @@ export default function LoginPage() {
     setResetLoading(true);
     setError('');
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      // Use server proxy — works from any country
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset', email: email.trim(), password: '_unused_' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       setResetSent(true);
       setTimeout(() => setResetSent(false), 8000);
-    } catch (err: any) {
-      setError('Could not send reset email. Check the address and try again.');
+    } catch {
+      // Fallback to direct Firebase
+      try {
+        await sendPasswordResetEmail(auth, email.trim());
+        setResetSent(true);
+        setTimeout(() => setResetSent(false), 8000);
+      } catch {
+        setError('Could not send reset email. Check the address and try again.');
+      }
     } finally {
       setResetLoading(false);
     }

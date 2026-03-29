@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, signInWithCustomToken, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 import { saveUserData } from './lib/db';
 
@@ -101,18 +101,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithEmail = async (email: string, password: string, role?: string) => {
     saveRole(role);
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      // Try server-side proxy first (works from any country/ISP)
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      await signInWithCustomToken(auth, data.customToken);
+    } catch (err: any) {
+      // If proxy fails (e.g. not deployed yet), try direct Firebase
+      if (err.message?.includes('fetch') || err.message?.includes('network')) {
+        const { signInWithEmailAndPassword } = await import('firebase/auth');
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        throw err;
+      }
+    }
   };
 
   const signupWithEmail = async (name: string, email: string, password: string, role?: string) => {
     saveRole(role);
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    // Seed the user document in Firestore with email + role on signup
-    await saveUserData(cred.user.uid, {
-      role: (role || 'seeker') as any,
-      profile: { email, name } as any,
-    }).catch(() => {});
+    try {
+      // Try server-side proxy first (works from any country/ISP)
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signup', email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Sign up failed');
+      await signInWithCustomToken(auth, data.customToken);
+      await saveUserData(data.uid, {
+        role: (role || 'seeker') as any,
+        profile: { email, name } as any,
+      }).catch(() => {});
+    } catch (err: any) {
+      if (err.message?.includes('fetch') || err.message?.includes('network')) {
+        const { createUserWithEmailAndPassword } = await import('firebase/auth');
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name });
+        await saveUserData(cred.user.uid, {
+          role: (role || 'seeker') as any,
+          profile: { email, name } as any,
+        }).catch(() => {});
+      } else {
+        throw err;
+      }
+    }
   };
 
   const logout = () => {
