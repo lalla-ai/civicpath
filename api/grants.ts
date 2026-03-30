@@ -300,7 +300,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch { /* USASpending unavailable */ }
 
-  // --- SOURCE 6: Curated database (112+ grants: federal, AI-startup, hackathons, foundations) ---
+  // --- SOURCE 6: World Bank Projects API (free, no key, international) ---
+  try {
+    const wbQuery = keyword || 'technology innovation grants';
+    const wbRes = await fetch(
+      `https://search.worldbank.org/api/v2/projects?format=json&qterm=${encodeURIComponent(wbQuery)}&rows=4&fl=id,project_name,totalamt,closingdate,url,countryname,regionname,sector1`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    if (wbRes.ok) {
+      const wbData = await wbRes.json();
+      const projects = Object.values(wbData?.projects || {}).filter((p: any) => p && typeof p === 'object' && p.project_name);
+      liveTotal += projects.length;
+      projects.slice(0, 4).forEach((p: any) => {
+        const country = Array.isArray(p.countryname) ? p.countryname[0] : (p.countryname || 'International');
+        const amt = p.totalamt && Number(p.totalamt) > 0 ? `$${Number(p.totalamt).toLocaleString()}` : undefined;
+        const closeDate = p.closingdate ? p.closingdate.split(' ')[0] : 'Rolling';
+        liveResults.push({
+          id: `wb-${p.id}`,
+          title: p.project_name || 'World Bank Project',
+          agency: `World Bank — ${country}`,
+          openDate: '',
+          closeDate,
+          source: 'World Bank',
+          url: p.url || `https://projects.worldbank.org/en/projects-operations/project-detail/${p.id}`,
+          amount: amt,
+        });
+      });
+    }
+  } catch { /* World Bank unavailable */ }
+
+  // --- SOURCE 7: Parallel Grants.gov multi-category sweep ---
+  // Run 3 parallel searches for education, health, and arts to surface
+  // opportunities a user's keyword might miss
+  try {
+    const categoryKeywords = [
+      keyword.toLowerCase().includes('edu') ? null : 'STEM education technology',
+      keyword.toLowerCase().includes('health') ? null : 'community health innovation',
+      keyword.toLowerCase().includes('art') ? null : 'arts culture digital',
+    ].filter(Boolean).slice(0, 2); // max 2 extra queries to stay fast
+
+    await Promise.allSettled(
+      categoryKeywords.map(async (ck) => {
+        const r = await fetch('https://apply07.grants.gov/grantsws/rest/opportunities/search/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword: ck, oppStatuses: 'posted', rows: 3, sortBy: 'openDate|desc' }),
+        });
+        const d = await r.json();
+        liveTotal += d.hitCount || 0;
+        (d.oppHits || []).forEach((g: any) => {
+          if (!liveResults.some(x => x.id === g.id)) {
+            liveResults.push({
+              id: g.id, title: g.title, agency: g.agency,
+              openDate: g.openDate, closeDate: g.closeDate || 'Rolling',
+              source: 'Grants.gov', url: `https://www.grants.gov/search-results-detail/${g.id}`,
+            });
+          }
+        });
+      })
+    );
+  } catch { /* parallel sweep unavailable */ }
+
+  // --- SOURCE 8: Curated database (112+ grants: federal, AI-startup, hackathons, foundations) ---
   // Only add mock grants NOT already covered by live results
   const combined = [...liveResults];
   const total = liveTotal + expandedMock.length;
