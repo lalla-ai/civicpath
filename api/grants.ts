@@ -236,7 +236,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch { /* SBIR unavailable */ }
 
-  // --- SOURCE 4: Curated database (55+ grants: federal, AI-startup, accelerators, foundations) ---
+  // --- SOURCE 4: NSF Award Search API (free, no key needed) ---
+  try {
+    const nsfKeyword = keyword || 'artificial intelligence';
+    const nsfRes = await fetch(
+      `https://api.nsf.gov/services/v1/awards.json?keyword=${encodeURIComponent(nsfKeyword)}&dateStart=01/01/2025&rpp=5&printFields=id,title,agency,awardeeName,awardeeCity,awardeeStateCode,estimatedTotalAmt,expDate,fundsObligatedAmt,abstractText`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    if (nsfRes.ok) {
+      const nsfData = await nsfRes.json();
+      const awards = nsfData?.response?.award || [];
+      liveTotal += awards.length;
+      awards.forEach((a: any) => {
+        const amt = a.estimatedTotalAmt ? `$${Number(a.estimatedTotalAmt).toLocaleString()}` : undefined;
+        liveResults.push({
+          id: `nsf-live-${a.id}`,
+          title: a.title || 'NSF Award',
+          agency: `NSF — ${a.awardeeName || 'Awardee'}`,
+          openDate: '',
+          closeDate: a.expDate ? a.expDate.slice(0, 10) : 'Rolling',
+          source: 'NSF Awards',
+          url: `https://www.nsf.gov/awardsearch/showAward?AWD_ID=${a.id}`,
+          amount: amt,
+        });
+      });
+    }
+  } catch { /* NSF API unavailable */ }
+
+  // --- SOURCE 5: USASpending.gov (federal grants, free, no key) ---
+  try {
+    const uspRes = await fetch('https://api.usaspending.gov/api/v2/search/spending_by_award/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filters: {
+          award_type_codes: ['02', '03', '04', '05'], // grants + cooperative agreements
+          keywords: [keyword || 'technology innovation'],
+          time_period: [{ start_date: '2025-01-01', end_date: '2026-12-31' }],
+        },
+        fields: ['Award ID', 'Recipient Name', 'Award Amount', 'Awarding Agency', 'Award Type', 'Description', 'Period of Performance Start Date', 'Period of Performance Current End Date'],
+        limit: 5,
+        sort: 'Award Amount',
+        order: 'desc',
+      }),
+    });
+    if (uspRes.ok) {
+      const uspData = await uspRes.json();
+      const results = uspData?.results || [];
+      liveTotal += results.length;
+      results.forEach((a: any) => {
+        const amt = a['Award Amount'] ? `$${Number(a['Award Amount']).toLocaleString()}` : undefined;
+        liveResults.push({
+          id: `usp-${a['Award ID']}`,
+          title: a['Description'] ? a['Description'].slice(0, 120) : `${a['Awarding Agency']} Federal Grant`,
+          agency: a['Awarding Agency'] || 'Federal Agency',
+          openDate: a['Period of Performance Start Date'] || '',
+          closeDate: a['Period of Performance Current End Date'] || 'Rolling',
+          source: 'USASpending.gov',
+          url: `https://www.usaspending.gov/award/${a['Award ID']}`,
+          amount: amt,
+        });
+      });
+    }
+  } catch { /* USASpending unavailable */ }
+
+  // --- SOURCE 6: Curated database (112+ grants: federal, AI-startup, hackathons, foundations) ---
   // Only add mock grants NOT already covered by live results
   const combined = [...liveResults];
   const total = liveTotal + expandedMock.length;
