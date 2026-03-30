@@ -73,6 +73,26 @@ For each, give: grant name, 1-sentence reason it fits, and deadline. Keep it con
   }
 }
 
+// ── Send Web Push notification to a user's saved subscription ────────────
+async function sendWebPush(db: any, uid: string, title: string, body: string, url: string) {
+  try {
+    const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
+    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
+
+    const subSnap = await db.doc(`users/${uid}/meta/pushSubscription`).get();
+    if (!subSnap.exists) return;
+    const subscription = subSnap.data();
+
+    const payload = JSON.stringify({ title, body, url, icon: '/icon-192.png' });
+    await fetch('https://civicpath.ai/api/push-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription, payload }),
+    }).catch(() => {});
+  } catch { /* push optional */ }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel passes Authorization: Bearer <CRON_SECRET> for scheduled invocations
   const auth = req.headers['authorization'];
@@ -104,14 +124,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const userDoc of usersSnap.docs) {
     const data = userDoc.data();
     const profile = data.profile;
+    const uid = userDoc.id;
     if (!profile?.email || !profile?.focusArea) { skipped++; continue; }
-
-    // Don't send if user hasn't been active recently (no companyName = never onboarded)
     if (!profile.companyName) { skipped++; continue; }
 
     try {
-      const grants = await fetchGrantsForKeyword(profile.focusArea, profile.location || 'United States');
-      if (grants.length === 0) { skipped++; continue; }
+      const allGrants = await fetchGrantsForKeyword(profile.focusArea, profile.location || 'United States');
+      if (allGrants.length === 0) { skipped++; continue; }
+
+      // ── NEW-ONLY DETECTION: only alert on grants not seen before ──────────
+      const seenRef = db.doc(`users/${uid}/meta/watcherSeen`);
+      const seenSnap = await seenRef.get();
+      const seenIds: string[] = seenSnap.exists ? (seenSnap.data()?.grantIds || []) : [];
+
+      // Build stable IDs from title+agency
+      const newGrants = allGrants.filter((g: any) => {
+        const stableId = `${g.title}|${g.agency}`.toLowerCase().replace(/\s+/g, '-');
+        return !seenIds.includes(stableId);
+      });
+
+      // Save all current grant IDs so next run only alerts on truly new ones
+      const currentIds = allGrants.map((g: any) =>
+        `${g.title}|${g.agency}`.toLowerCase().replace(/\s+/g, '-')
+      );
+      await seenRef.set({ grantIds: currentIds, updatedAt: new Date().toISOString() }, { merge: true });
+
+      // If no new grants, skip (user already knows about these)
+      const grants = newGrants.length > 0 ? newGrants : allGrants;
+      const isNewAlert = newGrants.length > 0;
+      if (!isNewAlert && seenSnap.exists) { skipped++; continue; } // skip re-alert
 
       const summary = await scoreAndSummarize(geminiKey, profile, grants.slice(0, 5));
 
@@ -199,6 +240,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }),
         }).catch(() => {});
       }
+
+      // ── Web Push notification ──────────────────────────────────
+      await sendWebPush(
+        db, uid,
+        `🔍 ${newGrants.length} new ${profile.focusArea} grants found!`,
+        `${newGrants[0]?.title || 'New opportunity'} and ${Math.max(0, newGrants.length - 1)} more — tap to see your matches`,
+        'https://civicpath.ai/seeker'
+      );
 
       sent++;
     } catch (err) {

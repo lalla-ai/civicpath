@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../AuthContext';
 import { auth } from '../firebase';
-import { saveUserData, loadUserData, saveProposal, saveApplication } from '../lib/db';
+import { saveUserData, loadUserData, saveProposal, saveApplication, loadProposals } from '../lib/db';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { orchestratedInference } from '../lib/agents/orchestrator';
@@ -309,6 +309,113 @@ export default function SeekerDashboard() {
   const [omninorMessage, setOmninorMessage] = useState<string | null>(null);
   const [omninorAction, setOmninorAction] = useState<(() => void) | null>(null);
   const [omninorActionLabel, setOmninorActionLabel] = useState<string | null>(null);
+
+  // ── Task 4: ⌘K Command Palette ──────────────────────────────────────────────
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
+  const commandInputRef = useRef<HTMLInputElement>(null);
+
+  const COMMANDS = [
+    { key: 'pipeline', icon: '▶️', label: 'Run Full Pipeline', desc: 'Hunter → Matchmaker → Drafter', action: () => { setActiveTab('dashboard'); setTimeout(() => handleExecute(), 100); } },
+    { key: 'grants', icon: '🔍', label: 'Find My Grants', desc: 'Search for matching grant opportunities', action: () => { setActiveTab('grants'); } },
+    { key: 'tracker', icon: '📊', label: 'Open Grant Tracker', desc: 'View your saved and applied grants', action: () => setActiveTab('tracker') },
+    { key: 'lalla', icon: '✨', label: 'Ask MyLalla', desc: 'Talk to your AI grant advisor', action: () => window.location.href = '/mylalla' },
+    { key: 'scheduler', icon: '📅', label: 'Open Scheduler', desc: 'View your grant work plan', action: () => setActiveTab('scheduler') },
+    { key: 'profile', icon: '🏢', label: 'Edit Profile', desc: 'Update your organization profile', action: () => setActiveTab('profile') },
+    { key: 'integrations', icon: '🔗', label: 'Integrations', desc: 'Connect Gmail, Calendar, Telegram', action: () => setActiveTab('integrations') },
+    { key: 'awarded', icon: '🏆', label: 'Post-Award Compliance', desc: 'Manage awarded grants & reports', action: () => setActiveTab('awarded') },
+    { key: 'wipe', icon: '🔒', label: 'Secure Wipe (Sovereign Purge)', desc: '500ms circuit breaker — clears all pipeline data', action: () => { setPurgeVisible(true); } },
+  ];
+
+  const filteredCommands = commandQuery.trim()
+    ? COMMANDS.filter(c =>
+        c.label.toLowerCase().includes(commandQuery.toLowerCase()) ||
+        c.desc.toLowerCase().includes(commandQuery.toLowerCase())
+      )
+    : COMMANDS;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(o => !o);
+        setCommandQuery('');
+      }
+      if (e.key === 'Escape') setShowCommandPalette(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    if (showCommandPalette) setTimeout(() => commandInputRef.current?.focus(), 50);
+  }, [showCommandPalette]);
+
+  // ── Task 5: Auto weekly pipeline ────────────────────────────────────────────
+  const [weeklyBanner, setWeeklyBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (step !== 'dashboard') return;
+    const uid = auth.currentUser?.uid;
+    if (!uid || !profile.companyName || !profile.focusArea) return;
+    const lastRun = localStorage.getItem('civicpath_last_weekly_run');
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const isOverdue = !lastRun || (Date.now() - Number(lastRun)) > sevenDays;
+    if (!isOverdue || hasAutoRun) return;
+    setWeeklyBanner(`🔍 Weekly scan — finding new ${profile.focusArea} grants for ${profile.companyName}...`);
+    localStorage.setItem('civicpath_last_weekly_run', String(Date.now()));
+    const timer = setTimeout(() => {
+      handleExecute();
+      setTimeout(() => setWeeklyBanner(null), 3000);
+    }, 1500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, user]);
+
+  // ── Task 2: Web Push subscribe ─────────────────────────────────────────────
+  const [pushEnabled, setPushEnabled] = useState(() => !!localStorage.getItem('civicpath_push_enabled'));
+  const [pushLoading, setPushLoading] = useState(false);
+
+  const VAPID_PUBLIC = 'BJz44eXFT7qFDuFUqI9N2PITknh0kCqRCcwIYXt12XGjwEsejphzm-6EPfJA1A1xi6MLUq8VWRkX0jeKeuRAuVw';
+
+  const enablePushNotifications = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: VAPID_PUBLIC,
+      });
+      await fetch('/api/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, subscription: sub.toJSON() }),
+      });
+      localStorage.setItem('civicpath_push_enabled', '1');
+      setPushEnabled(true);
+    } catch (err: any) {
+      console.warn('Push subscribe failed:', err.message);
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const disablePushNotifications = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    try {
+      await fetch('/api/push-subscribe', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid }),
+      });
+      localStorage.removeItem('civicpath_push_enabled');
+      setPushEnabled(false);
+    } catch { /* silent */ }
+  };
 
   // Sync plan from Firestore when user logs in
   useEffect(() => {
@@ -1166,6 +1273,24 @@ ${grants.map((g: any) => `* **${g.title}** \`[${g.source}]\`
     addGlobalLog(`[\ud83c\udfaf The Matchmaker] Scoring ${allDiscoveredGrants.length} grants against your profile with Gemini...`);
     await delay(300);
 
+    // ── Task 3: Load past proposals for memory context ──────────────────────────
+    let memoryContext = '';
+    try {
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        const pastProposals = await loadProposals(uid);
+        if (pastProposals.length > 0) {
+          const recent = pastProposals.slice(0, 3);
+          memoryContext = `
+
+HISTORICAL MEMORY (past proposals — use to improve scoring accuracy):
+${recent.map(p => `- Applied for: "${p.grantTitle}" (${p.grantAgency || 'Unknown agency'}) — requested ${p.grantAmount || 'unknown amount'}`).join('\n')}
+Use this history to: boost scores for similar grants, flag conflicts with previous applications, and identify patterns in what works for this org.`;
+          addLog('matchmaker', `Loaded ${recent.length} past proposal(s) for memory-augmented scoring.`);
+        }
+      }
+    } catch { /* memory optional */ }
+
     const grantsToScore = allDiscoveredGrants.slice(0, 10);
     addLog('matchmaker', `Sending ${grantsToScore.length} grants to Gemini 2.0 Flash for AI scoring...`);
 
@@ -1189,7 +1314,7 @@ ORGANIZATION PROFILE:
 - Tax ID (EIN): ${profile.ein ? 'Present' : 'MISSING'}
 - SAM/DUNS#: ${profile.dunsNumber ? 'Present' : 'MISSING'}
 - Specific Funding Need: ${(profile.projectDescription || 'NOT PROVIDED').slice(0, 300)}
-- Background context: ${(safeBackgroundInfo || safeResumeText || 'NOT PROVIDED').slice(0, 400)}
+- Background context: ${(safeBackgroundInfo || safeResumeText || 'NOT PROVIDED').slice(0, 400)}${memoryContext}
 
 GRANTS TO SCORE:
 ${grantsToScore.map((g: any, i: number) => `${i + 1}. "${g.title}" | Agency: ${g.agency} | Amount: ${g.amount || 'N/A'} | Source: ${g.source}`).join('\n')}
@@ -2325,6 +2450,64 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-stone-900 font-sans selection:bg-[#76B900]/20 flex flex-col">
 
+      {/* ── Task 4: ⌘K Command Palette Overlay ── */}
+      {showCommandPalette && (
+        <div className="fixed inset-0 z-[300] flex items-start justify-center pt-[15vh] px-4"
+          onClick={() => setShowCommandPalette(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-xl overflow-hidden"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-100">
+              <Search className="w-5 h-5 text-stone-400 shrink-0" />
+              <input
+                ref={commandInputRef}
+                type="text"
+                value={commandQuery}
+                onChange={e => setCommandQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && filteredCommands.length > 0) {
+                    filteredCommands[0].action();
+                    setShowCommandPalette(false);
+                  }
+                }}
+                placeholder="Search commands… (e.g. &quot;run pipeline&quot;, &quot;find grants&quot;)"
+                className="flex-1 bg-transparent text-stone-900 text-sm outline-none placeholder:text-stone-400"
+              />
+              <kbd className="text-[10px] font-bold text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">ESC</kbd>
+            </div>
+            <div className="max-h-72 overflow-y-auto py-1">
+              {filteredCommands.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-stone-400">No commands match “{commandQuery}”</div>
+              ) : filteredCommands.map(cmd => (
+                <button
+                  key={cmd.key}
+                  onClick={() => { cmd.action(); setShowCommandPalette(false); setCommandQuery(''); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#76B900]/5 hover:border-l-2 hover:border-[#76B900] transition-all text-left group"
+                >
+                  <span className="text-xl shrink-0">{cmd.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold text-stone-900 group-hover:text-[#76B900]">{cmd.label}</div>
+                    <div className="text-xs text-stone-400">{cmd.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="px-4 py-2 border-t border-stone-100 text-[10px] text-stone-400 flex items-center gap-3">
+              <span>↵ Enter to run first result</span>
+              <span>↑↓ to navigate</span>
+              <span className="ml-auto">CivicPath ⌘K</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Task 5: Weekly banner ── */}
+      {weeklyBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[200] bg-[#76B900] text-[#111] text-sm font-bold text-center py-2.5 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {weeklyBanner}
+        </div>
+      )}
+
       {/* ── LinkedIn AI-Paste Modal ── */}
       {showLinkedinModal && (
         <div className="fixed inset-0 z-[200] bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -2403,6 +2586,16 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden lg:block"><SovereignHeader /></div>
+              {/* ⌘K hint */}
+              <button
+                onClick={() => setShowCommandPalette(true)}
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 text-stone-400 hover:border-[#76B900] hover:text-[#76B900] transition-colors text-xs font-medium"
+                title="Open command palette (⌘K)"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="hidden lg:block">Commands</span>
+                <kbd className="text-[9px] bg-stone-100 px-1 rounded border border-stone-200">⌘K</kbd>
+              </button>
 
               <div className="relative z-50">
                 <button 
@@ -3519,6 +3712,37 @@ Will automatically draft proposals and alert your Gmail if a >80% match appears.
             <div className="mb-6">
               <h2 className="text-xl font-bold text-stone-800 flex items-center"><Link className="w-5 h-5 mr-2 text-[#76B900]" /> App Integrations</h2>
               <p className="text-sm text-stone-500 mt-1">Connect CivicPath to your tools to enable autonomous proposal sending and meeting intelligence.</p>
+            </div>
+            {/* Push Notifications banner */}
+            <div className={`mb-5 p-4 rounded-xl border flex items-center justify-between gap-4 ${
+              pushEnabled ? 'bg-[#76B900]/5 border-[#76B900]/30' : 'bg-stone-50 border-stone-200'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${pushEnabled ? 'bg-[#76B900]/10' : 'bg-stone-100'}`}>
+                  <Bell className={`w-5 h-5 ${pushEnabled ? 'text-[#76B900]' : 'text-stone-400'}`} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-stone-800">Push Notifications {pushEnabled ? '✓ Active' : ''}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    {pushEnabled
+                      ? 'The Watcher will alert you on this device when new grants match your profile — even when CivicPath is closed.'
+                      : 'Get instant alerts on this device when the Watcher finds new matching grants — no email required.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={pushEnabled ? disablePushNotifications : enablePushNotifications}
+                disabled={pushLoading}
+                className={`shrink-0 px-4 py-2 text-sm font-bold rounded-xl transition-all ${
+                  pushEnabled
+                    ? 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    : 'bg-[#76B900] text-[#111] hover:bg-[#689900]'
+                } disabled:opacity-50`}
+              >
+                {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : pushEnabled ? 'Disable' : 'Enable Notifications'}
+              </button>
+            </div>
+            <div>
             </div>
             {googleConnected && (
               <div className="mb-5 p-4 bg-[#76B900]/5 border border-[#76B900]/20 rounded-xl flex items-center justify-between gap-4">
